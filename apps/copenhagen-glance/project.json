@@ -1,0 +1,14 @@
+{
+  "name": "copenhagen-glance",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "apps/copenhagen-glance/src",
+  "projectType": "application",
+  "tags": ["type:app", "lang:ts"],
+  "targets": {
+    "start": {
+      "command": "node src/main.ts",
+      "options": { "cwd": "{projectRoot}" },
+      "continuous": true
+    }
+  }
+}

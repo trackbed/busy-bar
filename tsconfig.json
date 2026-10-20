@@ -17,6 +17,9 @@
     },
     {
       "path": "./apps/merge-ticker"
+    },
+    {
+      "path": "./apps/copenhagen-glance"
     }
   ]
 }
