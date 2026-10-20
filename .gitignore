@@ -1,0 +1,49 @@
+# Compiled output
+dist
+tmp
+out-tsc
+*.tsbuildinfo
+
+# Dependencies
+node_modules
+.venv
+
+# Test and coverage output
+coverage
+test-output
+.coverage
+.coverage.*
+htmlcov
+
+# Python caches
+__pycache__/
+*.py[cod]
+.mypy_cache/
+.pytest_cache/
+.ruff_cache/
+
+# Nx
+/.nx/
+.cursor/rules/nx-rules.mdc
+.github/instructions/nx.instructions.md
+
+# Environment (BUSY Bar addresses and tokens live here)
+.env
+.env.*
+!.env.example
+
+# Editors
+/.idea
+.vscode/*
+!.vscode/settings.json
+!.vscode/extensions.json
+.claude/settings.local.json
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Local tooling
+/lefthook-local.yml
+vite.config.*.timestamp*
+vitest.config.*.timestamp*

@@ -1,0 +1,121 @@
+{
+  "$schema": "./node_modules/nx/schemas/nx-schema.json",
+  "defaultBase": "origin/main",
+  "analytics": false,
+  "namedInputs": {
+    "default": ["{projectRoot}/**/*", "sharedGlobals"],
+    "production": [
+      "default",
+      "!{projectRoot}/**/*.md",
+      "!{projectRoot}/coverage/**/*",
+      "!{projectRoot}/src/**/__tests__/**/*",
+      "!{projectRoot}/src/**/*.test.ts",
+      "!{projectRoot}/tests/**/*",
+      "!{projectRoot}/eslint.config.mjs",
+      "!{projectRoot}/vitest.config.ts",
+      "!{projectRoot}/tsconfig.spec.json"
+    ],
+    "sharedGlobals": [],
+    "lintGlobals": [
+      "{workspaceRoot}/.oxlintrc.json",
+      "{workspaceRoot}/eslint.factory.mjs",
+      "{workspaceRoot}/eslint.nx-boundaries.mjs"
+    ],
+    "vitestGlobals": ["{workspaceRoot}/vitest.factory.mjs"],
+    "rootTooling": [
+      "{workspaceRoot}/*.mjs",
+      "{workspaceRoot}/*.d.mts",
+      "{workspaceRoot}/scripts/**/*"
+    ],
+    "typescriptToolDependencies": [
+      {
+        "externalDependencies": ["@types/node", "@typescript/native"]
+      }
+    ],
+    "eslintToolDependencies": [
+      {
+        "externalDependencies": [
+          "@eslint-community/eslint-plugin-eslint-comments",
+          "@nx/eslint-plugin",
+          "@vitest/eslint-plugin",
+          "eslint",
+          "eslint-import-resolver-typescript",
+          "eslint-plugin-import-x",
+          "eslint-plugin-oxlint",
+          "typescript",
+          "typescript-eslint"
+        ]
+      }
+    ]
+  },
+  "targetDefaults": {
+    "lint": [
+      {
+        "filter": {
+          "plugin": "@nx/eslint/plugin"
+        },
+        "dependsOn": ["oxlint"],
+        "inputs": ["...", "lintGlobals", "eslintToolDependencies"]
+      }
+    ],
+    "oxlint": {
+      "options": {
+        "args": ["--deny-warnings"]
+      }
+    },
+    "typecheck": [
+      {
+        "filter": {
+          "plugin": "@nx/js/typescript"
+        },
+        "inputs": ["...", "typescriptToolDependencies"]
+      }
+    ],
+    "test": [
+      {
+        "filter": {
+          "plugin": "@nx/vitest"
+        },
+        "inputs": ["...", "vitestGlobals"]
+      }
+    ]
+  },
+  "plugins": [
+    {
+      "plugin": "@nx/js/typescript",
+      "include": ["{apps,libs,tools}/*/tsconfig*.json"],
+      "options": {
+        "typecheck": {
+          "targetName": "typecheck"
+        },
+        "build": false
+      }
+    },
+    {
+      "plugin": "@nx/eslint/plugin",
+      "include": [
+        "eslint.config.mjs",
+        "{apps,libs,tools}/*/{eslint.config.mjs,package.json,project.json}"
+      ],
+      "options": {
+        "targetName": "lint"
+      }
+    },
+    {
+      "plugin": "@nx/oxlint",
+      "include": [".oxlintrc.json", "{apps,libs,tools}/**/*"],
+      "options": {
+        "targetName": "oxlint"
+      }
+    },
+    {
+      "plugin": "@nx/vitest",
+      "include": ["{apps,libs,tools}/*/vitest.config.ts"],
+      "options": {
+        "testTargetName": "test",
+        "testMode": "run"
+      }
+    },
+    "./tools/workspace/src/plugins/python.ts"
+  ]
+}

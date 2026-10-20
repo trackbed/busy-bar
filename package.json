@@ -1,0 +1,61 @@
+{
+  "name": "@busy-bar-apps/source",
+  "version": "0.0.0",
+  "private": true,
+  "license": "UNLICENSED",
+  "workspaces": [
+    "apps/*",
+    "libs/*",
+    "tools/*"
+  ],
+  "type": "module",
+  "scripts": {
+    "bootstrap:status": "node scripts/check-workspace-ready.mjs",
+    "format:check": "oxfmt --check . && uv run ruff format --check .",
+    "format:write": "oxfmt . && uv run ruff format .",
+    "hooks:install": "node scripts/setup-hooks.mjs",
+    "hooks:policy:pre-commit": "sh scripts/pre-commit-policy.sh",
+    "lint:all": "NX_DAEMON=${NX_DAEMON:-false} nx run-many -t lint --outputStyle=static",
+    "postinstall": "node scripts/setup-hooks.mjs",
+    "test:all": "NX_DAEMON=${NX_DAEMON:-false} nx run-many -t test --outputStyle=static",
+    "typecheck:all": "NX_DAEMON=${NX_DAEMON:-false} nx run-many -t typecheck --outputStyle=static",
+    "verify": "bash scripts/verify.sh",
+    "verify:fast": "bash scripts/verify.sh --fast"
+  },
+  "devDependencies": {
+    "@eslint-community/eslint-plugin-eslint-comments": "4.8.1",
+    "@nx/devkit": "23.3.0",
+    "@nx/eslint": "23.3.0",
+    "@nx/eslint-plugin": "23.3.0",
+    "@nx/js": "23.3.0",
+    "@nx/oxlint": "23.3.0",
+    "@nx/vitest": "23.3.0",
+    "@types/node": "24.19.2",
+    "@typescript/native": "npm:typescript@7.0.2",
+    "@vitest/coverage-v8": "5.0.4",
+    "@vitest/eslint-plugin": "1.6.27",
+    "eslint": "10.12.0",
+    "eslint-import-resolver-typescript": "4.4.5",
+    "eslint-plugin-import-x": "4.17.1",
+    "eslint-plugin-oxlint": "1.87.0",
+    "knip": "6.41.0",
+    "lefthook": "2.2.1",
+    "nx": "23.3.0",
+    "oxfmt": "0.72.0",
+    "oxlint": "1.87.0",
+    "typescript": "npm:@typescript/typescript6@6.0.2",
+    "typescript-eslint": "8.71.1",
+    "vite": "8.3.4",
+    "vitest": "5.0.4"
+  },
+  "resolutions": {
+    "undici@npm:7.29.0": "npm:7.29.1"
+  },
+  "engines": {
+    "node": "24.x"
+  },
+  "packageManager": "yarn@4.18.1",
+  "nx": {
+    "includedScripts": []
+  }
+}
