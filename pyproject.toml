@@ -1,0 +1,92 @@
+# uv workspace root. It is not a package: it lists the Python projects, pins
+# the shared dev tools, and holds the tool configuration every Python project
+# inherits. See docs/python.md.
+
+[dependency-groups]
+dev = [
+  "mypy==2.4.0",
+  "pytest==9.1.1",
+  "pytest-asyncio==1.4.0",
+  "pytest-cov==7.1.0",
+  "ruff==0.17.0",
+]
+
+[tool.uv]
+required-version = ">=0.11.23,<0.14"
+# `uv add pkg` pins the exact version, like every other dependency here.
+add-bounds = "exact"
+# A new PyPI release must be at least seven days old before it can resolve,
+# matching the npm age gate in .yarnrc.yml.
+exclude-newer = "7 days"
+
+[tool.uv.workspace]
+# Listed one by one: apps/ and libs/ also hold TypeScript projects, and uv
+# rejects a glob that matches a directory without a pyproject.toml. The
+# project generator adds new members; the Nx Python plugin fails loudly on a
+# pyproject.toml that is missing here.
+members = ["apps/countdown", "libs/bar-kit-py"]
+
+[tool.ruff]
+target-version = "py314"
+src = ["apps/*/src", "libs/*/src", "tools/*/src"]
+
+[tool.ruff.lint]
+select = [
+  "A", # shadowed builtins
+  "ARG", # unused arguments
+  "ASYNC", # async pitfalls
+  "B", # likely bugs
+  "BLE", # blind except
+  "C4", # comprehensions
+  "DTZ", # naive datetimes
+  "E", # pycodestyle errors
+  "ERA", # commented-out code
+  "F", # pyflakes
+  "FURB", # modernizations
+  "I", # import order
+  "LOG", # logging misuse
+  "N", # naming
+  "PERF", # performance anti-patterns
+  "PIE", # unnecessary code
+  "PL", # pylint
+  "PT", # pytest style
+  "PTH", # pathlib over os.path
+  "RET", # return statements
+  "RUF", # ruff-specific
+  "S", # security
+  "SIM", # simplifications
+  "SLF", # private member access
+  "T10", # debugger calls
+  "T20", # print calls
+  "UP", # pyupgrade
+  "W", # pycodestyle warnings
+]
+# The formatter owns line length.
+ignore = ["E501"]
+# Display sizes are written the way the hardware docs write them: 72×16.
+allowed-confusables = ["×"]
+
+[tool.ruff.lint.per-file-ignores]
+# Apps may print to their terminal; libraries log instead.
+"apps/**/*.py" = ["T20"]
+"**/tests/**/*.py" = ["PLR2004", "S101", "S106", "SLF001"]
+
+[tool.mypy]
+python_version = "3.14"
+strict = true
+warn_unreachable = true
+enable_error_code = ["ignore-without-code", "redundant-expr", "truthy-bool"]
+
+# busylib is fully annotated but ships without a py.typed marker. Analyze it
+# anyway instead of treating every busylib type as Any.
+[[tool.mypy.overrides]]
+module = ["busylib", "busylib.*"]
+follow_untyped_imports = true
+
+[tool.pytest]
+minversion = "9.1"
+strict = true
+addopts = ["-ra"]
+testpaths = ["tests"]
+asyncio_mode = "auto"
+filterwarnings = ["error"]
