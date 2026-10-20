@@ -1256,6 +1256,14 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@busy-bar-apps/event-day@workspace:apps/event-day":
+  version: 0.0.0-use.local
+  resolution: "@busy-bar-apps/event-day@workspace:apps/event-day"
+  dependencies:
+    "@busy-bar-apps/bar-kit": "workspace:0.0.1"
+  languageName: unknown
+  linkType: soft
+
 "@busy-bar-apps/linear-queue@workspace:apps/linear-queue":
   version: 0.0.0-use.local
   resolution: "@busy-bar-apps/linear-queue@workspace:apps/linear-queue"

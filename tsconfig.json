@@ -13,6 +13,9 @@
       "path": "./tools/workspace"
     },
     {
+      "path": "./apps/event-day"
+    },
+    {
       "path": "./apps/linear-queue"
     },
     {
