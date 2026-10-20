@@ -1,0 +1,7 @@
+{
+  "name": "bar-kit",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/bar-kit/src",
+  "projectType": "library",
+  "tags": ["type:lib", "lang:ts"]
+}
