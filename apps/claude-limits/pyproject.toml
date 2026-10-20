@@ -1,0 +1,25 @@
+[project]
+name = "claude-limits"
+version = "0.0.1"
+description = "BUSY Bar board for the Claude accounts conductor-claude-rotation manages."
+requires-python = ">=3.14"
+dependencies = ["bar-kit"]
+
+[tool.uv.sources]
+bar-kit = { workspace = true }
+
+[build-system]
+requires = ["uv_build>=0.11.23,<0.14"]
+build-backend = "uv_build"
+
+[tool.coverage.run]
+branch = true
+source = ["src"]
+# The process entry point only wires the modules together; they hold the
+# behavior.
+omit = ["src/claude_limits/__main__.py"]
+
+[tool.coverage.report]
+# Ratchet upward; never lower it to make a change pass.
+fail_under = 95
+show_missing = true

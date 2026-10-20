@@ -17,8 +17,12 @@ FRONT_DISPLAY = DisplaySize(width=72, height=16)
 """The 72×16 RGB LED matrix on the front. Elements placed outside it are not
 visible."""
 
-BACK_DISPLAY = DisplaySize(width=160, height=80)
-"""The 160×80 screen on the back, which shows 16 levels of grey."""
+BACK_DISPLAY = DisplaySize(width=148, height=80)
+"""The part of the 160×80 back screen apps can draw on.
+
+The firmware's status bar keeps the rightmost 12 columns, so elements past
+x = 147 are cut off. The screen shows 16 levels of grey.
+"""
 
 
 def rgba(red: int, green: int, blue: int, alpha: int = _MAX_CHANNEL) -> str:

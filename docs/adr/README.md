@@ -3,11 +3,12 @@
 An ADR records a decision with lasting consequences: what was decided, why,
 what it costs, and when to reconsider it. This table is the only list.
 
-| ADR                                    | Status   | Date       | Decision                                                              |
-| -------------------------------------- | -------- | ---------- | --------------------------------------------------------------------- |
-| [0001](0001-polyglot-nx-workspace.md)  | Accepted | 2026-10-19 | One Nx workspace for TypeScript and Python apps                       |
-| [0002](0002-local-python-nx-plugin.md) | Accepted | 2026-10-19 | Infer Python targets with a local Nx plugin instead of `@nxlv/python` |
-| [0003](0003-typescript-from-source.md) | Accepted | 2026-10-19 | Run TypeScript from source; type-check with TypeScript 7              |
+| ADR                                    | Status   | Date       | Decision                                                                |
+| -------------------------------------- | -------- | ---------- | ----------------------------------------------------------------------- |
+| [0001](0001-polyglot-nx-workspace.md)  | Accepted | 2026-10-19 | One Nx workspace for TypeScript and Python apps                         |
+| [0002](0002-local-python-nx-plugin.md) | Accepted | 2026-10-19 | Infer Python targets with a local Nx plugin instead of `@nxlv/python`   |
+| [0003](0003-typescript-from-source.md) | Accepted | 2026-10-19 | Run TypeScript from source; type-check with TypeScript 7                |
+| [0004](0004-firmware-emulator.md)      | Accepted | 2026-10-20 | Emulate the bar from its firmware source; download assets, never vendor |
 
 ## Adding an ADR
 

@@ -10,8 +10,12 @@ export interface DisplaySize {
  */
 export const FRONT_DISPLAY: DisplaySize = { width: 72, height: 16 };
 
-/** The 160×80 screen on the back, which shows 16 levels of grey. */
-export const BACK_DISPLAY: DisplaySize = { width: 160, height: 80 };
+/**
+ * The part of the 160×80 back screen apps can draw on. The firmware's
+ * status bar keeps the rightmost 12 columns, so elements past x = 147 are
+ * cut off. The screen shows 16 levels of grey.
+ */
+export const BACK_DISPLAY: DisplaySize = { width: 148, height: 80 };
 
 /**
  * Format a colour as the `#RRGGBBAA` string the display API expects.

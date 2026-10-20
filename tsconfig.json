@@ -11,6 +11,21 @@
     },
     {
       "path": "./tools/workspace"
+    },
+    {
+      "path": "./apps/event-day"
+    },
+    {
+      "path": "./apps/linear-queue"
+    },
+    {
+      "path": "./apps/merge-ticker"
+    },
+    {
+      "path": "./apps/copenhagen-glance"
+    },
+    {
+      "path": "./tools/emulator"
     }
   ]
 }

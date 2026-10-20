@@ -1,0 +1,18 @@
+{
+  "name": "emulator",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "tools/emulator/src",
+  "projectType": "application",
+  "tags": ["type:tooling", "lang:ts"],
+  "targets": {
+    "start": {
+      "command": "node --disable-warning=ExperimentalWarning src/main.ts",
+      "options": { "cwd": "{projectRoot}" },
+      "continuous": true
+    },
+    "pin-firmware": {
+      "command": "node src/pin-firmware.ts",
+      "options": { "cwd": "{projectRoot}" }
+    }
+  }
+}

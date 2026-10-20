@@ -9,10 +9,20 @@ both read the same environment variables and behave the same way.
 - Connection settings from `BUSYBAR_ADDR` and `BUSYBAR_TOKEN`
   (`load_bar_config`) and the async busylib client built from them
   (`create_busy_bar`).
-- Display sizes (`FRONT_DISPLAY`, `BACK_DISPLAY`) and colours (`rgba`).
+- Display sizes (`FRONT_DISPLAY`, and `BACK_DISPLAY`: the 148×80 of the
+  back screen that the status bar leaves to apps) and colours (`rgba`).
 - The frame loop (`run_bar_app`): draw every interval at a `priority`
-  (default `DEFAULT_PRIORITY`, 50), log failed draws and keep going, clear the
+  (default `DEFAULT_PRIORITY`, 50), delete the elements a frame stops drawing
+  (the bar keeps them otherwise), log failed draws and keep going, clear the
   display on shutdown (`install_shutdown_handlers`).
+- Background data (`Poller`): fetch a source every `interval` seconds, try
+  again after `retry` when it fails, and keep the latest value (`latest`) and
+  the last failure (`failure`) for a pure render function.
+- Text for the bitmap fonts: `to_bar_text` turns any text into printable ASCII
+  the fonts draw (`Nørreport` becomes `Noerreport`, a backtick an
+  apostrophe), `text_width` measures it in pixels, and `fit_text` cuts it to
+  a width with `..`. The widths come from busy-lib's font maps, so both kits
+  measure alike.
 
 ## Does Not Own
 

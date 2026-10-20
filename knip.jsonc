@@ -4,4 +4,10 @@
   "ignoreBinaries": ["uv"],
   // TypeScript reads this declaration for every `vitest.factory.mjs` import.
   "ignore": ["vitest.factory.d.mts"],
+  "workspaces": {
+    "tools/emulator": {
+      // The browser loads src/web/app.ts from src/web/index.html.
+      "entry": ["src/web/app.ts"],
+    },
+  },
 }

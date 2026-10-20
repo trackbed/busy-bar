@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>BUSY Bar emulator</title>
+    <link rel="icon" href="data:," />
+    <link rel="stylesheet" href="/style.css" />
+    <script type="module" src="/app.ts"></script>
+  </head>
+  <body>
+    <main>
+      <header>
+        <h1>BUSY Bar emulator</h1>
+        <p class="hint">
+          Point apps at <code id="address">BUSYBAR_ADDR=127.0.0.1:8080</code>
+          <span id="connection" class="connection">connecting…</span>
+        </p>
+      </header>
+
+      <section class="bar" aria-label="Front display">
+        <canvas
+          id="front"
+          width="720"
+          height="160"
+          aria-label="Front display, 72 by 16 LEDs"
+        ></canvas>
+        <span id="led" class="led" aria-hidden="true"></span>
+      </section>
+
+      <section class="controls" aria-label="Buttons">
+        <div
+          class="wheel"
+          id="wheel"
+          title="Scroll here, or use the arrow keys"
+        >
+          <button type="button" data-key="up" aria-label="Wheel up">▲</button>
+          <span>wheel</span>
+          <button type="button" data-key="down" aria-label="Wheel down">
+            ▼
+          </button>
+        </div>
+        <div class="buttons">
+          <button type="button" data-key="ok" title="Enter">OK</button>
+          <button type="button" data-key="back" title="Escape">BACK</button>
+          <button type="button" data-key="start" title="Space">START</button>
+        </div>
+        <fieldset class="selector">
+          <legend>Mode switch</legend>
+          <button type="button" data-key="busy">BUSY</button>
+          <button type="button" data-key="custom">CUSTOM</button>
+          <button type="button" data-key="off">OFF</button>
+          <button type="button" data-key="apps">APPS</button>
+          <button type="button" data-key="settings">SETTINGS</button>
+        </fieldset>
+      </section>
+
+      <section class="back" aria-label="Back display">
+        <canvas
+          id="back"
+          width="640"
+          height="320"
+          aria-label="Back display, 160 by 80 pixels"
+        ></canvas>
+      </section>
+
+      <section class="panel" aria-label="Emulator state">
+        <label class="toggle">
+          <input type="checkbox" id="timer" />
+          BUSY timer running
+          <small>(blocks every app draw, as on the bar)</small>
+        </label>
+        <label class="toggle">
+          <input type="checkbox" id="sound" />
+          Play sounds
+        </label>
+        <dl id="state"></dl>
+        <p class="links">
+          Screenshots:
+          <a
+            href="/emulator/screenshot.png?display=front&amp;scale=8"
+            target="_blank"
+            >front</a
+          >
+          ·
+          <a
+            href="/emulator/screenshot.png?display=back&amp;scale=4"
+            target="_blank"
+            >back</a
+          >
+        </p>
+      </section>
+    </main>
+  </body>
+</html>

@@ -12,7 +12,9 @@ exclude-newer-span = "P7D"
 
 [manifest]
 members = [
+    "agent-fleet",
     "bar-kit",
+    "claude-limits",
     "countdown",
 ]
 
@@ -24,6 +26,17 @@ dev = [
     { name = "pytest-cov", specifier = "==7.1.0" },
     { name = "ruff", specifier = "==0.17.0" },
 ]
+
+[[package]]
+name = "agent-fleet"
+version = "0.0.1"
+source = { editable = "apps/agent-fleet" }
+dependencies = [
+    { name = "bar-kit" },
+]
+
+[package.metadata]
+requires-dist = [{ name = "bar-kit", editable = "libs/bar-kit-py" }]
 
 [[package]]
 name = "annotated-types"
@@ -140,6 +153,17 @@ sdist = { url = "https://files.pythonhosted.org/packages/ae/9e/23fddccac61a8b66e
 wheels = [
     { url = "https://files.pythonhosted.org/packages/dc/0b/d66368afa5d74321798a7a57aa3e9324eb64cac4a2cada34f236ec53db48/busylib-2.6.0-py3-none-any.whl", hash = "sha256:ddfee5e0c7931ca4f4b1a462c617015daa461188fa2070f074d8b8220f3a45bf", size = 123022, upload-time = "2026-09-18T16:41:54.03Z" },
 ]
+
+[[package]]
+name = "claude-limits"
+version = "0.0.1"
+source = { editable = "apps/claude-limits" }
+dependencies = [
+    { name = "bar-kit" },
+]
+
+[package.metadata]
+requires-dist = [{ name = "bar-kit", editable = "libs/bar-kit-py" }]
 
 [[package]]
 name = "colorama"
