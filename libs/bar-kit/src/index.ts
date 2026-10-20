@@ -8,6 +8,7 @@ export type {
   RectangleElement,
   TextElement,
 } from '@busy-app/busy-lib';
+export { toBarText } from './bar-text.ts';
 export { createBusyBar } from './client.ts';
 export type { BarConfig } from './config.ts';
 export {
@@ -19,6 +20,10 @@ export {
 } from './config.ts';
 export type { DisplaySize } from './display.ts';
 export { BACK_DISPLAY, FRONT_DISPLAY, rgba } from './display.ts';
+export type { BarFont } from './fonts.ts';
+export { ELLIPSIS, fitText, textWidth } from './fonts.ts';
+export type { PollFailure, Poller, PollerOptions, Snapshot } from './poller.ts';
+export { createPoller } from './poller.ts';
 export type {
   BarDisplayClient,
   BarElements,
