@@ -1,0 +1,11 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "rootDir": "src/web",
+    "outDir": "dist/web",
+    "tsBuildInfoFile": "dist/web/tsconfig.web.tsbuildinfo",
+    "lib": ["es2024", "dom", "dom.iterable"]
+  },
+  "include": ["src/web/**/*.ts"],
+  "exclude": ["src/web/**/*.test.ts"]
+}
