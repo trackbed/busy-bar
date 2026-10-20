@@ -1,0 +1,12 @@
+min_version: 2.2.1
+assert_lefthook_installed: true
+
+# Pre-commit is the only managed hook. The policy itself lives in
+# scripts/pre-commit-policy.sh so it can run without Lefthook; see
+# docs/command-reference.md#git-hooks. Personal jobs go in a gitignored
+# lefthook-local.yml.
+pre-commit:
+  piped: true
+  jobs:
+    - name: busy-bar-apps pre-commit policy
+      run: sh scripts/pre-commit-policy.sh

@@ -1,0 +1,25 @@
+# <%= name %>
+
+Shared Python code for BUSY Bar apps. Replace this line with what the library
+owns.
+
+## Owns
+
+- Replace with the responsibilities this library takes on.
+
+## Does not own
+
+- Connection settings and the frame loop:
+  [`bar-kit-py`](<%= offset %>libs/bar-kit-py/README.md).
+
+## Start here
+
+- `src/<%= moduleName %>/__init__.py`: the public API. Depend on it from
+  another Python project with `"<%= name %>"` in `dependencies` and
+  `<%= name %> = { workspace = true }` under `[tool.uv.sources]`.
+
+## Verify
+
+```sh
+NX_DAEMON=false yarn nx run-many -t lint typecheck test -p <%= name %>
+```

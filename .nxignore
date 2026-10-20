@@ -1,0 +1,3 @@
+# Conductor and agent scratch space. It is excluded from Git through
+# .git/info/exclude, which not every tool reads.
+.context/**

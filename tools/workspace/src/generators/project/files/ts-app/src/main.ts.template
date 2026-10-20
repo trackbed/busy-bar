@@ -1,0 +1,16 @@
+import {
+  createBusyBar,
+  loadBarConfig,
+  runBarApp,
+  shutdownSignal,
+} from '@busy-bar-apps/bar-kit';
+
+import { render } from './render.ts';
+
+await runBarApp({
+  name: '<%= name %>',
+  client: createBusyBar(loadBarConfig()),
+  render,
+  intervalMs: 1000,
+  signal: shutdownSignal(),
+});

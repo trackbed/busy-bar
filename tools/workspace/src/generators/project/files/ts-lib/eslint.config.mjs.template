@@ -1,0 +1,7 @@
+// @ts-check
+import { createProjectEslintConfig } from '<%= offset %>eslint.factory.mjs';
+
+export default createProjectEslintConfig({
+  kind: 'lib',
+  tsconfigRootDir: import.meta.dirname,
+});

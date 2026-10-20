@@ -1,0 +1,9 @@
+{
+  "generators": {
+    "project": {
+      "factory": "./src/generators/project/generator.ts#projectGenerator",
+      "schema": "./src/generators/project/schema.json",
+      "description": "Create a BUSY Bar app or library in TypeScript or Python."
+    }
+  }
+}

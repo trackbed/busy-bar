@@ -1,0 +1,17 @@
+{
+  "name": "@busy-bar-apps/bar-kit",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "sideEffects": false,
+  "exports": {
+    ".": {
+      "@busy-bar-apps/source": "./src/index.ts",
+      "default": "./src/index.ts"
+    },
+    "./package.json": "./package.json"
+  },
+  "dependencies": {
+    "@busy-app/busy-lib": "0.21.1"
+  }
+}
