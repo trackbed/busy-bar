@@ -12,6 +12,7 @@ exclude-newer-span = "P7D"
 
 [manifest]
 members = [
+    "agent-fleet",
     "bar-kit",
     "countdown",
 ]
@@ -24,6 +25,17 @@ dev = [
     { name = "pytest-cov", specifier = "==7.1.0" },
     { name = "ruff", specifier = "==0.17.0" },
 ]
+
+[[package]]
+name = "agent-fleet"
+version = "0.0.1"
+source = { editable = "apps/agent-fleet" }
+dependencies = [
+    { name = "bar-kit" },
+]
+
+[package.metadata]
+requires-dist = [{ name = "bar-kit", editable = "libs/bar-kit-py" }]
 
 [[package]]
 name = "annotated-types"

@@ -24,7 +24,11 @@ exclude-newer = "7 days"
 # rejects a glob that matches a directory without a pyproject.toml. The
 # project generator adds new members; the Nx Python plugin fails loudly on a
 # pyproject.toml that is missing here.
-members = ["apps/countdown", "libs/bar-kit-py"]
+members = [
+  "apps/agent-fleet",
+  "apps/countdown",
+  "libs/bar-kit-py",
+]
 
 [tool.ruff]
 target-version = "py314"
