@@ -26,6 +26,7 @@ exclude-newer = "7 days"
 # pyproject.toml that is missing here.
 members = [
   "apps/agent-fleet",
+  "apps/claude-limits",
   "apps/countdown",
   "libs/bar-kit-py",
 ]
