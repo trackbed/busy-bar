@@ -1,0 +1,12 @@
+{
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "plugins": ["eslint", "oxc", "typescript", "unicorn", "vitest", "promise"],
+  "categories": {
+    "correctness": "error"
+  },
+  "rules": {
+    "eslint/no-console": "off",
+    "no-unused-vars": "off"
+  },
+  "ignorePatterns": ["**/dist/**", "**/coverage/**", ".venv/**"]
+}

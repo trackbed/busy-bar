@@ -1,0 +1,49 @@
+{
+  "name": "repo",
+  "$schema": "./node_modules/nx/schemas/project-schema.json",
+  "tags": ["type:tooling", "lang:ts"],
+  "targets": {
+    "lint": {
+      "command": "oxlint --deny-warnings *.mjs scripts && eslint --max-warnings=0 *.mjs scripts",
+      "cache": true,
+      "inputs": [
+        "rootTooling",
+        "lintGlobals",
+        "{workspaceRoot}/eslint.config.mjs",
+        "{workspaceRoot}/tsconfig.scripts.json",
+        "eslintToolDependencies",
+        {
+          "externalDependencies": ["oxlint"]
+        }
+      ],
+      "outputs": []
+    },
+    "typecheck": {
+      "command": "tsc -p tsconfig.scripts.json",
+      "cache": true,
+      "inputs": [
+        "rootTooling",
+        "{workspaceRoot}/tsconfig.base.json",
+        "{workspaceRoot}/tsconfig.scripts.json",
+        "typescriptToolDependencies"
+      ],
+      "outputs": []
+    },
+    "check-projects": {
+      "command": "node scripts/check-projects.mjs",
+      "cache": false
+    },
+    "knip": {
+      "command": "knip",
+      "cache": true,
+      "inputs": [
+        "{workspaceRoot}/**/*.{ts,mjs,mts,json,jsonc}",
+        "!{workspaceRoot}/**/{coverage,dist}/**/*",
+        {
+          "externalDependencies": ["knip"]
+        }
+      ],
+      "outputs": []
+    }
+  }
+}

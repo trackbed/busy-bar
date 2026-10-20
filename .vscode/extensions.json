@@ -1,0 +1,11 @@
+{
+  "recommendations": [
+    "nrwl.angular-console",
+    "oxc.oxc-vscode",
+    "dbaeumer.vscode-eslint",
+    "vitest.explorer",
+    "charliermarsh.ruff",
+    "ms-python.python",
+    "ms-python.mypy-type-checker"
+  ]
+}

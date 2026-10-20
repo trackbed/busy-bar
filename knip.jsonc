@@ -1,0 +1,7 @@
+{
+  "$schema": "https://unpkg.com/knip@6/schema-jsonc.json",
+  // uv is a system tool installed outside npm; see README.md#prerequisites.
+  "ignoreBinaries": ["uv"],
+  // TypeScript reads this declaration for every `vitest.factory.mjs` import.
+  "ignore": ["vitest.factory.d.mts"],
+}

@@ -1,0 +1,21 @@
+{
+  "editor.formatOnSave": true,
+  "editor.defaultFormatter": "oxc.oxc-vscode",
+  "editor.codeActionsOnSave": {
+    "source.fixAll.eslint": "explicit",
+    "source.fixAll.oxc": "explicit"
+  },
+  "[python]": {
+    "editor.defaultFormatter": "charliermarsh.ruff",
+    "editor.codeActionsOnSave": {
+      "source.fixAll.ruff": "explicit",
+      "source.organizeImports.ruff": "explicit"
+    }
+  },
+  "eslint.workingDirectories": [{ "mode": "auto" }],
+  "typescript.tsdk": "node_modules/@typescript/old/lib",
+  "python.defaultInterpreterPath": "${workspaceFolder}/.venv/bin/python",
+  "mypy-type-checker.args": ["--config-file=${workspaceFolder}/pyproject.toml"],
+  "mypy-type-checker.importStrategy": "fromEnvironment",
+  "python.testing.pytestEnabled": true
+}
