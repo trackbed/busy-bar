@@ -42,6 +42,9 @@ uv sync --all-packages  # Python 3.14 and the Python packages
 yarn bootstrap:status   # read-only check that everything is in place
 ```
 
+If Yarn cannot launch the readiness check, run
+`node scripts/check-workspace-ready.mjs` directly with the pinned Node runtime.
+
 ## Run an app
 
 ```sh

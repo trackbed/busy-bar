@@ -15,6 +15,10 @@ shell to use the daemon.
 | `uv sync --all-packages` | Install Python 3.14 and every Python package   |
 | `yarn bootstrap:status`  | Read-only readiness check with fix-it commands |
 
+If Yarn cannot launch scripts because dependencies or its install state are
+missing, run `node scripts/check-workspace-ready.mjs` directly. It needs only
+the pinned Node runtime and prints the commands that repair the environment.
+
 ## Everyday
 
 | Command                                                             | What it does                                                        |

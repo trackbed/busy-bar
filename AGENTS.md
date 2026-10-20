@@ -11,7 +11,8 @@ clients. TypeScript uses Yarn workspaces; Python uses a uv workspace.
 - Use the pinned Node version (`.node-version`; `nvm install` switches to it),
   then install before any Nx command: `corepack enable && yarn install && uv sync --all-packages`.
 - `yarn bootstrap:status` is a read-only readiness check. Run it first when
-  Nx or a tool fails in a way that looks environmental.
+  Nx or a tool fails in a way that looks environmental. If Yarn cannot launch
+  scripts, run `node scripts/check-workspace-ready.mjs` directly.
 
 # Hard Rules
 
