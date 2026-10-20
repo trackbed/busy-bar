@@ -45,7 +45,7 @@ function serving(files: Readonly<Record<string, Uint8Array>>) {
     return Promise.resolve(
       body === undefined
         ? new Response('missing', { status: 404 })
-        : new Response(body),
+        : new Response(Uint8Array.from(body)),
     );
   });
 }

@@ -1,0 +1,12 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "rootDir": ".",
+    "outDir": "dist/web-spec",
+    "tsBuildInfoFile": "dist/web-spec/tsconfig.web.spec.tsbuildinfo",
+    "lib": ["es2024", "dom", "dom.iterable"],
+    "types": ["node"]
+  },
+  "include": ["src/web/**/*.test.ts", "src/web/**/__tests__/**/*.ts"],
+  "references": [{ "path": "./tsconfig.web.json" }]
+}
