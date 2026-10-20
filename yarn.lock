@@ -1248,6 +1248,14 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@busy-bar-apps/merge-ticker@workspace:apps/merge-ticker":
+  version: 0.0.0-use.local
+  resolution: "@busy-bar-apps/merge-ticker@workspace:apps/merge-ticker"
+  dependencies:
+    "@busy-bar-apps/bar-kit": "workspace:0.0.1"
+  languageName: unknown
+  linkType: soft
+
 "@busy-bar-apps/source@workspace:.":
   version: 0.0.0-use.local
   resolution: "@busy-bar-apps/source@workspace:."

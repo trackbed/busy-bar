@@ -11,6 +11,9 @@
     },
     {
       "path": "./tools/workspace"
+    },
+    {
+      "path": "./apps/merge-ticker"
     }
   ]
 }
