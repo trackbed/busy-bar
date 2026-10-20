@@ -20,6 +20,8 @@ shell to use the daemon.
 | Command                                                             | What it does                                                        |
 | ------------------------------------------------------------------- | ------------------------------------------------------------------- |
 | `NX_DAEMON=false yarn nx run <app>:start`                           | Run an app against the bar                                          |
+| `NX_DAEMON=false yarn nx run emulator:start`                        | Start the emulator; run apps with `BUSYBAR_ADDR=127.0.0.1:8080`     |
+| `NX_DAEMON=false yarn nx run emulator:pin-firmware -- <sha>`        | Pin the emulator to another firmware commit                         |
 | `NX_DAEMON=false yarn nx run-many -t lint typecheck test -p <name>` | Check one project                                                   |
 | `NX_DAEMON=false yarn nx run-many -t test -p tag:lang:python`       | Test every Python project                                           |
 | `NX_DAEMON=false yarn nx g @busy-bar-apps/workspace:project ...`    | Create a project (see [project-structure.md](project-structure.md)) |

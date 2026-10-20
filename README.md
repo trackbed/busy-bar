@@ -5,13 +5,20 @@ Python. Each app is a small program on your computer or a server that draws on
 the bar's displays through its HTTP API, using the official `busylib` client
 for its language.
 
-| Project                                        | Language   | What it is                                          |
-| ---------------------------------------------- | ---------- | --------------------------------------------------- |
-| [`apps/clock`](apps/clock/README.md)           | TypeScript | The time on the front display, the date on the back |
-| [`apps/countdown`](apps/countdown/README.md)   | Python     | Days and hours left until an event                  |
-| [`libs/bar-kit`](libs/bar-kit/README.md)       | TypeScript | Connection settings, display helpers, frame loop    |
-| [`libs/bar-kit-py`](libs/bar-kit-py/README.md) | Python     | The same kit for Python apps                        |
-| [`tools/workspace`](tools/workspace/README.md) | TypeScript | Nx plugin for Python projects, project generator    |
+| Project                                                      | Language   | What it is                                          |
+| ------------------------------------------------------------ | ---------- | --------------------------------------------------- |
+| [`apps/clock`](apps/clock/README.md)                         | TypeScript | The time on the front display, the date on the back |
+| [`apps/countdown`](apps/countdown/README.md)                 | Python     | Days and hours left until an event                  |
+| [`apps/agent-fleet`](apps/agent-fleet/README.md)             | Python     | Every Claude Code session, and which ones need you  |
+| [`apps/claude-limits`](apps/claude-limits/README.md)         | Python     | Usage limits of every rotated Claude account        |
+| [`apps/copenhagen-glance`](apps/copenhagen-glance/README.md) | TypeScript | Danish spot price, CO2, and rain                    |
+| [`apps/event-day`](apps/event-day/README.md)                 | TypeScript | PhotoCraft booths and ChallengeCraft on event days  |
+| [`apps/linear-queue`](apps/linear-queue/README.md)           | TypeScript | A Linear team's ready, active, and review queue     |
+| [`apps/merge-ticker`](apps/merge-ticker/README.md)           | TypeScript | Today's merges, failing checks, auto-merge queue    |
+| [`libs/bar-kit`](libs/bar-kit/README.md)                     | TypeScript | Connection settings, display helpers, frame loop    |
+| [`libs/bar-kit-py`](libs/bar-kit-py/README.md)               | Python     | The same kit for Python apps                        |
+| [`tools/emulator`](tools/emulator/README.md)                 | TypeScript | A BUSY Bar in the browser, built from its firmware  |
+| [`tools/workspace`](tools/workspace/README.md)               | TypeScript | Nx plugin for Python projects, project generator    |
 
 ## Prerequisites
 
@@ -20,8 +27,11 @@ for its language.
   the pinned Yarn 4.18.1.
 - **uv 0.11.23 or later** ([install guide](https://docs.astral.sh/uv/getting-started/installation/)).
   uv downloads Python 3.14 itself.
-- **A BUSY Bar.** Plugged in over USB it answers at `10.0.4.20` with no setup.
-  Wi-Fi and the cloud proxy need a token; see [Connect to a bar](#connect-to-a-bar).
+- **A BUSY Bar**, or the emulator. Plugged in over USB a bar answers at
+  `10.0.4.20` with no setup. Wi-Fi and the cloud proxy need a token; see
+  [Connect to a bar](#connect-to-a-bar). Without a bar, run
+  `NX_DAEMON=false yarn nx run emulator:start` and set
+  `BUSYBAR_ADDR=127.0.0.1:8080` ([tools/emulator](tools/emulator/README.md)).
 
 ## Install
 
@@ -80,7 +90,8 @@ see [docs/command-reference.md](docs/command-reference.md).
 ```text
 apps/      Runnable BUSY Bar apps, one project per directory
 libs/      Shared libraries
-tools/     Workspace tooling: the Nx Python plugin and the project generator
+tools/     Workspace tooling: the emulator, the Nx Python plugin, and the
+           project generator
 docs/      Guides and architecture decision records
 scripts/   Repository scripts (verification, readiness, hooks)
 ```

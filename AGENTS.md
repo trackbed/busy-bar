@@ -71,9 +71,15 @@ These apply to every task. Break one only when the user names a concrete reason.
   `src/render*.ts` and the wiring in `src/main.ts`; Python apps keep it in
   `src/<module>/render.py` and `src/<module>/__main__.py`.
 - `libs/bar-kit/` (TypeScript) and `libs/bar-kit-py/` (Python): connection
-  settings (`BUSYBAR_ADDR`, `BUSYBAR_TOKEN`), display sizes, `rgba()`, and the
-  frame loop (`runBarApp` / `run_bar_app`). The two kits share one contract;
+  settings (`BUSYBAR_ADDR`, `BUSYBAR_TOKEN`), display sizes, `rgba()`, the
+  frame loop (`runBarApp` / `run_bar_app`), background polling
+  (`createPoller` / `Poller`), and text that fits the bitmap fonts
+  (`toBarText`, `textWidth`, `fitText`). The two kits share one contract;
   change both together.
+- `tools/emulator/`: a BUSY Bar on the computer, built from the open
+  firmware: the HTTP API, both displays with animations, and a browser page.
+  Start it with `NX_DAEMON=false yarn nx run emulator:start` and point an app
+  at it with `BUSYBAR_ADDR=127.0.0.1:8080`.
 - `tools/workspace/`: the Nx plugin that infers Python targets and graph edges
   (`src/plugins/python.ts`) and the project generator (`src/generators/project/`).
 - Root: `nx.json`, `project-boundaries.mjs`, `eslint.factory.mjs`,
@@ -84,7 +90,8 @@ Full layout, naming, and tags → [docs/project-structure.md](docs/project-struc
 
 # Trigger → Doc Resolver
 
-- BUSY Bar API, displays, fonts, connecting → [docs/busy-bar.md](docs/busy-bar.md). Text must be printable ASCII; the front display is 72×16.
+- BUSY Bar API, displays, fonts, connecting → [docs/busy-bar.md](docs/busy-bar.md). Text must be printable ASCII; the front display is 72×16 and apps draw on 148×80 of the back.
+- Checking an app without a bar, or the bar's exact behaviour → [tools/emulator/README.md](tools/emulator/README.md).
 - New app or library, tags, naming → [docs/project-structure.md](docs/project-structure.md).
 - TypeScript config, runtime, ESLint, Vitest → [docs/typescript.md](docs/typescript.md).
 - Python, uv, Ruff, mypy, pytest, the Nx Python plugin → [docs/python.md](docs/python.md).

@@ -7,6 +7,7 @@ Status: Current.
 ```text
 apps/<name>/       Runnable BUSY Bar apps
 libs/<name>/       Shared libraries
+tools/emulator/    A BUSY Bar emulator, built from the firmware
 tools/workspace/   Nx plugin for Python projects and the project generator
 docs/              Guides and ADRs
 scripts/           Repository scripts

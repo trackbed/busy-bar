@@ -22,8 +22,13 @@ Status: Current.
    test that only executes its lines. Raise thresholds as coverage grows;
    never lower one to pass.
 7. **Hardware is checked by hand.** Run the app with `nx run <app>:start`
-   against a real bar, or the community emulator, before you rely on a layout.
-   Unit tests cannot see how text looks on the LEDs.
+   against the emulator ([tools/emulator](../tools/emulator/README.md)), then
+   a real bar, before you rely on a layout. The emulator draws with the
+   bar's fonts and canvas rules, so what it shows is what the bar shows.
+   Unit tests cannot see how text looks on the LEDs, but they can check that
+   it fits: measure every text element with the kit's `textWidth` /
+   `text_width` and assert it stays inside its display, as the apps' render
+   tests do.
 
 TypeScript tests live next to the code as `*.test.ts`; Python tests live in
 `tests/test_*.py`. `async` tests run directly in both languages.
