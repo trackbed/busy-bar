@@ -56,11 +56,11 @@ These apply to every task. Break one only when the user names a concrete reason.
   code directly; add no compatibility shims or migration scaffolding unless
   the user names a constraint.
 - **Agent instructions** belong in this file. `CLAUDE.md` only imports it.
-- **Git**: `main` changes only through squash-merged pull requests; the
-  repository ruleset blocks direct pushes, force-pushes, and deletion for
-  everyone, admins included. Conventional Commits (`feat(scope): …`) only for
-  PR titles, which become the squash commit's subject. Branch commits use plain
-  descriptive messages.
+- **Git**: `main` changes only through squash-merged pull requests that pass
+  the `CI` check; the repository ruleset blocks direct pushes, force-pushes,
+  and deletion for everyone, admins included. Conventional Commits
+  (`feat(scope): …`) only for PR titles, which become the squash commit's
+  subject. Branch commits use plain descriptive messages.
 - **Guardrails earn their keep**: add a new checker, rule, or doc only for a
   real or plausible mistake that existing tools cannot catch. Prefer
   extending what exists.

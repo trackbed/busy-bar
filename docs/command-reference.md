@@ -73,8 +73,8 @@ merge groups, and pushes to `main`:
   `~/.nx` is restored between runs. `nrwl/nx-set-shas` supplies the base
   commit.
 - **Workflow lint**: actionlint (checksum-verified) and zizmor.
-- **CI**: passes only if every other job succeeded or was skipped, so it is
-  the one check to require before merging.
+- **CI**: passes only if every other job succeeded or was skipped. It is the
+  one check that [branch protection](#branch-protection) requires.
 
 A weekly scheduled run, also startable by hand, runs every target on every
 project and adds the **Dependency audit** job (`yarn npm audit` and
@@ -100,7 +100,14 @@ bypass list, so it binds repository admins too:
 - Squash is the only allowed merge method, and the repository settings disable
   merge commits and rebase merging. The squash commit takes the PR title as its
   subject, which is why PR titles follow Conventional Commits.
+- A pull request merges only after the **CI** check from GitHub Actions
+  passes. The branch need not be up to date with `main`, so another PR
+  landing first doesn't force a rebase and rerun; the CI run on each push to
+  `main` catches breakage after a merge.
 - Force-pushes to `main` and deleting it are blocked.
+
+Auto-merge is enabled, so `gh pr merge --auto --squash` merges a PR once
+**CI** passes.
 
 Inspect what GitHub enforces with
 `gh api repos/Abildtoft/kramme-busy-bar-apps/rules/branches/main`.
