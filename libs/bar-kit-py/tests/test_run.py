@@ -23,26 +23,37 @@ class FakeClient:
         frames: int,
         *,
         failing_draws: int = 0,
+        failing_draw: int | None = None,
         failing_clear: bool = False,
     ) -> None:
         self.stop = stop
         self.frames = frames
         self.failing_draws = failing_draws
+        self.failing_draw = failing_draw
         self.failing_clear = failing_clear
         self.drawn: list[types.DisplayElements] = []
         self.cleared: list[str] = []
+        self.deleted: list[list[str]] = []
 
     async def display_draw(self, display_data: types.DisplayElements, /) -> object:
         self.drawn.append(display_data)
         if len(self.drawn) >= self.frames:
             self.stop.set()
-        if len(self.drawn) <= self.failing_draws:
+        if (
+            len(self.drawn) <= self.failing_draws
+            or len(self.drawn) == self.failing_draw
+        ):
             message = "bar offline"
             raise ConnectionError(message)
         return None
 
-    async def display_clear(self, *, application_name: str) -> object:
-        self.cleared.append(application_name)
+    async def display_clear(
+        self, *, application_name: str, element_ids: Sequence[str] | None = None
+    ) -> object:
+        if element_ids is None:
+            self.cleared.append(application_name)
+        else:
+            self.deleted.append(list(element_ids))
         if self.failing_clear:
             message = "bar offline"
             raise ConnectionError(message)
@@ -76,6 +87,42 @@ async def test_draws_a_frame_per_interval_and_clears_when_stopped() -> None:
     assert client.drawn[0].elements == FRAME
     assert client.drawn[0].priority == DEFAULT_PRIORITY
     assert client.cleared == ["demo"]
+
+
+EXTRA = types.TextElement(id="extra", text="X", font="small")
+
+
+async def test_deletes_the_elements_a_frame_stops_drawing() -> None:
+    stop = asyncio.Event()
+    client = FakeClient(stop, frames=3)
+    frames = iter([[*FRAME, EXTRA], FRAME, FRAME])
+
+    await run_bar_app(
+        name="demo",
+        client=client,
+        render=lambda _now: next(frames),
+        interval=0,
+        stop=stop,
+    )
+
+    assert client.deleted == [["extra"]]
+    assert client.cleared == ["demo"]
+
+
+async def test_remembers_what_the_last_draw_that_went_through_showed() -> None:
+    stop = asyncio.Event()
+    client = FakeClient(stop, frames=3, failing_draw=2)
+    frames = iter([[*FRAME, EXTRA], FRAME, FRAME])
+
+    await run_bar_app(
+        name="demo",
+        client=client,
+        render=lambda _now: next(frames),
+        interval=0,
+        stop=stop,
+    )
+
+    assert client.deleted == [["extra"]]
 
 
 async def test_draws_at_the_requested_priority() -> None:

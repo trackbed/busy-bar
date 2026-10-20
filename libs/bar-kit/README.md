@@ -9,10 +9,19 @@ variables and behave the same way.
 
 - Connection settings from `BUSYBAR_ADDR` and `BUSYBAR_TOKEN`
   (`loadBarConfig`) and the busy-lib client built from them (`createBusyBar`).
-- Display sizes (`FRONT_DISPLAY`, `BACK_DISPLAY`) and colours (`rgba`).
+- Display sizes (`FRONT_DISPLAY`, and `BACK_DISPLAY`: the 148×80 of the
+  back screen that the status bar leaves to apps) and colours (`rgba`).
 - The frame loop (`runBarApp`): draw every interval at a `priority`
-  (default `DEFAULT_PRIORITY`, 50), log failed draws and keep going, clear the
+  (default `DEFAULT_PRIORITY`, 50), delete the elements a frame stops drawing
+  (the bar keeps them otherwise), log failed draws and keep going, clear the
   display on shutdown (`shutdownSignal`).
+- Background data (`createPoller`): fetch a source every `intervalMs`, try
+  again after `retryMs` when it fails, and keep the latest value (`latest()`)
+  and the last failure (`failure()`) for a pure render function.
+- Text for the bitmap fonts: `toBarText` turns any text into printable ASCII
+  the fonts draw (`Nørreport` becomes `Noerreport`, a backtick an
+  apostrophe), `textWidth` measures it in pixels from busy-lib's font maps,
+  and `fitText` cuts it to a width with `..`.
 - Re-exports of busy-lib's element types (`TextElement`, `RectangleElement`,
   and others) so apps need only this package.
 

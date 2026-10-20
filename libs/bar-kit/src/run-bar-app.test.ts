@@ -98,6 +98,75 @@ describe('runBarApp', () => {
     },
   );
 
+  it('deletes the elements a frame stops drawing', async () => {
+    const controller = new AbortController();
+    const client = fakeClient(controller, 3);
+    const extra = {
+      id: 'extra',
+      type: 'text',
+      text: 'X',
+      font: 'small',
+    } as const;
+    const frames: BarElements[] = [[...FRAME, extra], FRAME, FRAME];
+    let frame = -1;
+
+    await runBarApp({
+      name: 'demo',
+      client,
+      render: () => {
+        frame += 1;
+        return frames[frame] ?? FRAME;
+      },
+      intervalMs: 0,
+      signal: controller.signal,
+    });
+
+    expect(client.DisplayClear.mock.calls).toStrictEqual([
+      [
+        { application_name: 'demo', element_ids: ['extra'] },
+        { signal: controller.signal },
+      ],
+      [{ application_name: 'demo' }],
+    ]);
+  });
+
+  it('remembers what the last draw that went through showed', async () => {
+    const controller = new AbortController();
+    let calls = 0;
+    const client = fakeClient(controller, 3, () => {
+      calls += 1;
+      return calls === 2
+        ? Promise.reject(new Error('bar offline'))
+        : Promise.resolve();
+    });
+    const extra = {
+      id: 'extra',
+      type: 'text',
+      text: 'X',
+      font: 'small',
+    } as const;
+    let frame = 0;
+
+    await runBarApp({
+      name: 'demo',
+      client,
+      render: () => {
+        frame += 1;
+        return frame === 1 ? [...FRAME, extra] : FRAME;
+      },
+      intervalMs: 0,
+      signal: controller.signal,
+      log: { warn: vi.fn<(...data: unknown[]) => void>() },
+    });
+
+    expect(client.DisplayClear).toHaveBeenNthCalledWith(
+      1,
+      { application_name: 'demo', element_ids: ['extra'] },
+      { signal: controller.signal },
+    );
+    expect(client.DisplayClear).toHaveBeenCalledTimes(2);
+  });
+
   it('logs a failed draw and keeps running', async () => {
     const controller = new AbortController();
     let calls = 0;
