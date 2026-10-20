@@ -156,9 +156,23 @@ function isState(value: unknown): value is State {
   return (
     typeof value === 'object' &&
     value !== null &&
+    (!('application' in value) || typeof value.application === 'string') &&
+    (!('priority' in value) || isNumber(value.priority)) &&
     'loaderPriority' in value &&
-    'elements' in value
+    isNumber(value.loaderPriority) &&
+    'elements' in value &&
+    isNumber(value.elements) &&
+    'timerRunning' in value &&
+    typeof value.timerRunning === 'boolean' &&
+    'brightness' in value &&
+    (value.brightness === 'auto' || isNumber(value.brightness)) &&
+    'volume' in value &&
+    isNumber(value.volume)
   );
+}
+
+function isNumber(value: unknown): value is number {
+  return typeof value === 'number' && Number.isFinite(value);
 }
 
 const events = new EventSource('/emulator/events');

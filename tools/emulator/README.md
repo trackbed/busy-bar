@@ -75,6 +75,15 @@ behaviour and copies none of it.
 
 ## Verify
 
+The page tests load the real HTML and app in Happy DOM and record canvas,
+HTTP, audio, and event-stream output. They check display conversion, state
+validation, connection updates, controls, and sound without firmware downloads
+or hardware. `tsconfig.web.spec.json` supplies DOM types for browser tests;
+`tsconfig.spec.json` checks server tests. Browser source is included in the
+normal coverage gate. Check the visual layout in a browser and on the bar as
+described in
+[the testing strategy](../../docs/testing-strategy.md).
+
 ```sh
 NX_DAEMON=false yarn nx run-many -t lint oxlint typecheck test -p emulator
 ```
