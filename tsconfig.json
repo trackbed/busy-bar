@@ -23,6 +23,9 @@
     },
     {
       "path": "./apps/copenhagen-glance"
+    },
+    {
+      "path": "./tools/emulator"
     }
   ]
 }

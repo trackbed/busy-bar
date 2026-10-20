@@ -1,0 +1,611 @@
+{
+  "repository": "busy-app/busybar-firmware",
+  "commit": "a11df43b98927a3cbeb15584f8c4a6f470a12d5b",
+  "files": [
+    {
+      "path": "assets/images/internal/load_error_9x9.png",
+      "sha": "f1b5e54debcf1e7d6d83c92ab8ebcfbcd01021b6",
+      "size": 227
+    },
+    {
+      "path": "assets/shared/animations/azuki_16x16.zip",
+      "sha": "b776339970a183034831acc033ed658c9924684c",
+      "size": 9682
+    },
+    {
+      "path": "assets/shared/animations/back_soon_72x16.zip",
+      "sha": "3ae9941419d2d0c025656d71a5e8f51fb4a68548",
+      "size": 753115
+    },
+    {
+      "path": "assets/shared/animations/booked_72x16.zip",
+      "sha": "bb01742cdf42c335562d6a65569d048aa6fd0cd9",
+      "size": 1833509
+    },
+    {
+      "path": "assets/shared/animations/calendar_event_16x16.zip",
+      "sha": "a6b0fa116b1c18767e4113ed2a37b15e0b751261",
+      "size": 139626
+    },
+    {
+      "path": "assets/shared/animations/calendar_reminder_16x16.zip",
+      "sha": "9da14d2f0aaf958d78930e3c6bc4f9d28a31de14",
+      "size": 153967
+    },
+    {
+      "path": "assets/shared/animations/chill_time_72x16.zip",
+      "sha": "73b219c78bad16147fbb0fc8a182843e17859e2c",
+      "size": 1924333
+    },
+    {
+      "path": "assets/shared/animations/coding_72x16.zip",
+      "sha": "45db660dd8f694b4605391f37b127d3fc4fcb70f",
+      "size": 684257
+    },
+    {
+      "path": "assets/shared/animations/dnd_72x16.zip",
+      "sha": "aa3287fdcf24e8c0a94fd5bf9be44205f56fa6e8",
+      "size": 215176
+    },
+    {
+      "path": "assets/shared/animations/flow_72x16.zip",
+      "sha": "f31df169b49c94df77a52a9c5978447c83cac4de",
+      "size": 828780
+    },
+    {
+      "path": "assets/shared/animations/keep_out_72x16.zip",
+      "sha": "97c1192b420c77a0bbfff6da68a6b79555e2ade0",
+      "size": 354799
+    },
+    {
+      "path": "assets/shared/animations/low_social_battery_72x16.zip",
+      "sha": "5b50bcb22e991362ab1723a6b88bb2d4c5adbcb1",
+      "size": 732393
+    },
+    {
+      "path": "assets/shared/animations/lunch_72x16.zip",
+      "sha": "478c70e042eb3ead0340d6f38bb0a1a7151d8d87",
+      "size": 1290123
+    },
+    {
+      "path": "assets/shared/animations/meeting_72x16.zip",
+      "sha": "9424b1c72be837d9e56e949da3cdc697cd388e19",
+      "size": 1484243
+    },
+    {
+      "path": "assets/shared/animations/on_air_72x16.zip",
+      "sha": "5fe2a9c469464bedc46200fabebffa18becce286",
+      "size": 388840
+    },
+    {
+      "path": "assets/shared/animations/on_call_72x16.zip",
+      "sha": "72e0d4cba30c50784977700583a60088a0ad5c85",
+      "size": 361260
+    },
+    {
+      "path": "assets/shared/animations/spinner_back_16x16.zip",
+      "sha": "825d3d62d44b296711389208f0cf5da09a985ce1",
+      "size": 3134
+    },
+    {
+      "path": "assets/shared/animations/spinner_front_8x8.zip",
+      "sha": "5040ff886dc38dcc76b1d01d06e26bca7c714ed9",
+      "size": 6333
+    },
+    {
+      "path": "assets/shared/animations/start_menu_31x16.zip",
+      "sha": "9e7408c087be600fc51da27edb03682e5485f812",
+      "size": 224863
+    },
+    {
+      "path": "assets/shared/animations/transition_select_72x16.zip",
+      "sha": "e0aafe36ebfd426e9d3165fca56bad00adabb41e",
+      "size": 55780
+    },
+    {
+      "path": "assets/shared/animations/wave_invitation_72x16.zip",
+      "sha": "5341fc7beeba5e070cc5efdb40d2a764528e803d",
+      "size": 57518
+    },
+    {
+      "path": "assets/shared/fonts/busy_bold_10.font",
+      "sha": "0bef76a401e725a6953b9ba471c42ec538055025",
+      "size": 3256
+    },
+    {
+      "path": "assets/shared/fonts/busy_bold_7.font",
+      "sha": "da4b5694a31a924492fcfa62c61d291061cc97d7",
+      "size": 2448
+    },
+    {
+      "path": "assets/shared/fonts/busy_condensed_7.font",
+      "sha": "82a26f0268d2318c96b8bf24930cba247e1ac922",
+      "size": 2304
+    },
+    {
+      "path": "assets/shared/fonts/busy_regular_14.font",
+      "sha": "1f35461a097b374abc2a313c2a118ef6e821adad",
+      "size": 4764
+    },
+    {
+      "path": "assets/shared/fonts/busy_regular_5.font",
+      "sha": "34aaefd7cad29416a69d2b2cb3410976b0460e5f",
+      "size": 1928
+    },
+    {
+      "path": "assets/shared/fonts/busy_regular_7.font",
+      "sha": "4558a8e5df277b47cd78df92b2377b6659685173",
+      "size": 2304
+    },
+    {
+      "path": "assets/shared/fonts/busy_regular_9.font",
+      "sha": "0cad09b0322a8efa1492a4a655fbaf2c003bd3b7",
+      "size": 2748
+    },
+    {
+      "path": "assets/shared/fonts/busy_superscript_7.font",
+      "sha": "c4f69a4d7bc44124234acb5858b367c3eaac79cf",
+      "size": 2280
+    },
+    {
+      "path": "assets/shared/fonts/busy_tiny.font",
+      "sha": "bb44a9b1243b36e86112f22e022cd56d7a72963c",
+      "size": 664
+    },
+    {
+      "path": "assets/shared/fonts/lana_pixel_regular_11.font",
+      "sha": "a5876491b1e9536c2bbb75bd69ee89559cb03a0d",
+      "size": 371100
+    },
+    {
+      "path": "assets/shared/images/external/active_indicator_left_28x7.png",
+      "sha": "89f71fc07d188ab87c0981d1386b4ebe73c16b41",
+      "size": 266
+    },
+    {
+      "path": "assets/shared/images/external/active_indicator_right_28x7.png",
+      "sha": "9f5a8e41ad5910d85c35d9cd2c6809dc2e6da5ac",
+      "size": 268
+    },
+    {
+      "path": "assets/shared/images/external/apps_menu_back_12x12.png",
+      "sha": "96f7e89912c7049626261425763947552c06da11",
+      "size": 159
+    },
+    {
+      "path": "assets/shared/images/external/charging_battery_front_8x8.png",
+      "sha": "86c9a1c1accd6fe8f1cfc8b2d3a6b9f595751434",
+      "size": 249
+    },
+    {
+      "path": "assets/shared/images/external/checkmark_back_11x11.png",
+      "sha": "2fae8b73f0229e0afb0b2559a7e57b200e21571f",
+      "size": 166
+    },
+    {
+      "path": "assets/shared/images/external/checkmark_front_8x8.png",
+      "sha": "fe098075884188390ea093d11a52802a60f4b16c",
+      "size": 149
+    },
+    {
+      "path": "assets/shared/images/external/clock_5x5.png",
+      "sha": "7a56d526bbd01756fdbbf72441b4110dd79f13d4",
+      "size": 177
+    },
+    {
+      "path": "assets/shared/images/external/dt_apple_green.png",
+      "sha": "21222b33c5aedb55bb5b21086ed324e386550650",
+      "size": 438
+    },
+    {
+      "path": "assets/shared/images/external/dt_apple_red.png",
+      "sha": "98599fce20a99e7507b8e1789ff206ad4db10f54",
+      "size": 438
+    },
+    {
+      "path": "assets/shared/images/external/dt_apple_yellow.png",
+      "sha": "84490b91dbe3b423455e7c65dfcb13a99788a90a",
+      "size": 430
+    },
+    {
+      "path": "assets/shared/images/external/dt_available.png",
+      "sha": "4b89d3137cbf9de03d82708f30352f36717d365f",
+      "size": 350
+    },
+    {
+      "path": "assets/shared/images/external/dt_basketball.png",
+      "sha": "716096dfce8aab282b3478b64946dd53ee92745f",
+      "size": 472
+    },
+    {
+      "path": "assets/shared/images/external/dt_book.png",
+      "sha": "d85df6e81f029e29fabec52b818600fbe910a343",
+      "size": 482
+    },
+    {
+      "path": "assets/shared/images/external/dt_burger.png",
+      "sha": "c89dae9909b2b1b8b3cc9b5d495ce729896a8423",
+      "size": 515
+    },
+    {
+      "path": "assets/shared/images/external/dt_chicken.png",
+      "sha": "cb374489086d0c61598847f9a21008eb901d659d",
+      "size": 426
+    },
+    {
+      "path": "assets/shared/images/external/dt_coctail.png",
+      "sha": "8b948971d4b61b9820a6eaad1e28f6a858f9a245",
+      "size": 400
+    },
+    {
+      "path": "assets/shared/images/external/dt_coffee.png",
+      "sha": "0f86e6be9f565f9508c04c02bbd573526aecd3b1",
+      "size": 384
+    },
+    {
+      "path": "assets/shared/images/external/dt_crescent_moon_1.png",
+      "sha": "ef5a98946d46bdcbc9babf609b647794d11b71cd",
+      "size": 346
+    },
+    {
+      "path": "assets/shared/images/external/dt_crescent_moon_2.png",
+      "sha": "3e116f9a4ca54aef7b3f9cf9096ee6ccce058172",
+      "size": 350
+    },
+    {
+      "path": "assets/shared/images/external/dt_dialog_no.png",
+      "sha": "a1077e2649507f16c9b5d667a427b2d775be914d",
+      "size": 326
+    },
+    {
+      "path": "assets/shared/images/external/dt_dialog_yes.png",
+      "sha": "ea64d20c2d8d3d7d58783eada6524a47aee489b5",
+      "size": 322
+    },
+    {
+      "path": "assets/shared/images/external/dt_dialog.png",
+      "sha": "2b0b606419955cb02433136e8d96c1e12a5da721",
+      "size": 320
+    },
+    {
+      "path": "assets/shared/images/external/dt_drink_1.png",
+      "sha": "b75633735bb7b45455e8355bd8a2be5fc8766bb2",
+      "size": 447
+    },
+    {
+      "path": "assets/shared/images/external/dt_drink_2.png",
+      "sha": "c2a0a885642de6c80a04003936ef0d7547038cdd",
+      "size": 435
+    },
+    {
+      "path": "assets/shared/images/external/dt_emoji_angry.png",
+      "sha": "7578efe45053ad7f6f5bbb36d3978b8836a79979",
+      "size": 387
+    },
+    {
+      "path": "assets/shared/images/external/dt_emoji_awkward.png",
+      "sha": "54f3b827fdef64bf66a76cab5388dcd0f3f78986",
+      "size": 397
+    },
+    {
+      "path": "assets/shared/images/external/dt_emoji_cry.png",
+      "sha": "1c302ecc45e902f9d6bb38ce8b4d3709eb421149",
+      "size": 425
+    },
+    {
+      "path": "assets/shared/images/external/dt_emoji_dead.png",
+      "sha": "6089c5cbbee24f78be6857e032cb03651e27ef5d",
+      "size": 411
+    },
+    {
+      "path": "assets/shared/images/external/dt_emoji_evil.png",
+      "sha": "b8766e09db0b0cb0578af03e17ec577e34ecd809",
+      "size": 445
+    },
+    {
+      "path": "assets/shared/images/external/dt_emoji_expressionless.png",
+      "sha": "f8b2e9f21b2511379e408f1c261ef0a743988114",
+      "size": 369
+    },
+    {
+      "path": "assets/shared/images/external/dt_emoji_eyes.png",
+      "sha": "7c23d08e84d7558eff925adcf862dbe8b202309a",
+      "size": 277
+    },
+    {
+      "path": "assets/shared/images/external/dt_emoji_fatigue.png",
+      "sha": "10cdb452634ab6acf3b1cfc18b4d8f27f8120fbb",
+      "size": 431
+    },
+    {
+      "path": "assets/shared/images/external/dt_emoji_glasses.png",
+      "sha": "c24c1156b91d594b7d998cc42d08a1cf65ac4ff4",
+      "size": 400
+    },
+    {
+      "path": "assets/shared/images/external/dt_emoji_grinning.png",
+      "sha": "465fcdd4ed8443d461c8c2d3ff36ff4dbc6009a3",
+      "size": 381
+    },
+    {
+      "path": "assets/shared/images/external/dt_emoji_happy.png",
+      "sha": "a3fc723e30eead24f540c825efa1aed45575809d",
+      "size": 374
+    },
+    {
+      "path": "assets/shared/images/external/dt_emoji_heart_eyes.png",
+      "sha": "4a8295a0c948f31907523b8d20b098f9608759dd",
+      "size": 438
+    },
+    {
+      "path": "assets/shared/images/external/dt_emoji_laught.png",
+      "sha": "0fc1526a6ae4b92a1c32fc63d2d338a2dcdea213",
+      "size": 380
+    },
+    {
+      "path": "assets/shared/images/external/dt_emoji_melted.png",
+      "sha": "8c63f7be51f616c875d5744832b3c8aa093c5d01",
+      "size": 384
+    },
+    {
+      "path": "assets/shared/images/external/dt_emoji_panic.png",
+      "sha": "bf033deaa91dfd86aa639342975b75934e32ee60",
+      "size": 491
+    },
+    {
+      "path": "assets/shared/images/external/dt_emoji_relief.png",
+      "sha": "868362b485a7c5cba4d78f26c72198288ad32d14",
+      "size": 390
+    },
+    {
+      "path": "assets/shared/images/external/dt_emoji_sad.png",
+      "sha": "8bffdd4de199af86197ece4805e4cb29c64f3b27",
+      "size": 380
+    },
+    {
+      "path": "assets/shared/images/external/dt_emoji_sleep.png",
+      "sha": "f2b97d114d5c137500afed2daf09ca46adbdf6db",
+      "size": 440
+    },
+    {
+      "path": "assets/shared/images/external/dt_emoji_surprised.png",
+      "sha": "c5889b47461b2958b8c53b28dfb577cb5218293c",
+      "size": 400
+    },
+    {
+      "path": "assets/shared/images/external/dt_emoji_sweat_smile.png",
+      "sha": "573540da928ee73cfdef1b118ee754920c29b161",
+      "size": 431
+    },
+    {
+      "path": "assets/shared/images/external/dt_emoji_tounge.png",
+      "sha": "571b10222c219e54787a51a8de3ae2c78427c222",
+      "size": 430
+    },
+    {
+      "path": "assets/shared/images/external/dt_football.png",
+      "sha": "0c7227fa9c003cebca0e2161d152d3ea17037682",
+      "size": 419
+    },
+    {
+      "path": "assets/shared/images/external/dt_heart_blue.png",
+      "sha": "1eadc63a87721a1d33cadddd667729173194d75a",
+      "size": 325
+    },
+    {
+      "path": "assets/shared/images/external/dt_heart_green.png",
+      "sha": "9cf556d4f6aaa7dbb0ee9b43f895ff80590ac48e",
+      "size": 320
+    },
+    {
+      "path": "assets/shared/images/external/dt_heart_light_blue.png",
+      "sha": "aa28cbf964acf3aa9d1ed9882514a66eec620537",
+      "size": 311
+    },
+    {
+      "path": "assets/shared/images/external/dt_heart_orange.png",
+      "sha": "c43d73683220fbcf06df33eb2c0f879234b327a6",
+      "size": 319
+    },
+    {
+      "path": "assets/shared/images/external/dt_heart_pink.png",
+      "sha": "0ea747935ce9c65e6dfe6cb6d8a3736dc1d62a80",
+      "size": 311
+    },
+    {
+      "path": "assets/shared/images/external/dt_heart_red.png",
+      "sha": "aa774b3015e4c242ec292471d19ebcf042ce5c02",
+      "size": 307
+    },
+    {
+      "path": "assets/shared/images/external/dt_heart_violet.png",
+      "sha": "ea9ed380ccb978498c4fd235565ac511a23a4285",
+      "size": 310
+    },
+    {
+      "path": "assets/shared/images/external/dt_heart_yellow.png",
+      "sha": "af892626ad9230138cc130cbddc3d4ee27859437",
+      "size": 319
+    },
+    {
+      "path": "assets/shared/images/external/dt_home.png",
+      "sha": "53135e29a9ee8f9b604d771edfa8062331e6aca2",
+      "size": 454
+    },
+    {
+      "path": "assets/shared/images/external/dt_leaf.png",
+      "sha": "6961b16a46080184980916b2cd5a9d2723d208d0",
+      "size": 416
+    },
+    {
+      "path": "assets/shared/images/external/dt_moon_1.png",
+      "sha": "0c56c6114de4e3f377ce776c82604bdf581c43c1",
+      "size": 378
+    },
+    {
+      "path": "assets/shared/images/external/dt_moon_2.png",
+      "sha": "2c8f0fe8e71ee22f95a3ac3c11fc5ff379e8575d",
+      "size": 386
+    },
+    {
+      "path": "assets/shared/images/external/dt_no.png",
+      "sha": "522b7d0a4c2879c9188770bc357db6aa04e86d41",
+      "size": 376
+    },
+    {
+      "path": "assets/shared/images/external/dt_pie.png",
+      "sha": "ea12137800c391d120ab63bd8cd47e64260685ff",
+      "size": 497
+    },
+    {
+      "path": "assets/shared/images/external/dt_pizza_margarita.png",
+      "sha": "f77fdcb53fb743e9113891b8fcc8837ddb341817",
+      "size": 647
+    },
+    {
+      "path": "assets/shared/images/external/dt_pizza_peperoni.png",
+      "sha": "516afdfd94b50f0fd7dcccc2ac129364deb22d62",
+      "size": 680
+    },
+    {
+      "path": "assets/shared/images/external/dt_pizza.png",
+      "sha": "719985f3899842dca2e5182ebf2d9413181b6bf0",
+      "size": 719
+    },
+    {
+      "path": "assets/shared/images/external/dt_sparkls_1.png",
+      "sha": "097102a3db61e7be61dfaac7dacd77dc372b152b",
+      "size": 225
+    },
+    {
+      "path": "assets/shared/images/external/dt_sparkls_2.png",
+      "sha": "77b935b14540892d18fbb83bb54d6e655beb2268",
+      "size": 216
+    },
+    {
+      "path": "assets/shared/images/external/dt_study.png",
+      "sha": "94ae251aa9310289926a06c02a71470f8f7a5f2e",
+      "size": 425
+    },
+    {
+      "path": "assets/shared/images/external/dt_tea.png",
+      "sha": "3bd52a8d9fe176764e9c45569ca407ade464e05a",
+      "size": 431
+    },
+    {
+      "path": "assets/shared/images/external/dt_tennis.png",
+      "sha": "b8c88d9783fcb2a300cfda1e847b672fd2a79055",
+      "size": 391
+    },
+    {
+      "path": "assets/shared/images/external/dt_toast.png",
+      "sha": "1610dd18c536eb86b2668d064b68581ae427e349",
+      "size": 579
+    },
+    {
+      "path": "assets/shared/images/external/dt_tomato.png",
+      "sha": "30b2deef62c04d3ae57ea4c5e3cb80a4a954bf97",
+      "size": 399
+    },
+    {
+      "path": "assets/shared/images/external/dt_unavailable.png",
+      "sha": "f4ad28ef38e0f4102ee5751380b11cc9a38a278a",
+      "size": 357
+    },
+    {
+      "path": "assets/shared/images/external/dt_work.png",
+      "sha": "9dce70f33c588010e506752d541b5f906bfcaa5c",
+      "size": 459
+    },
+    {
+      "path": "assets/shared/images/external/dt_yes.png",
+      "sha": "32443295d20fc75995f4622ad23b5ae5c630504b",
+      "size": 322
+    },
+    {
+      "path": "assets/shared/images/external/error_back_11x11.png",
+      "sha": "1596afc7445078dd0720a3cebd8e368480dfb101",
+      "size": 173
+    },
+    {
+      "path": "assets/shared/images/external/error_front_8x8.png",
+      "sha": "4537f12420d3f3c1369058bbe2c0db78b399fc8b",
+      "size": 194
+    },
+    {
+      "path": "assets/shared/images/external/hourglass_5x5.png",
+      "sha": "984fa87c52362e7fcb7b30ccb7536688e3b28b30",
+      "size": 143
+    },
+    {
+      "path": "assets/shared/images/external/info_back_11x11.png",
+      "sha": "9af519ffb0e65792704664ced7e6b5bebaa786ae",
+      "size": 199
+    },
+    {
+      "path": "assets/shared/images/external/info_front_8x8.png",
+      "sha": "222eea47304a46af2672441bc35a16c0f8e87848",
+      "size": 220
+    },
+    {
+      "path": "assets/shared/images/external/low_battery_front_8x8.png",
+      "sha": "54bdb18bd2ce33f78a58f46b2c2fc4954a2dc725",
+      "size": 253
+    },
+    {
+      "path": "assets/shared/images/external/missing_battery_front_8x8.png",
+      "sha": "4a1c4ed642f27a0bc0cc66a262be3bfbba5af1bf",
+      "size": 239
+    },
+    {
+      "path": "assets/shared/images/external/setup_11x11.png",
+      "sha": "eb70da887822f0f769ef5dbf2a760df65a967ad4",
+      "size": 169
+    },
+    {
+      "path": "assets/shared/images/external/start_11x11.png",
+      "sha": "8c50576845164dafa3a2319388c6e333139262e6",
+      "size": 171
+    },
+    {
+      "path": "assets/shared/images/external/unknown_app_back_11x11.png",
+      "sha": "1d14d40a8e49e21961d0233806aba5781a0a9316",
+      "size": 299
+    },
+    {
+      "path": "assets/shared/images/external/unknown_app_front_8x8.png",
+      "sha": "e495b7206a517a86af35d22b26e4b86eb6e9c1d8",
+      "size": 354
+    },
+    {
+      "path": "assets/shared/sounds/calendar_event_starts.wav",
+      "sha": "76898e3c8e80180fa1a2bb438dc2bc2857c4240b",
+      "size": 142230
+    },
+    {
+      "path": "assets/shared/sounds/calendar_reminder_ends.wav",
+      "sha": "172633329217c625ce91a2dbbf0afa6df2e53709",
+      "size": 142230
+    },
+    {
+      "path": "assets/shared/sounds/volume_change.wav",
+      "sha": "ab4bfad30b5a8f6e3470f1702d069278756e7375",
+      "size": 46230
+    },
+    {
+      "path": "LICENSES/CC-BY-SA-4.0.txt",
+      "sha": "835a6836b385fa068fdd625685548845cda60c2f",
+      "size": 18375
+    },
+    {
+      "path": "LICENSES/OFL-1.1.txt",
+      "sha": "6fe84ee21ebe5d2b54dc63b53b4d5c404c083409",
+      "size": 4016
+    },
+    {
+      "path": "REUSE.toml",
+      "sha": "9f1a1ded1528f0e139dd485c683af59f5d8842af",
+      "size": 2761
+    }
+  ]
+}

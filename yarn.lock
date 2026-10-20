@@ -1256,6 +1256,12 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@busy-bar-apps/emulator@workspace:tools/emulator":
+  version: 0.0.0-use.local
+  resolution: "@busy-bar-apps/emulator@workspace:tools/emulator"
+  languageName: unknown
+  linkType: soft
+
 "@busy-bar-apps/event-day@workspace:apps/event-day":
   version: 0.0.0-use.local
   resolution: "@busy-bar-apps/event-day@workspace:apps/event-day"
