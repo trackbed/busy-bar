@@ -1,0 +1,33 @@
+# <%= name %>
+
+A BUSY Bar app written in TypeScript. Replace this line with what it shows.
+
+## Owns
+
+- What the app draws (`src/render.ts`) and how often it redraws (`src/main.ts`).
+
+## Does not own
+
+- Connection settings, the frame loop, and shutdown handling. Those live in
+  [`bar-kit`](<%= offset %>libs/bar-kit/README.md).
+
+## Start here
+
+- `src/render.ts`: maps a moment in time to display elements. Keep it pure so
+  tests can pin the time.
+- `src/main.ts`: hands `render` to `runBarApp`.
+
+## Run
+
+Set `BUSYBAR_ADDR` and `BUSYBAR_TOKEN` in `.env.local` if the bar is not
+plugged in over USB (see [docs/busy-bar.md](<%= offset %>docs/busy-bar.md)), then:
+
+```sh
+NX_DAEMON=false yarn nx run <%= name %>:start
+```
+
+## Verify
+
+```sh
+NX_DAEMON=false yarn nx run-many -t lint typecheck test -p <%= name %>
+```

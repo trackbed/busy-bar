@@ -1,0 +1,22 @@
+"""What the app draws."""
+
+from datetime import datetime
+
+from busylib import types
+
+from bar_kit import FRONT_DISPLAY
+
+
+def render(_now: datetime) -> list[types.DisplayElement]:
+    """Draw the app's title on the front display. Replace this with the app."""
+    return [
+        types.TextElement(
+            id="title",
+            display=types.DisplayName.FRONT,
+            text="<%= title %>",
+            font="normal",
+            align="center",
+            x=FRONT_DISPLAY.width // 2,
+            y=FRONT_DISPLAY.height // 2,
+        )
+    ]

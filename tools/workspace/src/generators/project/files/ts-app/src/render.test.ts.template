@@ -1,0 +1,11 @@
+import { describe, expect, it } from 'vitest';
+
+import { render } from './render.ts';
+
+describe('render', () => {
+  it('draws the title on the front display', () => {
+    expect(render(new Date('2026-01-01T00:00:00Z'))).toMatchObject([
+      { id: 'title', display: 'front', text: '<%= title %>' },
+    ]);
+  });
+});

@@ -1,0 +1,4 @@
+// Public API of @busy-bar-apps/<%= name %>. Export each name explicitly so the
+// package surface stays deliberate.
+
+export { <%= propertyName %> } from './<%= name %>.ts';

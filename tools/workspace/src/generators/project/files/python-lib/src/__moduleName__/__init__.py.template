@@ -1,0 +1,6 @@
+"""Shared code for BUSY Bar apps. Replace this line with what it owns."""
+
+
+def <%= moduleName %>() -> str:
+    """Placeholder. Replace it with the library's first real export."""
+    return "<%= name %>"

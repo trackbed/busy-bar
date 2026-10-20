@@ -1,0 +1,5 @@
+from <%= moduleName %> import <%= moduleName %>
+
+
+def test_returns_the_library_name() -> None:
+    assert <%= moduleName %>() == "<%= name %>"

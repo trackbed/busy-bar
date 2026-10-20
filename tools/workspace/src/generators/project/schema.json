@@ -1,0 +1,42 @@
+{
+  "$schema": "https://json-schema.org/schema",
+  "$id": "BusyBarProject",
+  "title": "BUSY Bar project",
+  "description": "Create a BUSY Bar app or library in TypeScript or Python, wired into Nx, the Yarn or uv workspace, linting, type checking, and tests.",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Project name in kebab-case, such as `weather`. It names the directory, the Nx project, and the package.",
+      "pattern": "^[a-z][a-z0-9]*(-[a-z0-9]+)*$",
+      "$default": { "$source": "argv", "index": 0 },
+      "x-prompt": "What is the project called (kebab-case)?"
+    },
+    "language": {
+      "type": "string",
+      "description": "Implementation language.",
+      "enum": ["ts", "python"],
+      "x-prompt": {
+        "message": "Which language?",
+        "type": "list",
+        "items": [
+          { "value": "ts", "label": "TypeScript (Node.js)" },
+          { "value": "python", "label": "Python" }
+        ]
+      }
+    },
+    "type": {
+      "type": "string",
+      "description": "`app` for a runnable BUSY Bar app under apps/, `lib` for shared code under libs/.",
+      "enum": ["app", "lib"],
+      "default": "app"
+    },
+    "skipInstall": {
+      "type": "boolean",
+      "description": "Skip `yarn install` or `uv lock` after generating.",
+      "default": false
+    }
+  },
+  "required": ["name", "language"],
+  "additionalProperties": false
+}

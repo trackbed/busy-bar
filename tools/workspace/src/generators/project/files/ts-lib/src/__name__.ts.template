@@ -1,0 +1,4 @@
+/** Placeholder. Replace it with the library's first real export. */
+export function <%= propertyName %>(): string {
+  return '<%= name %>';
+}

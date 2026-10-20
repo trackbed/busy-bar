@@ -1,0 +1,34 @@
+# <%= name %>
+
+A BUSY Bar app written in Python. Replace this line with what it shows.
+
+## Owns
+
+- What the app draws (`src/<%= moduleName %>/render.py`) and how often it
+  redraws (`src/<%= moduleName %>/__main__.py`).
+
+## Does not own
+
+- Connection settings, the frame loop, and shutdown handling. Those live in
+  [`bar-kit-py`](<%= offset %>libs/bar-kit-py/README.md).
+
+## Start here
+
+- `src/<%= moduleName %>/render.py`: maps a moment in time to display
+  elements. Keep it pure so tests can pin the time.
+- `src/<%= moduleName %>/__main__.py`: hands `render` to `run_bar_app`.
+
+## Run
+
+Set `BUSYBAR_ADDR` and `BUSYBAR_TOKEN` in `.env.local` if the bar is not
+plugged in over USB (see [docs/busy-bar.md](<%= offset %>docs/busy-bar.md)), then:
+
+```sh
+NX_DAEMON=false yarn nx run <%= name %>:start
+```
+
+## Verify
+
+```sh
+NX_DAEMON=false yarn nx run-many -t lint typecheck test -p <%= name %>
+```

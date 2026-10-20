@@ -1,0 +1,19 @@
+[project]
+name = "<%= name %>"
+version = "0.0.1"
+description = "Shared code for BUSY Bar apps."
+requires-python = ">=3.14"
+dependencies = []
+
+[build-system]
+requires = ["uv_build>=0.11.23,<0.14"]
+build-backend = "uv_build"
+
+[tool.coverage.run]
+branch = true
+source = ["src"]
+
+[tool.coverage.report]
+# Ratchet upward; never lower it to make a change pass.
+fail_under = 95
+show_missing = true

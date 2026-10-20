@@ -1,0 +1,23 @@
+# <%= name %>
+
+Shared TypeScript code for BUSY Bar apps. Replace this line with what the
+library owns.
+
+## Owns
+
+- Replace with the responsibilities this library takes on.
+
+## Does not own
+
+- Connection settings and the frame loop: [`bar-kit`](<%= offset %>libs/bar-kit/README.md).
+
+## Start here
+
+- `src/index.ts`: the public API. Import the library as
+  `@busy-bar-apps/<%= name %>`.
+
+## Verify
+
+```sh
+NX_DAEMON=false yarn nx run-many -t lint typecheck test -p <%= name %>
+```

@@ -1,0 +1,9 @@
+import { describe, expect, it } from 'vitest';
+
+import { <%= propertyName %> } from './<%= name %>.ts';
+
+describe('<%= propertyName %>', () => {
+  it('returns the library name', () => {
+    expect(<%= propertyName %>()).toBe('<%= name %>');
+  });
+});
