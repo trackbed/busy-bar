@@ -105,7 +105,10 @@ async function call(
 ): Promise<Answer> {
   const response = await fetch(`${base}${path}`, {
     method,
-    body: init.body ?? null,
+    body:
+      init.body instanceof Uint8Array
+        ? Uint8Array.from(init.body)
+        : (init.body ?? null),
     headers: init.headers ?? {},
   });
   const text = await response.text();

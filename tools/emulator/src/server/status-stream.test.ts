@@ -150,7 +150,7 @@ function send(client: Client, data: string | Uint8Array): void {
   // A masked frame with a short payload: two header bytes and the mask.
   expect(length).toBeLessThan(126);
   sent += 6 + length;
-  client.socket.send(data);
+  client.socket.send(typeof data === 'string' ? data : Uint8Array.from(data));
 }
 
 /** Send `value` as JSON text and wait until the server has read it all. */
