@@ -7,7 +7,6 @@ write and needs no lock:
 - `config.json`: the accounts and the rotation threshold.
 - `<state_directory>/state.json`: the active account and any rotation in flight.
 - `<state_directory>/usage/<account>.json`: the last usage snapshot per account.
-- `logs/monitor.log`: one JSON line per monitor tick.
 
 This module only reads. It never calls the usage endpoint or touches the
 Keychain: refreshing the tool's tokens from outside breaks its logins.
@@ -23,7 +22,6 @@ DEFAULT_ROOT = Path("~/.local/share/conductor-claude-rotation")
 
 _DEFAULT_THRESHOLD = 100.0
 _DEFAULT_MAX_USAGE_AGE = timedelta(seconds=600)
-_LOG_TAIL_BYTES = 64 * 1024
 
 
 class RotationNotSetUpError(FileNotFoundError):
@@ -68,10 +66,6 @@ class Rotation:
     max_usage_age: timedelta
     """How old a snapshot may be before the tool stops trusting it."""
 
-    last_switch: datetime | None
-    monitor_status: str | None
-    """The latest monitor tick, such as `keep_account` or `no_eligible_account`."""
-
     def account(self, label: str | None) -> Account | None:
         """The account with `label`, if the tool has one."""
         return next((item for item in self.accounts if item.label == label), None)
@@ -99,7 +93,6 @@ def read_rotation(root: Path) -> Rotation:
         for label in _labels(config)
     )
     pending = _mapping(state.get("pending"))
-    last_completed = _mapping(state.get("last_completed"))
     return Rotation(
         accounts=accounts,
         current=_text(state, "current_account") or _text(config, "initial_account"),
@@ -107,8 +100,6 @@ def read_rotation(root: Path) -> Rotation:
         threshold=_number(config.get("threshold")) or _DEFAULT_THRESHOLD,
         max_usage_age=_seconds(config.get("max_usage_age_seconds"))
         or _DEFAULT_MAX_USAGE_AGE,
-        last_switch=_time(last_completed.get("completed_at")),
-        monitor_status=_last_monitor_status(root / "logs" / "monitor.log"),
     )
 
 
@@ -137,23 +128,6 @@ def _window(value: object) -> Window | None:
     if used is None or resets_at is None or observed_at is None:
         return None
     return Window(used=used, resets_at=resets_at, observed_at=observed_at)
-
-
-def _last_monitor_status(path: Path) -> str | None:
-    if not path.is_file():
-        return None
-    with path.open("rb") as log:
-        size = log.seek(0, 2)
-        log.seek(max(0, size - _LOG_TAIL_BYTES))
-        tail = log.read().decode("utf-8", errors="replace")
-    for line in reversed(tail.splitlines()):
-        try:
-            entry = json.loads(line)
-        except ValueError:
-            continue
-        if isinstance(entry, Mapping) and (status := _text(entry, "status")):
-            return status
-    return None
 
 
 def _read_object(path: Path) -> dict[str, object]:

@@ -1,4 +1,4 @@
-from datetime import UTC, datetime, timedelta
+from datetime import timedelta
 from pathlib import Path
 
 import pytest
@@ -28,7 +28,6 @@ def test_reads_accounts_usage_and_state(tmp_path: Path, write_json: WriteJson) -
             "current_account": "account-b",
             "pending": {"to_account": "account-a", "phase": "restart_workspaces"},
             "blocked_until": {"account-a": EPOCH_NOW + 600},
-            "last_completed": {"completed_at": "2026-10-20T11:00:00+00:00"},
         },
     )
     write_json(
@@ -39,16 +38,6 @@ def test_reads_accounts_usage_and_state(tmp_path: Path, write_json: WriteJson) -
             "seven_day": usage_window(40, resets_in_minutes=3 * 24 * 60),
         },
     )
-    write_json(
-        "logs/monitor.log",
-        None,
-    ).write_text(
-        '{"time": "2026-10-20T11:59:00+00:00", "status": "keep_account"}\n'
-        "not json\n"
-        '{"time": "2026-10-20T12:00:00+00:00", "status": "restarts_pending"}\n',
-        encoding="utf-8",
-    )
-
     rotation = read_rotation(tmp_path)
 
     assert rotation == Rotation(
@@ -73,8 +62,6 @@ def test_reads_accounts_usage_and_state(tmp_path: Path, write_json: WriteJson) -
         rotating_to="account-a",
         threshold=95,
         max_usage_age=timedelta(minutes=5),
-        last_switch=datetime(2026, 10, 20, 11, tzinfo=UTC),
-        monitor_status="restarts_pending",
     )
     assert rotation.account("account-b") == rotation.accounts[1]
     assert rotation.account("missing") is None
@@ -91,8 +78,6 @@ def test_falls_back_to_the_initial_account_and_defaults(
     assert rotation.rotating_to is None
     assert rotation.threshold == 100
     assert rotation.max_usage_age == timedelta(minutes=10)
-    assert rotation.last_switch is None
-    assert rotation.monitor_status is None
 
 
 def test_follows_a_custom_state_directory(
@@ -154,12 +139,3 @@ def test_rejects_files_the_tool_did_not_write(
 
     with pytest.raises(ValueError, match=error):
         read_rotation(tmp_path)
-
-
-def test_ignores_a_monitor_log_without_a_status(
-    tmp_path: Path, write_json: WriteJson
-) -> None:
-    write_json("config.json", CONFIG)
-    write_json("logs/monitor.log", {"time": "2026-10-20T12:00:00+00:00"})
-
-    assert read_rotation(tmp_path).monitor_status is None
