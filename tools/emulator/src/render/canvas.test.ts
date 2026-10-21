@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
 import type { Bitmap } from '../formats/png.ts';
 import {
@@ -253,6 +253,21 @@ describe('Canvas', () => {
     expect(reds(canvas)).toStrictEqual([
       [0, 0, 0, 0],
       [125, 125, 0, 0],
+    ]);
+  });
+
+  it('visits only the visible part of a filled box', () => {
+    const canvas = new Canvas(4, 2);
+    const blend = vi.spyOn(canvas, 'blend');
+
+    canvas.clipped({ x: 1, y: 1, width: 2, height: 1 }, () => {
+      canvas.fillBox({ x: -10, y: -10, width: 30, height: 30 }, RED);
+    });
+
+    expect(blend).toHaveBeenCalledTimes(2);
+    expect(reds(canvas)).toStrictEqual([
+      [0, 0, 0, 0],
+      [0, 255, 255, 0],
     ]);
   });
 
