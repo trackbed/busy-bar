@@ -34,16 +34,16 @@ describe('parseLeaderboard', () => {
     });
   });
 
-  it('copes with an empty board', () => {
+  it.each(['draft', 'archived'])('reads an empty %s board', (state) => {
     expect(
       parseLeaderboard({
         status: 'success',
         value: {
-          challenge: { status: 'draft', entryCount: null },
+          challenge: { status: state, entryCount: null },
           entries: [],
         },
       }),
-    ).toStrictEqual({ state: 'draft', entries: undefined, leader: undefined });
+    ).toStrictEqual({ state, entries: undefined, leader: undefined });
   });
 
   it.each([
@@ -59,6 +59,14 @@ describe('parseLeaderboard', () => {
     [{ status: 'error' }, 'ChallengeCraft reported an error.'],
     [
       { status: 'success', value: { challenge: { status: 'paused' } } },
+      'without a status',
+    ],
+    [
+      { status: 'success', value: { challenge: { status: 'constructor' } } },
+      'without a status',
+    ],
+    [
+      { status: 'success', value: { challenge: { status: '__proto__' } } },
       'without a status',
     ],
     ['nope', 'did not answer with a JSON object'],

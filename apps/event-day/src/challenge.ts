@@ -25,12 +25,6 @@ export class ChallengeError extends Error {
 
 export const LEADERBOARD_QUERY = 'leaderboard:getLeaderboard';
 
-const STATES: Readonly<Record<string, ChallengeState>> = {
-  live: 'live',
-  draft: 'draft',
-  archived: 'archived',
-};
-
 export interface FetchChallengeOptions {
   /** The ChallengeCraft Convex deployment URL (`https://<name>.convex.cloud`). */
   readonly convexUrl: string;
@@ -83,8 +77,8 @@ export function parseLeaderboard(body: unknown): ChallengeStatus {
   }
   const value = objectAt(body, 'value');
   const challenge = objectAt(value, 'challenge');
-  const state = STATES[stringAt(challenge, 'status') ?? ''];
-  if (state === undefined) {
+  const state = stringAt(challenge, 'status');
+  if (state !== 'live' && state !== 'draft' && state !== 'archived') {
     throw new ChallengeError(
       'ChallengeCraft sent a leaderboard without a status.',
     );

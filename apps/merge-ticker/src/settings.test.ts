@@ -36,6 +36,8 @@ describe('loadSettings', () => {
       'IANA time zone',
     ],
     [{ GITHUB_TOKEN: 't', MERGE_TICKER_SOUND: 'loud' }, 'on or off'],
+    [{ GITHUB_TOKEN: 't', MERGE_TICKER_SOUND: 'constructor' }, 'on or off'],
+    [{ GITHUB_TOKEN: 't', MERGE_TICKER_SOUND: '__proto__' }, 'on or off'],
   ])('rejects %j', (env, message) => {
     expect(() => loadSettings(env)).toThrow(TickerSettingsError);
     expect(() => loadSettings(env)).toThrow(message);

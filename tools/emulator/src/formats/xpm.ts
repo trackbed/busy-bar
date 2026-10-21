@@ -15,19 +15,19 @@ const MAX_CHARS_PER_PIXEL = 4;
 
 type Rgba = readonly [number, number, number, number];
 
-const NAMES: Readonly<Record<string, Rgba>> = {
-  none: [0, 0, 0, 0],
-  black: [0, 0, 0, 255],
-  white: [255, 255, 255, 255],
-  red: [255, 0, 0, 255],
-  green: [0, 255, 0, 255],
-  blue: [0, 0, 255, 255],
-  yellow: [255, 255, 0, 255],
-  cyan: [0, 255, 255, 255],
-  magenta: [255, 0, 255, 255],
-  gray: [128, 128, 128, 255],
-  grey: [128, 128, 128, 255],
-};
+const NAMES = new Map<string, Rgba>([
+  ['none', [0, 0, 0, 0]],
+  ['black', [0, 0, 0, 255]],
+  ['white', [255, 255, 255, 255]],
+  ['red', [255, 0, 0, 255]],
+  ['green', [0, 255, 0, 255]],
+  ['blue', [0, 0, 255, 255]],
+  ['yellow', [255, 255, 0, 255]],
+  ['cyan', [0, 255, 255, 255]],
+  ['magenta', [255, 0, 255, 255]],
+  ['gray', [128, 128, 128, 255]],
+  ['grey', [128, 128, 128, 255]],
+]);
 
 // The front prefers colour keys, the greyscale back prefers grey keys.
 const KEY_ORDER: Readonly<Record<'front' | 'back', readonly string[]>> = {
@@ -115,7 +115,7 @@ function pickColor(spec: string, display: 'front' | 'back'): Rgba | undefined {
 }
 
 function parseValue(value: string): Rgba | undefined {
-  const named = NAMES[value.toLowerCase()];
+  const named = NAMES.get(value.toLowerCase());
   if (named !== undefined) {
     return named;
   }

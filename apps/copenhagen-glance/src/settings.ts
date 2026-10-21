@@ -17,8 +17,6 @@ export class GlanceSettingsError extends Error {
 /** Copenhagen City Hall Square. */
 export const COPENHAGEN = { latitude: 55.6761, longitude: 12.5683 } as const;
 
-const SWITCHES: Readonly<Record<string, boolean>> = { on: true, off: false };
-
 /**
  * Read the optional `GLANCE_PRICE_AREA` (`DK1` or `DK2`), `GLANCE_LATITUDE`,
  * `GLANCE_LONGITUDE`, and `GLANCE_RAIN`. The defaults suit Copenhagen.
@@ -33,8 +31,7 @@ export function loadSettings(
     );
   }
   const rawRain = env['GLANCE_RAIN']?.trim().toLowerCase() || 'on';
-  const rain = SWITCHES[rawRain];
-  if (rain === undefined) {
+  if (rawRain !== 'on' && rawRain !== 'off') {
     throw new GlanceSettingsError(
       `GLANCE_RAIN must be on or off; got ${JSON.stringify(rawRain)}.`,
     );
@@ -43,7 +40,7 @@ export function loadSettings(
     area,
     latitude: coordinate(env, 'GLANCE_LATITUDE', COPENHAGEN.latitude, 90),
     longitude: coordinate(env, 'GLANCE_LONGITUDE', COPENHAGEN.longitude, 180),
-    rain,
+    rain: rawRain === 'on',
   };
 }
 
