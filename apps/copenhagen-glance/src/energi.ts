@@ -1,4 +1,9 @@
-import { arrayAt, isObject, numberAt, stringAt } from './json.ts';
+import {
+  arrayAt,
+  isObject,
+  numberAt,
+  stringAt,
+} from '@busy-bar-apps/json-values';
 
 /** The two Danish bidding zones: Jutland and Funen (DK1), Zealand (DK2). */
 export type PriceArea = 'DK1' | 'DK2';

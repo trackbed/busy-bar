@@ -22,6 +22,7 @@ when a live booth goes quiet, cannot be read, or disappears.
 
 ## Does Not Own
 
+- Primitive JSON validation: [`json-values`](../../libs/json-values/README.md).
 - Event Studio. The app only reads what the wall and the TV leaderboard can
   read.
 - Connection settings, the frame loop, polling, and shutdown handling. Those

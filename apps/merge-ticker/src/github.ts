@@ -1,7 +1,12 @@
 import { toBarText } from '@busy-bar-apps/bar-kit';
-
-import type { JsonObject } from './json.ts';
-import { arrayAt, isObject, numberAt, objectAt, stringAt } from './json.ts';
+import type { JsonObject } from '@busy-bar-apps/json-values';
+import {
+  arrayAt,
+  isObject,
+  numberAt,
+  objectAt,
+  stringAt,
+} from '@busy-bar-apps/json-values';
 
 export type Checks = 'passing' | 'failing' | 'pending' | 'none';
 

@@ -1,4 +1,9 @@
-import { arrayAt, isObject, numberAt, stringAt } from './json.ts';
+import {
+  arrayAt,
+  isObject,
+  numberAt,
+  stringAt,
+} from '@busy-bar-apps/json-values';
 
 /** One booth, as its public URL names it: `/e/<eventSlug>/<boothSlug>`. */
 export interface BoothRef {

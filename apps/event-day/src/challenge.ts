@@ -1,6 +1,11 @@
 import { toBarText } from '@busy-bar-apps/bar-kit';
-
-import { arrayAt, isObject, numberAt, objectAt, stringAt } from './json.ts';
+import {
+  arrayAt,
+  isObject,
+  numberAt,
+  objectAt,
+  stringAt,
+} from '@busy-bar-apps/json-values';
 
 type ChallengeState = 'live' | 'draft' | 'archived';
 

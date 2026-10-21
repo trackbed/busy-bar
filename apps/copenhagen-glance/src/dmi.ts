@@ -1,4 +1,4 @@
-import { arrayAt, isObject, objectAt } from './json.ts';
+import { arrayAt, isObject, objectAt } from '@busy-bar-apps/json-values';
 
 /** Rain expected in one hour of DMI's forecast. */
 export interface RainHour {

@@ -20,6 +20,7 @@ next 24, the CO2, and the rain for the next three hours.
 
 ## Does Not Own
 
+- Primitive JSON validation: [`json-values`](../../libs/json-values/README.md).
 - What you actually pay. The spot price excludes grid tariffs, elafgift, and
   VAT.
 - Connection settings, the frame loop, polling, and shutdown handling. Those
