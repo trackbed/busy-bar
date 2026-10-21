@@ -13,7 +13,9 @@ when a live booth goes quiet, cannot be read, or disappears.
 - Reading PhotoCraft booths ([src/photocraft.ts](src/photocraft.ts)) through
   the public routes the live wall uses: a wall token from
   `POST /api/photo-craft-token`, then the newest portraits from
-  `GET /api/photo-craft?boothId=`. No login is involved.
+  `GET /api/photo-craft?boothId=`. No login is involved. Successful gallery
+  snapshots and their versions stay cached through failures and paused booths,
+  so an unchanged response can restore the last photo count and timestamp.
 - Reading a ChallengeCraft leaderboard ([src/challenge.ts](src/challenge.ts))
   with the public `leaderboard:getLeaderboard` query and the TV leaderboard's
   token, through Convex's HTTP API.
