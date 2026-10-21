@@ -1,5 +1,3 @@
-// Reading untrusted JSON without casts: check each value's type as it is used.
-
 /** A JSON object whose values are not checked yet. */
 export type JsonObject = Readonly<Record<string, unknown>>;
 
@@ -22,4 +20,11 @@ export function arrayAt(value: JsonObject, key: string): readonly unknown[] {
 export function stringAt(value: JsonObject, key: string): string | undefined {
   const child = value[key];
   return typeof child === 'string' ? child : undefined;
+}
+
+export function numberAt(value: JsonObject, key: string): number | undefined {
+  const child = value[key];
+  return typeof child === 'number' && Number.isFinite(child)
+    ? child
+    : undefined;
 }

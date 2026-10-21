@@ -56,8 +56,8 @@ export const DEFAULT_PRIORITY = 50;
  * Draw a frame every `intervalMs` until `signal` aborts, then clear the
  * display. The bar merges each draw into what the app already shows, by
  * element id, so elements the last frame drew and this one does not are
- * deleted after the draw. Failed draws are logged and retried on the next
- * frame, so an app survives the bar rebooting or dropping off Wi-Fi. An
+ * deleted after the draw. Failed draws and deletions are logged and retried
+ * on later frames, so an app survives the bar dropping off Wi-Fi. An
  * exception thrown by `render` is a bug: it clears the display and rejects.
  */
 export async function runBarApp(options: RunBarAppOptions): Promise<void> {
@@ -78,11 +78,12 @@ export async function runBarApp(options: RunBarAppOptions): Promise<void> {
     );
   }
 
-  // The ids the bar shows from the last draw that went through.
+  // IDs that may still be displayed, including deletions awaiting a retry.
   let shown = new Set<string>();
   try {
     while (!signal.aborted) {
       const elements = render(now());
+      let operation = 'Drawing on';
       try {
         await client.DisplayDraw(
           { application_name: name, priority, elements },
@@ -90,18 +91,20 @@ export async function runBarApp(options: RunBarAppOptions): Promise<void> {
         );
         const drawn = new Set(elements.map((element) => element.id));
         const stale = [...shown].filter((id) => !drawn.has(id));
-        shown = drawn;
+        shown = new Set([...shown, ...drawn]);
         if (stale.length > 0) {
+          operation = 'Deleting stale elements from';
           await client.DisplayClear(
             { application_name: name, element_ids: stale },
             { signal },
           );
         }
+        shown = drawn;
       } catch (error) {
         // An abort during the request rejects it; that is the shutdown, not a
         // failure worth logging.
         if (!isAborted(signal)) {
-          log.warn(`[${name}] Drawing on the BUSY Bar failed:`, error);
+          log.warn(`[${name}] ${operation} the BUSY Bar failed:`, error);
         }
       }
       await sleep(intervalMs, signal);

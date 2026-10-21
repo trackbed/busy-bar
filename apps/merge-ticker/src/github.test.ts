@@ -110,6 +110,29 @@ describe('parsePullRequests', () => {
     });
   });
 
+  it.each(['constructor', '__proto__', 'UNKNOWN'])(
+    'ignores unknown check state %s',
+    (state) => {
+      const pulls = parsePullRequests({
+        data: {
+          open: {
+            nodes: [
+              {
+                number: 1,
+                repository: { nameWithOwner: 'owner/repo' },
+                commits: {
+                  nodes: [{ commit: { statusCheckRollup: { state } } }],
+                },
+              },
+            ],
+          },
+        },
+      });
+
+      expect(pulls.open[0]?.checks).toBe('none');
+    },
+  );
+
   it('counts the nodes when the totals are missing', () => {
     const pulls = parsePullRequests({
       data: { open: { nodes: [] }, merged: {} },

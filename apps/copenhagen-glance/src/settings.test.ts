@@ -30,6 +30,8 @@ describe('loadSettings', () => {
   it.each([
     [{ GLANCE_PRICE_AREA: 'SE4' }, 'DK1 (west of the Great Belt) or DK2'],
     [{ GLANCE_RAIN: 'maybe' }, 'GLANCE_RAIN must be on or off'],
+    [{ GLANCE_RAIN: 'constructor' }, 'GLANCE_RAIN must be on or off'],
+    [{ GLANCE_RAIN: '__proto__' }, 'GLANCE_RAIN must be on or off'],
     [
       { GLANCE_LATITUDE: 'north' },
       'GLANCE_LATITUDE must be a number from -90 to 90',

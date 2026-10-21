@@ -23,7 +23,6 @@ export const DEFAULT_PRIORITY = 50;
 
 // PhotoCraft's own slug rule.
 const SLUG = /^[a-z0-9][a-z0-9-]{1,46}[a-z0-9]$/u;
-const SWITCHES: Readonly<Record<string, boolean>> = { on: true, off: false };
 
 type Env = Readonly<Record<string, string | undefined>>;
 
@@ -123,11 +122,10 @@ function whole(
 
 function switchOf(env: Env, name: string): boolean {
   const raw = env[name]?.trim().toLowerCase() || 'on';
-  const value = SWITCHES[raw];
-  if (value === undefined) {
+  if (raw !== 'on' && raw !== 'off') {
     throw new EventSettingsError(
       `${name} must be on or off; got ${JSON.stringify(raw)}.`,
     );
   }
-  return value;
+  return raw === 'on';
 }

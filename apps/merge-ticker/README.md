@@ -18,6 +18,7 @@ requests.
 
 ## Does Not Own
 
+- Primitive JSON validation: [`json-values`](../../libs/json-values/README.md).
 - Merging. GitHub's auto-merge does that; the ticker only watches.
 - Connection settings, the frame loop, polling, and shutdown handling. Those
   live in [`bar-kit`](../../libs/bar-kit/README.md).

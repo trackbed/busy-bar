@@ -52,6 +52,22 @@ describe('loadSettings', () => {
   it.each([
     [{}, 'Set EVENT_DAY_BOOTHS'],
     [
+      {
+        EVENT_DAY_CHALLENGE_URL: 'https://x',
+        EVENT_DAY_CHALLENGE_TOKEN: 't',
+        EVENT_DAY_SOUND: 'constructor',
+      },
+      'on or off',
+    ],
+    [
+      {
+        EVENT_DAY_CHALLENGE_URL: 'https://x',
+        EVENT_DAY_CHALLENGE_TOKEN: 't',
+        EVENT_DAY_SOUND: '__proto__',
+      },
+      'on or off',
+    ],
+    [
       { EVENT_DAY_BOOTHS: 'summit-2026/main-booth' },
       'needs EVENT_DAY_PHOTOCRAFT_URL',
     ],

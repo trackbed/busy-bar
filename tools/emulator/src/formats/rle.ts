@@ -1,7 +1,7 @@
-// The run-length encoding the bar uses for screen frames on its status
-// stream (lib/toolbox/rle_encode.c in the firmware): an opcode byte, then
-// either `op & 0x7f` literal blocks (high bit set) or one block repeated
-// `op` times.
+// The firmware's toolbox run-length encoding (lib/toolbox/rle_encode.c),
+// used for screen frames on the status stream and for `.anim` pixel data: an
+// opcode byte, then either `op & 0x7f` literal blocks (high bit set) or one
+// block repeated `op` times.
 
 const MAX_COUNT = 0x7f;
 
@@ -54,7 +54,7 @@ export function encodeRle(data: Uint8Array, blockSize: number): Uint8Array {
   return Uint8Array.from(out);
 }
 
-/** Decode what `encodeRle` writes; the inverse, for tests and tools. */
+/** Decode RLE blocks of `blockSize` bytes; the inverse of `encodeRle`. */
 export function decodeRle(data: Uint8Array, blockSize: number): Uint8Array {
   const out: number[] = [];
   let at = 0;

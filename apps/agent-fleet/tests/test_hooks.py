@@ -132,11 +132,11 @@ def test_ignores_payloads_it_has_no_use_for(body: object) -> None:
 @pytest.mark.parametrize(
     ("cwd", "workspace"),
     [
-        (CWD, Workspace(name="quebec", repo="kramme-busy-bar-apps")),
-        (f"{CWD}/apps/clock", Workspace(name="quebec", repo="kramme-busy-bar-apps")),
-        ("/Users/me/projects/consensus-connect", Workspace("consensus-connect", "")),
-        ("/Users/me/projekter/kø", Workspace(name="koe", repo="")),
-        ("", Workspace(name="?", repo="")),
+        (CWD, Workspace(name="quebec")),
+        (f"{CWD}/apps/clock", Workspace(name="quebec")),
+        ("/Users/me/projects/consensus-connect", Workspace("consensus-connect")),
+        ("/Users/me/projekter/kø", Workspace(name="koe")),
+        ("", Workspace(name="?")),
     ],
 )
 def test_names_a_session_after_its_workspace(cwd: str, workspace: Workspace) -> None:

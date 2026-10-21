@@ -1,4 +1,4 @@
-import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 
 import type { AssetRoot } from '../__tests__/asset-root.ts';
 import { assetRoot } from '../__tests__/asset-root.ts';
@@ -15,7 +15,7 @@ import type {
 import { parseDrawRequest } from '../device/elements.ts';
 import type { PlacedElement } from '../device/screen.ts';
 import type { Animation } from '../formats/animation.ts';
-import type { Canvas } from './canvas.ts';
+import { Canvas } from './canvas.ts';
 import type { Frames, SceneAssets } from './scene.ts';
 import { anchor, countdownText, coverageAt, SceneRenderer } from './scene.ts';
 
@@ -628,6 +628,83 @@ describe('SceneRenderer', () => {
   });
 
   describe('rectangle', () => {
+    it.each(['solid', 'gradient_h', 'gradient_v', 'none'])(
+      'bounds %s fill and border work to the visible display',
+      (fill) => {
+        const blend = vi.spyOn(Canvas.prototype, 'blend');
+        const { front } = draw([
+          rectangle({
+            x: -10,
+            y: -10,
+            width: 100,
+            height: 100,
+            fill,
+            fill_colors: fill.startsWith('gradient')
+              ? ['#FF0000FF', '#0000FFFF']
+              : ['#FFFFFFFF'],
+            border_width: 20,
+            radius: 12,
+          }),
+        ]);
+
+        const calls = blend.mock.contexts.filter((canvas) => canvas === front);
+        expect(calls.length).toBeLessThanOrEqual(
+          front.width * front.height * 2,
+        );
+        expect(blank(front)).toBe(false);
+      },
+    );
+
+    it.each(['solid', 'gradient_h', 'gradient_v', 'none'])(
+      'skips wholly off-screen %s rectangles',
+      (fill) => {
+        const blend = vi.spyOn(Canvas.prototype, 'blend');
+        const { front } = draw([
+          rectangle({
+            x: 100,
+            y: 100,
+            width: 100,
+            height: 100,
+            fill,
+            fill_colors: fill.startsWith('gradient')
+              ? ['#FF0000FF', '#0000FFFF']
+              : ['#FFFFFFFF'],
+            border_width: 2,
+            radius: 12,
+          }),
+        ]);
+
+        expect(
+          blend.mock.contexts.filter((canvas) => canvas === front),
+        ).toHaveLength(0);
+        expect(blank(front)).toBe(true);
+      },
+    );
+
+    it.each(['solid', 'gradient_h', 'gradient_v', 'none'])(
+      'preserves %s colors and rounded edges when clipping',
+      (fill) => {
+        const fields = {
+          width: 8,
+          height: 8,
+          fill,
+          fill_colors: fill.startsWith('gradient')
+            ? ['#FF0000FF', '#0000FFFF']
+            : ['#FFFFFFFF'],
+          border_width: 1,
+          radius: 4,
+        };
+        const full = draw([rectangle(fields)]).front;
+        const clipped = draw([rectangle({ ...fields, x: -3, y: -2 })]).front;
+
+        for (let y = 0; y < 6; y += 1) {
+          for (let x = 0; x < 5; x += 1) {
+            expect(rgb(clipped, x, y)).toStrictEqual(rgb(full, x + 3, y + 2));
+          }
+        }
+      },
+    );
+
     it('fills solid with the colour, its alpha as opacity', () => {
       expect(rgb(draw([rectangle({})]).front, 3, 0)).toStrictEqual(WHITE);
       expect(

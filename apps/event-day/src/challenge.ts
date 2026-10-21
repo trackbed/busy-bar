@@ -1,6 +1,11 @@
 import { toBarText } from '@busy-bar-apps/bar-kit';
-
-import { arrayAt, isObject, numberAt, objectAt, stringAt } from './json.ts';
+import {
+  arrayAt,
+  isObject,
+  numberAt,
+  objectAt,
+  stringAt,
+} from '@busy-bar-apps/json-values';
 
 type ChallengeState = 'live' | 'draft' | 'archived';
 
@@ -19,12 +24,6 @@ export class ChallengeError extends Error {
 }
 
 export const LEADERBOARD_QUERY = 'leaderboard:getLeaderboard';
-
-const STATES: Readonly<Record<string, ChallengeState>> = {
-  live: 'live',
-  draft: 'draft',
-  archived: 'archived',
-};
 
 export interface FetchChallengeOptions {
   /** The ChallengeCraft Convex deployment URL (`https://<name>.convex.cloud`). */
@@ -78,8 +77,8 @@ export function parseLeaderboard(body: unknown): ChallengeStatus {
   }
   const value = objectAt(body, 'value');
   const challenge = objectAt(value, 'challenge');
-  const state = STATES[stringAt(challenge, 'status') ?? ''];
-  if (state === undefined) {
+  const state = stringAt(challenge, 'status');
+  if (state !== 'live' && state !== 'draft' && state !== 'archived') {
     throw new ChallengeError(
       'ChallengeCraft sent a leaderboard without a status.',
     );

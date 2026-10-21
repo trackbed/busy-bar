@@ -33,7 +33,6 @@ account reaches its limit.
   - `config.json`: the accounts, `threshold`, and `max_usage_age_seconds`.
   - `state/state.json`: `current_account` and any rotation in flight.
   - `state/usage/<account>.json`: the five-hour and weekly windows.
-  - `logs/monitor.log`: the latest tick's status.
 - `board_at(rotation, now)` grades each window: green below 80% of the
   threshold, amber from 80%, red at the threshold, and grey without a reading,
   past its reset, or older than `max_usage_age_seconds`.

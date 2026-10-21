@@ -138,6 +138,39 @@ describe('PhotoCraft', () => {
     expect(calls[2]?.url).toContain('galleryVersion=v7');
   });
 
+  it.each<Reply>([
+    { status: 502 },
+    { status: 404 },
+    { status: 200, body: [] },
+    { status: 200 },
+  ])(
+    'preserves the gallery through an unsuccessful response %j',
+    async (failure) => {
+      const { client, calls } = photoCraft({
+        tokens: [TOKEN],
+        galleries: [
+          gallery(['2026-10-20T09:59:00Z'], 'v7'),
+          failure,
+          {
+            status: 200,
+            body: { images: [], galleryVersion: 'v7', unchanged: true },
+          },
+        ],
+      });
+
+      const first = await client.status(BOOTH, signal);
+      expect((await client.status(BOOTH, signal)).state).not.toBe('live');
+      const recovered = await client.status(BOOTH, signal);
+
+      expect(recovered).toBe(first);
+      expect(recovered.photos).toBe(1);
+      expect(recovered.latestPhotoAt).toStrictEqual(
+        new Date('2026-10-20T09:59:00Z'),
+      );
+      expect(calls[3]?.url).toContain('galleryVersion=v7');
+    },
+  );
+
   it('renews the token shortly before it expires', async () => {
     const { client, calls, advance } = photoCraft({
       tokens: [TOKEN, TOKEN],

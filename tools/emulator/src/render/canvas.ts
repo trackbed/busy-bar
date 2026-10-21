@@ -128,8 +128,9 @@ export class Canvas {
 
   /** Fill a rectangle with one colour. */
   fillBox(box: Box, color: Rgba, opacity = 255): void {
-    for (let y = box.y; y < box.y + box.height; y += 1) {
-      for (let x = box.x; x < box.x + box.width; x += 1) {
+    const clip = intersect(box, this.#clip);
+    for (let y = clip.y; y < clip.y + clip.height; y += 1) {
+      for (let x = clip.x; x < clip.x + clip.width; x += 1) {
         this.blend(x, y, color, opacity);
       }
     }

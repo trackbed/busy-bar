@@ -15,7 +15,7 @@ import type { PlacedElement } from '../device/screen.ts';
 import type { Font } from '../formats/font.ts';
 import type { Bitmap } from '../formats/png.ts';
 import type { Box, Rgba } from './canvas.ts';
-import { BLACK, Canvas, OPA_MIN } from './canvas.ts';
+import { BLACK, Canvas, intersect, OPA_MIN } from './canvas.ts';
 import type { TextLayout } from './text.ts';
 import { drawText, layoutText, scrollOffset } from './text.ts';
 
@@ -302,6 +302,7 @@ function drawRectangle(canvas: Canvas, element: RectangleElement): void {
   const borderWidth = Math.max(0, toInt8(element.borderWidth));
   const [start, end] = element.fillColors;
   canvas.clipped(box, () => {
+    const clip = canvas.clip;
     if (element.fill === 'solid') {
       if (start.a > OPA_MIN) {
         fillRounded(canvas, box, radius, start, start.a);
@@ -309,8 +310,8 @@ function drawRectangle(canvas: Canvas, element: RectangleElement): void {
     } else if (element.fill !== 'none') {
       const horizontal = element.fill === 'gradient_h';
       const size = horizontal ? box.width : box.height;
-      for (let y = box.y; y < box.y + box.height; y += 1) {
-        for (let x = box.x; x < box.x + box.width; x += 1) {
+      for (let y = clip.y; y < clip.y + clip.height; y += 1) {
+        for (let x = clip.x; x < clip.x + clip.width; x += 1) {
           const coverage = coverageAt(box, radius, x, y);
           if (coverage > 0) {
             const stop = gradientStop(
@@ -332,8 +333,8 @@ function drawRectangle(canvas: Canvas, element: RectangleElement): void {
         height: box.height - 2 * borderWidth,
       };
       const innerRadius = Math.max(0, radius - borderWidth);
-      for (let y = box.y; y < box.y + box.height; y += 1) {
-        for (let x = box.x; x < box.x + box.width; x += 1) {
+      for (let y = clip.y; y < clip.y + clip.height; y += 1) {
+        for (let x = clip.x; x < clip.x + clip.width; x += 1) {
           const outside = coverageAt(box, radius, x, y);
           const hole =
             inner.width > 0 && inner.height > 0
@@ -391,8 +392,9 @@ function fillRounded(
   color: Rgba,
   opacity: number,
 ): void {
-  for (let y = box.y; y < box.y + box.height; y += 1) {
-    for (let x = box.x; x < box.x + box.width; x += 1) {
+  const clip = intersect(box, canvas.clip);
+  for (let y = clip.y; y < clip.y + clip.height; y += 1) {
+    for (let x = clip.x; x < clip.x + clip.width; x += 1) {
       const coverage = coverageAt(box, radius, x, y);
       if (coverage > 0) {
         canvas.blend(x, y, { ...color, a: coverage }, opacity);

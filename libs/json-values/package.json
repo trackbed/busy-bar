@@ -1,0 +1,14 @@
+{
+  "name": "@busy-bar-apps/json-values",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "sideEffects": false,
+  "exports": {
+    ".": {
+      "@busy-bar-apps/source": "./src/index.ts",
+      "default": "./src/index.ts"
+    },
+    "./package.json": "./package.json"
+  }
+}

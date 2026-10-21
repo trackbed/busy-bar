@@ -57,31 +57,34 @@ async def run_bar_app(  # noqa: PLR0913 - keyword-only settings, one per concern
 
     The bar merges each draw into what the app already shows, by element id,
     so elements the last frame drew and this one does not are deleted after
-    the draw. Failed draws are logged and retried on the next frame, so an app
-    survives the bar rebooting or dropping off Wi-Fi. An exception raised by
+    the draw. Failed draws and deletions are logged and retried on later
+    frames, so an app survives the bar dropping off Wi-Fi. An exception raised by
     `render` is a bug: it clears the display and propagates.
     """
     if not _MIN_PRIORITY <= priority <= _MAX_PRIORITY:
         message = f"Draw priority must be an integer from 1 to 100; got {priority}."
         raise ValueError(message)
 
-    # The ids the bar shows from the last draw that went through, in order.
+    # IDs that may still be displayed, including deletions awaiting a retry.
     shown: list[str] = []
     try:
         while not stop.is_set():
             frame = types.DisplayElements(
                 application_name=name, priority=priority, elements=list(render(now()))
             )
+            operation = "Drawing on"
             try:
                 await client.display_draw(frame)
                 drawn = [element.id for element in frame.elements]
                 stale = [element_id for element_id in shown if element_id not in drawn]
-                shown = drawn
+                shown = list(dict.fromkeys([*shown, *drawn]))
                 if stale:
+                    operation = "Deleting stale elements from"
                     await client.display_clear(application_name=name, element_ids=stale)
+                shown = drawn
             except Exception:  # A dropped draw must not end the app.
                 logger.warning(
-                    "[%s] Drawing on the BUSY Bar failed.", name, exc_info=True
+                    "[%s] %s the BUSY Bar failed.", name, operation, exc_info=True
                 )
             await wait_for_stop(interval, stop)
     finally:

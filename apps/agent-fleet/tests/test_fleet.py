@@ -44,7 +44,6 @@ def test_a_prompt_starts_a_working_session_named_after_its_workspace() -> None:
     assert row == Row(
         session_id="s1",
         workspace="s1",
-        repo="discera",
         status="working",
         detail="pr-fix-ci",
         age=timedelta(minutes=1),

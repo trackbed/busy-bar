@@ -7,6 +7,7 @@ import type { Animation, Section } from './animation.ts';
 import { AnimationError } from './animation.ts';
 import { byteAt } from './bytes.ts';
 import type { Bitmap } from './png.ts';
+import { decodeRle } from './rle.ts';
 
 const SIGNATURE = 'bicycle1';
 const HEADER_BYTES = 34;
@@ -199,7 +200,7 @@ function readPixels(
     return unpack(data, format);
   }
   if (encoding === 1) {
-    return unpack(readRle(data, BLOCK_BYTES[format]), format);
+    return unpack(decodeRle(data, BLOCK_BYTES[format]), format);
   }
   throw new AnimationError(`Unknown pixel encoding ${encoding}.`);
 }
@@ -227,28 +228,6 @@ function unpack(raw: Uint8Array, format: ColorFormat): Uint8Array {
     out.set(raw.subarray(pixel * 3, pixel * 3 + 3), pixel * 4);
   }
   return out;
-}
-
-/** The firmware's toolbox RLE: literal runs (high bit set) or a repeated block. */
-function readRle(data: Uint8Array, block: number): Uint8Array {
-  const out: number[] = [];
-  let at = 0;
-  while (at < data.length) {
-    const op = byteAt(data, at);
-    at += 1;
-    if ((op & 0x80) !== 0) {
-      const length = (op & 0x7f) * block;
-      out.push(...data.subarray(at, at + length));
-      at += length;
-    } else {
-      const repeated = data.subarray(at, at + block);
-      for (let i = 0; i < op; i += 1) {
-        out.push(...repeated);
-      }
-      at += block;
-    }
-  }
-  return Uint8Array.from(out);
 }
 
 /**

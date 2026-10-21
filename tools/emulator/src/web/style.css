@@ -119,11 +119,6 @@ button:hover {
   border-color: var(--accent);
 }
 
-button.pressed {
-  background: var(--accent);
-  color: #000;
-}
-
 .panel {
   display: grid;
   gap: 10px;

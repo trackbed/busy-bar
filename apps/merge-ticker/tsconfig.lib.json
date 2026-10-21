@@ -8,5 +8,12 @@
   },
   "include": ["src/**/*.ts"],
   "exclude": ["src/**/*.test.ts", "src/**/__tests__/**"],
-  "references": [{ "path": "../../libs/bar-kit/tsconfig.lib.json" }]
+  "references": [
+    {
+      "path": "../../libs/json-values/tsconfig.lib.json"
+    },
+    {
+      "path": "../../libs/bar-kit/tsconfig.lib.json"
+    }
+  ]
 }

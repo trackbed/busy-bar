@@ -58,6 +58,20 @@ describe('parseXpm', () => {
     ]);
   });
 
+  it.each(['constructor', '__proto__'])(
+    'rejects inherited color name %s on both displays',
+    (name) => {
+      const data = xpm('1 1 1 1', `a c ${name}`, 'a');
+
+      for (const display of ['front', 'back'] as const) {
+        expect(() => parseXpm(data, display, FRONT)).toThrow(XpmError);
+        expect(() => parseXpm(data, display, FRONT)).toThrow(
+          'have valid XPM color table',
+        );
+      }
+    },
+  );
+
   it.each([
     ['XPM2\n1 1 1 1\na c red\na', 'have valid XPM header'],
     [xpm('1 1 one 1', 'a c red', 'a'), 'have valid XPM header'],

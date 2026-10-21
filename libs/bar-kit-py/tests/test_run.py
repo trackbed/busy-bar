@@ -31,6 +31,7 @@ class FakeClient:
         self.failing_draws = failing_draws
         self.failing_draw = failing_draw
         self.failing_clear = failing_clear
+        self.failing_deletions = 0
         self.drawn: list[types.DisplayElements] = []
         self.cleared: list[str] = []
         self.deleted: list[list[str]] = []
@@ -54,7 +55,9 @@ class FakeClient:
             self.cleared.append(application_name)
         else:
             self.deleted.append(list(element_ids))
-        if self.failing_clear:
+        if self.failing_clear or (
+            element_ids is not None and len(self.deleted) <= self.failing_deletions
+        ):
             message = "bar offline"
             raise ConnectionError(message)
         return None
@@ -123,6 +126,31 @@ async def test_remembers_what_the_last_draw_that_went_through_showed() -> None:
     )
 
     assert client.deleted == [["extra"]]
+
+
+async def test_retries_deletions_and_remembers_ids_drawn_while_cleanup_failed(
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    stop = asyncio.Event()
+    client = FakeClient(stop, frames=3)
+    client.failing_deletions = 1
+    fresh = types.TextElement(id="fresh", text="F", font="small")
+    frames = iter([[*FRAME, EXTRA], [*FRAME, fresh], FRAME])
+
+    with caplog.at_level(logging.WARNING, logger="bar_kit.run"):
+        await run_bar_app(
+            name="demo",
+            client=client,
+            render=lambda _now: next(frames),
+            interval=0,
+            stop=stop,
+        )
+
+    assert client.deleted == [["extra"], ["extra", "fresh"]]
+    assert client.cleared == ["demo"]
+    assert [record.getMessage() for record in caplog.records] == [
+        "[demo] Deleting stale elements from the BUSY Bar failed."
+    ]
 
 
 async def test_draws_at_the_requested_priority() -> None:

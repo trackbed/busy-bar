@@ -1,4 +1,9 @@
-import { arrayAt, isObject, numberAt, stringAt } from './json.ts';
+import {
+  arrayAt,
+  isObject,
+  numberAt,
+  stringAt,
+} from '@busy-bar-apps/json-values';
 
 /** One booth, as its public URL names it: `/e/<eventSlug>/<boothSlug>`. */
 export interface BoothRef {
@@ -43,7 +48,9 @@ interface WallToken {
 interface BoothMemory {
   token: WallToken | undefined;
   retryMintAt: number;
-  galleryVersion: string | undefined;
+  gallery:
+    | { readonly version: string | undefined; readonly status: BoothStatus }
+    | undefined;
   last: BoothStatus | undefined;
 }
 
@@ -171,8 +178,8 @@ export class PhotoCraft {
       boothId: token.boothId,
       limit: String(GALLERY_LIMIT),
     });
-    if (memory.galleryVersion !== undefined) {
-      query.set('galleryVersion', memory.galleryVersion);
+    if (memory.gallery?.version !== undefined) {
+      query.set('galleryVersion', memory.gallery.version);
     }
     const response = await this.#fetch(
       `${this.#appUrl}/api/photo-craft?${query.toString()}`,
@@ -196,9 +203,10 @@ export class PhotoCraft {
     if (!isObject(body)) {
       return blank(booth, 'error', 'PhotoCraft sent something unexpected');
     }
-    memory.galleryVersion = stringAt(body, 'galleryVersion');
-    if (body['unchanged'] === true && memory.last?.state === 'live') {
-      return memory.last;
+    const version = stringAt(body, 'galleryVersion');
+    if (body['unchanged'] === true && memory.gallery !== undefined) {
+      memory.gallery = { version, status: memory.gallery.status };
+      return memory.gallery.status;
     }
     const times = arrayAt(body, 'images').flatMap((image) => {
       const createdAt = isObject(image)
@@ -207,7 +215,7 @@ export class PhotoCraft {
       const time = createdAt === undefined ? Number.NaN : Date.parse(createdAt);
       return Number.isNaN(time) ? [] : [time];
     });
-    return {
+    const status: BoothStatus = {
       booth,
       state: 'live',
       photos: arrayAt(body, 'images').length,
@@ -215,6 +223,8 @@ export class PhotoCraft {
         times.length === 0 ? undefined : new Date(Math.max(...times)),
       problem: undefined,
     };
+    memory.gallery = { version, status };
+    return status;
   }
 
   #remember(booth: BoothRef): BoothMemory {
@@ -224,7 +234,7 @@ export class PhotoCraft {
       memory = {
         token: undefined,
         retryMintAt: 0,
-        galleryVersion: undefined,
+        gallery: undefined,
         last: undefined,
       };
       this.#memory.set(key, memory);

@@ -13,8 +13,6 @@ export class TickerSettingsError extends Error {
   override readonly name = 'TickerSettingsError';
 }
 
-const SWITCHES: Readonly<Record<string, boolean>> = { on: true, off: false };
-
 /**
  * Read `GITHUB_TOKEN` (required) and the optional `MERGE_TICKER_SCOPE`,
  * `MERGE_TICKER_TIME_ZONE`, and `MERGE_TICKER_SOUND`.
@@ -39,8 +37,7 @@ export function loadSettings(
     }
   }
   const rawSound = env['MERGE_TICKER_SOUND']?.trim().toLowerCase() || 'on';
-  const sound = SWITCHES[rawSound];
-  if (sound === undefined) {
+  if (rawSound !== 'on' && rawSound !== 'off') {
     throw new TickerSettingsError(
       `MERGE_TICKER_SOUND must be on or off; got ${JSON.stringify(rawSound)}.`,
     );
@@ -49,6 +46,6 @@ export function loadSettings(
     token,
     scope: env['MERGE_TICKER_SCOPE']?.trim() ?? '',
     timeZone,
-    sound,
+    sound: rawSound === 'on',
   };
 }

@@ -62,7 +62,6 @@ class Row:
 
     session_id: str
     workspace: str
-    repo: str
     status: Status
     detail: str
     """A word for the status, or the skill a working session is running."""
@@ -167,7 +166,6 @@ class Fleet:
             Row(
                 session_id=session_id,
                 workspace=session.workspace.name,
-                repo=session.workspace.repo,
                 status=status,
                 detail=_detail(session, status),
                 age=max(now - session.since, timedelta(0)),

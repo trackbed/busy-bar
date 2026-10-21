@@ -1253,6 +1253,7 @@ __metadata:
   resolution: "@busy-bar-apps/copenhagen-glance@workspace:apps/copenhagen-glance"
   dependencies:
     "@busy-bar-apps/bar-kit": "workspace:0.0.1"
+    "@busy-bar-apps/json-values": "workspace:0.0.1"
   languageName: unknown
   linkType: soft
 
@@ -1267,6 +1268,13 @@ __metadata:
   resolution: "@busy-bar-apps/event-day@workspace:apps/event-day"
   dependencies:
     "@busy-bar-apps/bar-kit": "workspace:0.0.1"
+    "@busy-bar-apps/json-values": "workspace:0.0.1"
+  languageName: unknown
+  linkType: soft
+
+"@busy-bar-apps/json-values@workspace:0.0.1, @busy-bar-apps/json-values@workspace:libs/json-values":
+  version: 0.0.0-use.local
+  resolution: "@busy-bar-apps/json-values@workspace:libs/json-values"
   languageName: unknown
   linkType: soft
 
@@ -1275,6 +1283,7 @@ __metadata:
   resolution: "@busy-bar-apps/linear-queue@workspace:apps/linear-queue"
   dependencies:
     "@busy-bar-apps/bar-kit": "workspace:0.0.1"
+    "@busy-bar-apps/json-values": "workspace:0.0.1"
   languageName: unknown
   linkType: soft
 
@@ -1283,6 +1292,7 @@ __metadata:
   resolution: "@busy-bar-apps/merge-ticker@workspace:apps/merge-ticker"
   dependencies:
     "@busy-bar-apps/bar-kit": "workspace:0.0.1"
+    "@busy-bar-apps/json-values": "workspace:0.0.1"
   languageName: unknown
   linkType: soft
 

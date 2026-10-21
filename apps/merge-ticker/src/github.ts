@@ -1,7 +1,12 @@
 import { toBarText } from '@busy-bar-apps/bar-kit';
-
-import type { JsonObject } from './json.ts';
-import { arrayAt, isObject, numberAt, objectAt, stringAt } from './json.ts';
+import type { JsonObject } from '@busy-bar-apps/json-values';
+import {
+  arrayAt,
+  isObject,
+  numberAt,
+  objectAt,
+  stringAt,
+} from '@busy-bar-apps/json-values';
 
 export type Checks = 'passing' | 'failing' | 'pending' | 'none';
 
@@ -72,13 +77,13 @@ const QUERY = `query MergeTicker($open: String!, $merged: String!) {
   }
 }`;
 
-const CHECKS: Readonly<Record<string, Checks>> = {
-  SUCCESS: 'passing',
-  FAILURE: 'failing',
-  ERROR: 'failing',
-  PENDING: 'pending',
-  EXPECTED: 'pending',
-};
+const CHECKS = new Map<string, Checks>([
+  ['SUCCESS', 'passing'],
+  ['FAILURE', 'failing'],
+  ['ERROR', 'failing'],
+  ['PENDING', 'pending'],
+  ['EXPECTED', 'pending'],
+]);
 
 /**
  * The two searches: your open pull requests, and the ones merged since
@@ -194,7 +199,7 @@ function readOpen(node: unknown): OpenPullRequest[] {
       ...basics,
       draft: node['isDraft'] === true,
       autoMerge: isObject(node['autoMergeRequest']),
-      checks: (state === undefined ? undefined : CHECKS[state]) ?? 'none',
+      checks: CHECKS.get(state ?? '') ?? 'none',
     },
   ];
 }

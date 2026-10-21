@@ -4,6 +4,7 @@
   "private": true,
   "type": "module",
   "dependencies": {
-    "@busy-bar-apps/bar-kit": "workspace:0.0.1"
+    "@busy-bar-apps/bar-kit": "workspace:0.0.1",
+    "@busy-bar-apps/json-values": "workspace:0.0.1"
   }
 }

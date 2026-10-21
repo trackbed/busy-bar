@@ -16,6 +16,7 @@ When ready runs low, it is time for another backlog-refine pass.
 
 ## Does Not Own
 
+- Primitive JSON validation: [`json-values`](../../libs/json-values/README.md).
 - Deciding what is ready. Linear's states and labels do;
   `kramme:linear:backlog-refine` grades readiness in its report but writes no
   label.

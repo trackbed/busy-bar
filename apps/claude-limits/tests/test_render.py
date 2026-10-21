@@ -38,8 +38,6 @@ def rotation(
         rotating_to=rotating_to,
         threshold=100.0,
         max_usage_age=timedelta(minutes=10),
-        last_switch=None,
-        monitor_status=None,
     )
 
 
