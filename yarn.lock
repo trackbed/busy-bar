@@ -1270,6 +1270,12 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@busy-bar-apps/json-values@workspace:0.0.1, @busy-bar-apps/json-values@workspace:libs/json-values":
+  version: 0.0.0-use.local
+  resolution: "@busy-bar-apps/json-values@workspace:libs/json-values"
+  languageName: unknown
+  linkType: soft
+
 "@busy-bar-apps/linear-queue@workspace:apps/linear-queue":
   version: 0.0.0-use.local
   resolution: "@busy-bar-apps/linear-queue@workspace:apps/linear-queue"
