@@ -14,7 +14,8 @@ variables and behave the same way.
 - The frame loop (`runBarApp`): draw every interval at a `priority`
   (default `DEFAULT_PRIORITY`, 50), delete the elements a frame stops drawing
   (the bar keeps them otherwise), log failed draws and keep going, clear the
-  display on shutdown (`shutdownSignal`).
+  display on shutdown (`shutdownSignal`). Failed element deletions are retried
+  on later frames, including IDs drawn while an earlier cleanup was failing.
 - Background data (`createPoller`): fetch a source every `intervalMs`, try
   again after `retryMs` when it fails, and keep the latest value (`latest()`)
   and the last failure (`failure()`) for a pure render function.

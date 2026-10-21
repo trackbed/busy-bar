@@ -130,6 +130,47 @@ describe('runBarApp', () => {
     ]);
   });
 
+  it('retries deletions and remembers IDs drawn while cleanup failed', async () => {
+    const controller = new AbortController();
+    const client = fakeClient(controller, 3);
+    client.DisplayClear.mockRejectedValueOnce(new Error('bar offline'));
+    const extra = {
+      id: 'extra',
+      type: 'text',
+      text: 'X',
+      font: 'small',
+    } as const;
+    const fresh = { ...extra, id: 'fresh' };
+    const frames: BarElements[] = [[...FRAME, extra], [...FRAME, fresh], FRAME];
+    let frame = 0;
+    const log = { warn: vi.fn<(...data: unknown[]) => void>() };
+
+    await runBarApp({
+      name: 'demo',
+      client,
+      render: () => frames[frame++] ?? FRAME,
+      intervalMs: 0,
+      signal: controller.signal,
+      log,
+    });
+
+    expect(client.DisplayClear.mock.calls).toStrictEqual([
+      [
+        { application_name: 'demo', element_ids: ['extra'] },
+        { signal: controller.signal },
+      ],
+      [
+        { application_name: 'demo', element_ids: ['extra', 'fresh'] },
+        { signal: controller.signal },
+      ],
+      [{ application_name: 'demo' }],
+    ]);
+    expect(log.warn).toHaveBeenCalledExactlyOnceWith(
+      '[demo] Deleting stale elements from the BUSY Bar failed:',
+      new Error('bar offline'),
+    );
+  });
+
   it('remembers what the last draw that went through showed', async () => {
     const controller = new AbortController();
     let calls = 0;
