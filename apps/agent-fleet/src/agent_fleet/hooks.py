@@ -28,9 +28,7 @@ _HOOK_TIMEOUT_SECONDS = 2
 _SESSION_END_TIMEOUT_SECONDS = 1
 
 # Conductor checks every workspace out at ~/conductor/workspaces/<repo>/<name>.
-_CONDUCTOR_WORKSPACE = re.compile(
-    r"/conductor/workspaces/(?P<repo>[^/]+)/(?P<workspace>[^/]+)"
-)
+_CONDUCTOR_WORKSPACE = re.compile(r"/conductor/workspaces/[^/]+/(?P<workspace>[^/]+)")
 # How a skill's expanded prompt starts when a slash command loads it.
 _SKILL_PROMPT = re.compile(
     r"^Base directory for this skill: \S*/skills/(?P<skill>[^/\s]+)"
@@ -39,10 +37,9 @@ _SKILL_PROMPT = re.compile(
 
 @dataclass(frozen=True, slots=True)
 class Workspace:
-    """Where a session runs: the Conductor workspace and its repository."""
+    """Where a session runs: its Conductor workspace or directory name."""
 
     name: str
-    repo: str
 
 
 @dataclass(frozen=True, slots=True)
@@ -90,10 +87,8 @@ def workspace_of(cwd: str) -> Workspace:
     """Name a session after its Conductor workspace, or its directory."""
     match = _CONDUCTOR_WORKSPACE.search(cwd)
     if match:
-        return Workspace(
-            name=to_bar_text(match["workspace"]), repo=to_bar_text(match["repo"])
-        )
-    return Workspace(name=to_bar_text(PurePosixPath(cwd).name) or "?", repo="")
+        return Workspace(name=to_bar_text(match["workspace"]))
+    return Workspace(name=to_bar_text(PurePosixPath(cwd).name) or "?")
 
 
 def skill_label(name: str) -> str:

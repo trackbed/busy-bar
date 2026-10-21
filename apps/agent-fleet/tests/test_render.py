@@ -17,19 +17,17 @@ from bar_kit import BACK_DISPLAY, FRONT_DISPLAY, text_width
 NOW = datetime(2026, 10, 20, 9, 0, tzinfo=UTC)
 
 
-def row(  # noqa: PLR0913 - mirrors the row's fields.
+def row(
     workspace: str,
     status: Status,
     detail: str | None = None,
     *,
     minutes: float = 0,
     selected: bool = False,
-    repo: str = "discera",
 ) -> Row:
     return Row(
         session_id=workspace,
         workspace=workspace,
-        repo=repo,
         status=status,
         detail=detail or status,
         age=timedelta(minutes=minutes),
