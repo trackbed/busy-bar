@@ -7,6 +7,7 @@ fills over each minute, and the date on the back display.
 
 - The clock layout ([src/render-clock.ts](src/render-clock.ts)) and its
   one-second redraw ([src/main.ts](src/main.ts)).
+- Sample frames for the app catalogue ([src/preview.ts](src/preview.ts)).
 
 ## Does Not Own
 
