@@ -17,6 +17,8 @@ A BUSY Bar app written in Python. Replace this line with what it shows.
 - `src/<%= moduleName %>/render.py`: maps a moment in time to display
   elements. Keep it pure so tests can pin the time.
 - `src/<%= moduleName %>/__main__.py`: hands `render` to `run_bar_app`.
+- `src/<%= moduleName %>/preview.py`: sample frames for the app catalogue
+  ([tools/catalogue](<%= offset %>tools/catalogue/README.md)).
 
 ## Run
 

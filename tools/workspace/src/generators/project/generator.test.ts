@@ -85,6 +85,10 @@ describe('projectGenerator', () => {
     expect(tree.read('apps/weather-station/src/main.ts', 'utf8')).toContain(
       "name: 'weather-station'",
     );
+    expect(
+      readJson<ProjectJson>(tree, 'apps/weather-station/project.json'),
+    ).toHaveProperty('targets.preview.command', 'node src/preview.ts');
+    expect(tree.exists('apps/weather-station/src/preview.test.ts')).toBe(true);
     expect(readJson<Tsconfig>(tree, 'tsconfig.json').references).toEqual([
       { path: './libs/bar-kit' },
       { path: './apps/weather-station' },
@@ -130,6 +134,9 @@ describe('projectGenerator', () => {
     ).toBe(true);
     expect(
       tree.read('apps/weather-station/tests/test_render.py', 'utf8'),
+    ).toContain('from weather_station.render import render');
+    expect(
+      tree.read('apps/weather-station/src/weather_station/preview.py', 'utf8'),
     ).toContain('from weather_station.render import render');
     expect(tree.read('pyproject.toml', 'utf8')).toContain(
       'members = [\n  "apps/countdown",\n  "apps/weather-station",\n  "libs/bar-kit-py",\n]',
