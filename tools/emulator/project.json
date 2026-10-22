@@ -2,7 +2,7 @@
   "name": "emulator",
   "$schema": "../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "tools/emulator/src",
-  "projectType": "application",
+  "projectType": "library",
   "tags": ["type:tooling", "lang:ts"],
   "targets": {
     "test": {
