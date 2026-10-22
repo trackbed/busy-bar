@@ -20,7 +20,8 @@ import {
 const REQUIRED_TARGETS = {
   'lang:ts': ['lint', 'oxlint', 'typecheck', 'test'],
   'lang:python': ['lint', 'typecheck', 'test'],
-  'type:app': ['start'],
+  // `preview` feeds the app catalogue (tools/catalogue).
+  'type:app': ['start', 'preview'],
 };
 // The workspace root only lints and type-checks its own scripts.
 const ROOT_TARGETS = ['lint', 'typecheck'];
