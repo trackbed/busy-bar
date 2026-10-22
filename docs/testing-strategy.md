@@ -28,7 +28,8 @@ Status: Current.
    Unit tests cannot see how text looks on the LEDs, but they can check that
    it fits: measure every text element with the kit's `textWidth` /
    `text_width` and assert it stays inside its display, as the apps' render
-   tests do.
+   and preview tests do. `nx run catalogue:build` draws every app's preview
+   scenes with the emulator on one page.
 
 TypeScript tests live next to the code as `*.test.ts`; Python tests live in
 `tests/test_*.py`. `async` tests run directly in both languages.

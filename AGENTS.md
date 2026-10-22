@@ -70,7 +70,9 @@ These apply to every task. Break one only when the user names a concrete reason.
 
 - `apps/<name>/`: runnable BUSY Bar apps. TypeScript apps keep the drawing in
   `src/render*.ts` and the wiring in `src/main.ts`; Python apps keep it in
-  `src/<module>/render.py` and `src/<module>/__main__.py`.
+  `src/<module>/render.py` and `src/<module>/__main__.py`. Each app's
+  `preview` module (`src/preview.ts`, `src/<module>/preview.py`) feeds the
+  catalogue sample frames from its own render function.
 - `libs/bar-kit/` (TypeScript) and `libs/bar-kit-py/` (Python): connection
   settings (`BUSYBAR_ADDR`, `BUSYBAR_TOKEN`), display sizes, `rgba()`, the
   frame loop (`runBarApp` / `run_bar_app`), background polling
@@ -81,6 +83,9 @@ These apply to every task. Break one only when the user names a concrete reason.
   firmware: the HTTP API, both displays with animations, and a browser page.
   Start it with `NX_DAEMON=false yarn nx run emulator:start` and point an app
   at it with `BUSYBAR_ADDR=127.0.0.1:8080`.
+- `tools/catalogue/`: `NX_DAEMON=false yarn nx run catalogue:build` writes
+  `dist/catalogue/index.html`, a landing page that draws every app's preview
+  scenes with the emulator.
 - `tools/workspace/`: the Nx plugin that infers Python targets and graph edges
   (`src/plugins/python.ts`) and the project generator (`src/generators/project/`).
 - Root: `nx.json`, `project-boundaries.mjs`, `eslint.factory.mjs`,
@@ -108,6 +113,7 @@ Full layout, naming, and tags → [docs/project-structure.md](docs/project-struc
 - Changed Python dependencies: run `uv lock` and commit `uv.lock`. CI installs with `--locked`.
 - Changed `package.json` dependencies: run `yarn install` and commit `yarn.lock`.
 - Changed a kit's public behavior: update the other language's kit and both READMEs.
+- Changed what an app draws or how it works: update its `preview` scenes and steps.
 
 # Verification Matrix
 
