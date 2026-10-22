@@ -1,0 +1,14 @@
+{
+  "name": "@busy-bar-apps/catalogue",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./package.json": "./package.json"
+  },
+  "dependencies": {
+    "@busy-bar-apps/emulator": "workspace:0.0.1",
+    "@busy-bar-apps/json-values": "workspace:0.0.1",
+    "@nx/devkit": "23.3.0"
+  }
+}

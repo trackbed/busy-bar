@@ -1240,6 +1240,16 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@busy-bar-apps/catalogue@workspace:tools/catalogue":
+  version: 0.0.0-use.local
+  resolution: "@busy-bar-apps/catalogue@workspace:tools/catalogue"
+  dependencies:
+    "@busy-bar-apps/emulator": "workspace:0.0.1"
+    "@busy-bar-apps/json-values": "workspace:0.0.1"
+    "@nx/devkit": "npm:23.3.0"
+  languageName: unknown
+  linkType: soft
+
 "@busy-bar-apps/clock@workspace:apps/clock":
   version: 0.0.0-use.local
   resolution: "@busy-bar-apps/clock@workspace:apps/clock"
@@ -1257,7 +1267,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@busy-bar-apps/emulator@workspace:tools/emulator":
+"@busy-bar-apps/emulator@workspace:0.0.1, @busy-bar-apps/emulator@workspace:tools/emulator":
   version: 0.0.0-use.local
   resolution: "@busy-bar-apps/emulator@workspace:tools/emulator"
   languageName: unknown
