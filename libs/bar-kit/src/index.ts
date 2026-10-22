@@ -24,6 +24,8 @@ export type { BarFont } from './fonts.ts';
 export { ELLIPSIS, fitText, textWidth } from './fonts.ts';
 export type { PollFailure, Poller, PollerOptions, Snapshot } from './poller.ts';
 export { createPoller } from './poller.ts';
+export type { Preview, PreviewScene, PreviewStep } from './preview.ts';
+export { printPreview } from './preview.ts';
 export type {
   BarDisplayClient,
   BarElements,

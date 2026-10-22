@@ -23,6 +23,9 @@ variables and behave the same way.
   the fonts draw (`Nørreport` becomes `Noerreport`, a backtick an
   apostrophe), `textWidth` measures it in pixels from busy-lib's font maps,
   and `fitText` cuts it to a width with `..`.
+- The app catalogue's contract (`Preview`, `PreviewScene`, `PreviewStep`):
+  what an app's `preview` target prints with `printPreview`, as one line of
+  JSON ([tools/catalogue](../../tools/catalogue/README.md)).
 - Re-exports of busy-lib's element types (`TextElement`, `RectangleElement`,
   and others) so apps need only this package.
 
