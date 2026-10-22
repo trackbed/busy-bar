@@ -15,6 +15,7 @@ requests.
   50, with checks and auto-merge) and the ones merged since local midnight.
 - Noticing merges and newly failing checks ([src/watch.ts](src/watch.ts)).
 - The layout ([src/render.ts](src/render.ts)).
+- Sample frames for the app catalogue ([src/preview.ts](src/preview.ts)).
 
 ## Does Not Own
 

@@ -7,7 +7,7 @@ export default createProjectVitestConfig({
     functions: 95,
     lines: 95,
   },
-  // The process entry point only wires the kit together; render.ts holds the
-  // behavior.
-  coverageExclude: ['src/main.ts'],
+  // The process entry points only wire the kit together (main.ts) or print
+  // sample frames (preview.ts); render.ts holds the behavior.
+  coverageExclude: ['src/main.ts', 'src/preview.ts'],
 });

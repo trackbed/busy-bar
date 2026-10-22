@@ -21,6 +21,7 @@ when a live booth goes quiet, cannot be read, or disappears.
   token, through Convex's HTTP API.
 - Deciding when a booth is quiet ([src/event.ts](src/event.ts)) and the layout
   ([src/render.ts](src/render.ts)).
+- Sample frames for the app catalogue ([src/preview.ts](src/preview.ts)).
 
 ## Does Not Own
 

@@ -100,13 +100,28 @@ function createPythonProject(
     };
   }
 
-  if (hasMainModule(workspaceRoot, root, pyproject)) {
+  const isApp = hasModule(workspaceRoot, root, pyproject, '__main__');
+  if (isApp) {
     targets['start'] = {
       command: `uv run python -m ${pyproject.moduleName}`,
       options: { cwd: root },
       continuous: true,
       metadata: {
         description: `Run the app (python -m ${pyproject.moduleName}).`,
+        technologies: ['python'],
+      },
+    };
+  }
+
+  // Only apps preview: bar-kit-py's `preview` module is the contract, not an
+  // entry point.
+  if (isApp && hasModule(workspaceRoot, root, pyproject, 'preview')) {
+    targets['preview'] = {
+      command: `uv run python -m ${pyproject.moduleName}.preview`,
+      options: { cwd: root },
+      metadata: {
+        description:
+          'Print sample frames for the app catalogue (tools/catalogue).',
         technologies: ['python'],
       },
     };
@@ -143,13 +158,14 @@ function uvTarget(
   };
 }
 
-function hasMainModule(
+function hasModule(
   workspaceRoot: string,
   root: string,
   pyproject: PyprojectInfo,
+  module: string,
 ): boolean {
   return existsSync(
-    join(workspaceRoot, root, 'src', pyproject.moduleName, '__main__.py'),
+    join(workspaceRoot, root, 'src', pyproject.moduleName, `${module}.py`),
   );
 }
 

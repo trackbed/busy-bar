@@ -1,0 +1,26 @@
+import type { Preview } from '@busy-bar-apps/bar-kit';
+import { printPreview } from '@busy-bar-apps/bar-kit';
+
+import { render } from './render.ts';
+
+/**
+ * Sample frames for the app catalogue: `nx run <%= name %>:preview`. Replace
+ * the text, and add a scene for each state worth showing.
+ */
+export function preview(): Preview {
+  return {
+    summary: 'A BUSY Bar app. Replace this line with what it is for.',
+    steps: [{ label: 'Draws', text: 'Its name on the front display.' }],
+    scenes: [
+      {
+        title: 'Hello',
+        caption: 'The name the generator drew.',
+        elements: render(new Date('2026-01-01T09:00:00Z')),
+      },
+    ],
+  };
+}
+
+if (import.meta.main) {
+  printPreview(preview());
+}

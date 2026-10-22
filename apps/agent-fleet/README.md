@@ -18,6 +18,7 @@ doing (the skill it runs, when it runs one), and for how long.
   layout ([src/agent_fleet/render.py](src/agent_fleet/render.py)), and the
   wheel, buttons, and chime
   ([src/agent_fleet/controls.py](src/agent_fleet/controls.py)).
+- Sample frames for the app catalogue ([src/agent_fleet/preview.py](src/agent_fleet/preview.py)).
 
 ## Does Not Own
 

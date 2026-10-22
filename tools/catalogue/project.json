@@ -1,0 +1,13 @@
+{
+  "name": "catalogue",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "tools/catalogue/src",
+  "projectType": "application",
+  "tags": ["type:tooling", "lang:ts"],
+  "targets": {
+    "build": {
+      "command": "node src/main.ts",
+      "options": { "cwd": "{projectRoot}" }
+    }
+  }
+}

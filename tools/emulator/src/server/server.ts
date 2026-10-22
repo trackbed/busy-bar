@@ -8,9 +8,9 @@ import type { AddressInfo } from 'node:net';
 import type { Duplex } from 'node:stream';
 
 import type { Device, DeviceEvent } from '../device/device.ts';
-import { encodePng } from '../formats/png.ts';
 import type { Canvas } from '../render/canvas.ts';
 import type { SceneRenderer } from '../render/scene.ts';
+import { screenshotPng } from '../render/screenshot.ts';
 import type { ApiContext } from './api.ts';
 import { handleApi, packGrey4 } from './api.ts';
 import { ApiError, sendBytes, sendError, sendJson } from './http.ts';
@@ -231,24 +231,7 @@ export class Emulator {
       return;
     }
     const canvas = display === 'front' ? this.#front : this.#back;
-    const width = canvas.width * scale;
-    const height = canvas.height * scale;
-    const rgba = new Uint8Array(width * height * 4);
-    for (let y = 0; y < height; y += 1) {
-      for (let x = 0; x < width; x += 1) {
-        const color = canvas.pixel(
-          Math.floor(x / scale),
-          Math.floor(y / scale),
-        );
-        const level = (value: number): number =>
-          display === 'back' ? (value >> 4) * 17 : value;
-        rgba.set(
-          [level(color.r), level(color.g), level(color.b), 255],
-          (y * width + x) * 4,
-        );
-      }
-    }
-    sendBytes(response, 'image/png', encodePng({ width, height, rgba }));
+    sendBytes(response, 'image/png', screenshotPng(canvas, display, scale));
   }
 
   #frame(): { readonly front: string; readonly back: string } {

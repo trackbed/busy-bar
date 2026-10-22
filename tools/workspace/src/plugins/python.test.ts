@@ -61,11 +61,12 @@ describe('createNodes', () => {
     expect(await projectsFor(root, [])).toEqual({});
   });
 
-  it('infers lint, typecheck, test, and start for an app', async () => {
+  it('infers lint, typecheck, test, start, and preview for an app', async () => {
     const root = workspace({
       'pyproject.toml': ROOT_PYPROJECT,
       'apps/countdown/pyproject.toml': APP_PYPROJECT,
       'apps/countdown/src/countdown/__main__.py': '',
+      'apps/countdown/src/countdown/preview.py': '',
       'apps/countdown/tests/test_render.py': '',
     });
 
@@ -84,6 +85,7 @@ describe('createNodes', () => {
       'typecheck',
       'test',
       'start',
+      'preview',
     ]);
     expect(targets['lint']).toMatchObject({
       command: 'uv run ruff check',
@@ -103,6 +105,10 @@ describe('createNodes', () => {
       command: 'uv run python -m countdown',
       continuous: true,
     });
+    expect(targets['preview']).toMatchObject({
+      command: 'uv run python -m countdown.preview',
+      options: { cwd: 'apps/countdown' },
+    });
   });
 
   it('infers only lint and typecheck for a lib without tests', async () => {
@@ -110,6 +116,7 @@ describe('createNodes', () => {
       'pyproject.toml': ROOT_PYPROJECT,
       'libs/bar-kit-py/pyproject.toml': LIB_PYPROJECT,
       'libs/bar-kit-py/src/bar_kit/__init__.py': '',
+      'libs/bar-kit-py/src/bar_kit/preview.py': '',
     });
 
     const projects = await projectsFor(root, [

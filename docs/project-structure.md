@@ -7,6 +7,7 @@ Status: Current.
 ```text
 apps/<name>/       Runnable BUSY Bar apps
 libs/<name>/       Shared libraries
+tools/catalogue/   The app catalogue: a landing page of every app's previews
 tools/emulator/    A BUSY Bar emulator, built from the firmware
 tools/workspace/   Nx plugin for Python projects and the project generator
 docs/              Guides and ADRs
@@ -29,7 +30,10 @@ NX_DAEMON=false yarn nx g @busy-bar-apps/workspace:project <name> --language=ts|
 ```
 
 `--type` defaults to `app`. Generated apps depend on the language's kit and
-draw their own name, so `nx run <name>:start` works at once.
+draw their own name, so `nx run <name>:start` works at once. They also get a
+`preview` module, which puts them in the
+[app catalogue](../tools/catalogue/README.md); every app needs a `preview`
+target.
 
 The generator refuses a name that another project already uses in either
 language, a reserved word, and a Python name that Python can already import.

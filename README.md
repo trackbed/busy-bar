@@ -17,6 +17,7 @@ for its language.
 | [`apps/merge-ticker`](apps/merge-ticker/README.md)           | TypeScript | Today's merges, failing checks, auto-merge queue    |
 | [`libs/bar-kit`](libs/bar-kit/README.md)                     | TypeScript | Connection settings, display helpers, frame loop    |
 | [`libs/bar-kit-py`](libs/bar-kit-py/README.md)               | Python     | The same kit for Python apps                        |
+| [`tools/catalogue`](tools/catalogue/README.md)               | TypeScript | A landing page showing what every app draws         |
 | [`tools/emulator`](tools/emulator/README.md)                 | TypeScript | A BUSY Bar in the browser, built from its firmware  |
 | [`tools/workspace`](tools/workspace/README.md)               | TypeScript | Nx plugin for Python projects, project generator    |
 
@@ -53,6 +54,13 @@ COUNTDOWN_TARGET=2026-12-24T18:00:00+01:00 NX_DAEMON=false yarn nx run countdown
 ```
 
 Press Ctrl+C to stop. The app clears what it drew before it exits.
+
+To see every app at once, build the catalogue: a page with each app's
+displays in its most telling states, and how it works.
+
+```sh
+NX_DAEMON=false yarn nx run catalogue:build  # writes dist/catalogue/index.html
+```
 
 ### Connect to a bar
 
@@ -93,8 +101,8 @@ see [docs/command-reference.md](docs/command-reference.md).
 ```text
 apps/      Runnable BUSY Bar apps, one project per directory
 libs/      Shared libraries
-tools/     Workspace tooling: the emulator, the Nx Python plugin, and the
-           project generator
+tools/     Workspace tooling: the emulator, the app catalogue, the Nx Python
+           plugin, and the project generator
 docs/      Guides and architecture decision records
 scripts/   Repository scripts (verification, readiness, hooks)
 ```

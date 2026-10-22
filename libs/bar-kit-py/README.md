@@ -24,6 +24,10 @@ both read the same environment variables and behave the same way.
   apostrophe), `text_width` measures it in pixels, and `fit_text` cuts it to
   a width with `..`. The widths come from busy-lib's font maps, so both kits
   measure alike.
+- The app catalogue's contract (`Preview`, `PreviewScene`, `PreviewStep`):
+  what an app's `preview` target prints with `print_preview`, as one line of
+  JSON, elements serialized the way busylib sends them
+  ([tools/catalogue](../../tools/catalogue/README.md)).
 
 ## Does Not Own
 

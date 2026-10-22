@@ -15,9 +15,9 @@ build-backend = "uv_build"
 [tool.coverage.run]
 branch = true
 source = ["src"]
-# The process entry point only wires the modules together; they hold the
-# behavior.
-omit = ["src/claude_limits/__main__.py"]
+# The process entry points only wire the modules together (__main__.py) or
+# print sample frames (preview.py); the other modules hold the behavior.
+omit = ["src/claude_limits/__main__.py", "src/claude_limits/preview.py"]
 
 [tool.coverage.report]
 # Ratchet upward; never lower it to make a change pass.

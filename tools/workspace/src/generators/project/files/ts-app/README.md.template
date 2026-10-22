@@ -16,6 +16,8 @@ A BUSY Bar app written in TypeScript. Replace this line with what it shows.
 - `src/render.ts`: maps a moment in time to display elements. Keep it pure so
   tests can pin the time.
 - `src/main.ts`: hands `render` to `runBarApp`.
+- `src/preview.ts`: sample frames for the app catalogue
+  ([tools/catalogue](<%= offset %>tools/catalogue/README.md)).
 
 ## Run
 

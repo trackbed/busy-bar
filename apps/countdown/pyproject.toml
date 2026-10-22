@@ -15,9 +15,9 @@ build-backend = "uv_build"
 [tool.coverage.run]
 branch = true
 source = ["src"]
-# The process entry point only wires the kit together; render.py and
-# settings.py hold the behavior.
-omit = ["src/countdown/__main__.py"]
+# The process entry points only wire the kit together (__main__.py) or print
+# sample frames (preview.py); render.py and settings.py hold the behavior.
+omit = ["src/countdown/__main__.py", "src/countdown/preview.py"]
 
 [tool.coverage.report]
 # Ratchet upward; never lower it to make a change pass.

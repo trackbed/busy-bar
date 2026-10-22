@@ -40,6 +40,10 @@ behaviour and copies none of it.
   `await_previous_end`, from stock animations and uploaded `.anim` files.
 - The status WebSocket (`/api/status/ws`): input events, front frames, and
   heartbeats as protobuf, for busylib's input readers.
+- A small public API for tools ([src/index.ts](src/index.ts)):
+  `openFirmwareAssets` syncs and opens the pinned assets, and
+  `screenshotDraw` validates one draw request as the API does and returns
+  PNGs of both displays. The [app catalogue](../catalogue/README.md) uses it.
 - The page ([src/web/](src/web/)): the displays, the buttons, wheel, and mode
   switch (they go through `/api/input`), a BUSY timer switch, sound, and the
   LED blink. Screenshots: `/emulator/screenshot.png?display=front|back&scale=8`.

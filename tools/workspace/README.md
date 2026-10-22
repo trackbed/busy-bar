@@ -6,8 +6,8 @@ Nx loads it straight from source.
 ## Owns
 
 - The Nx Python plugin ([src/plugins/python.ts](src/plugins/python.ts)):
-  inferred `lint`, `typecheck`, `test`, and `start` targets for every Python
-  project, and graph edges from `pyproject.toml`
+  inferred `lint`, `typecheck`, `test`, `start`, and `preview` targets for
+  every Python project, and graph edges from `pyproject.toml`
   ([docs/python.md](../../docs/python.md#the-nx-python-plugin)).
 - The project generator ([src/generators/project/](src/generators/project/)):
   `nx g @busy-bar-apps/workspace:project`. Its templates live in

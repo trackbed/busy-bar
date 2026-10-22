@@ -15,9 +15,12 @@ build-backend = "uv_build"
 [tool.coverage.run]
 branch = true
 source = ["src"]
-# The process entry point only wires the kit together; render.py holds the
-# behavior.
-omit = ["src/<%= moduleName %>/__main__.py"]
+# The process entry points only wire the kit together (__main__.py) or print
+# sample frames (preview.py); render.py holds the behavior.
+omit = [
+  "src/<%= moduleName %>/__main__.py",
+  "src/<%= moduleName %>/preview.py",
+]
 
 [tool.coverage.report]
 # Ratchet upward; never lower it to make a change pass.

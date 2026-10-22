@@ -16,6 +16,7 @@ account reaches its limit.
   ([src/claude_limits/board.py](src/claude_limits/board.py)): its threshold,
   stale readings, reset windows, and blocked accounts.
 - The layout ([src/claude_limits/render.py](src/claude_limits/render.py)).
+- Sample frames for the app catalogue ([src/claude_limits/preview.py](src/claude_limits/preview.py)).
 
 ## Does Not Own
 

@@ -1,0 +1,28 @@
+"""Sample frames for the app catalogue: `nx run <%= name %>:preview`.
+
+Replace the text, and add a scene for each state worth showing.
+"""
+
+from datetime import UTC, datetime
+
+from bar_kit import Preview, PreviewScene, PreviewStep, print_preview
+from <%= moduleName %>.render import render
+
+
+def preview() -> Preview:
+    """What the catalogue shows for this app."""
+    return Preview(
+        summary="A BUSY Bar app. Replace this line with what it is for.",
+        steps=[PreviewStep(label="Draws", text="Its name on the front display.")],
+        scenes=[
+            PreviewScene(
+                title="Hello",
+                caption="The name the generator drew.",
+                elements=render(datetime(2026, 1, 1, 9, tzinfo=UTC)),
+            )
+        ],
+    )
+
+
+if __name__ == "__main__":
+    print_preview(preview())
