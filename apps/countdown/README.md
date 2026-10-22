@@ -9,6 +9,7 @@ down to on the back display.
 - Reading the event from the environment
   ([src/countdown/settings.py](src/countdown/settings.py)).
 - The countdown layout ([src/countdown/render.py](src/countdown/render.py)).
+- Sample frames for the app catalogue ([src/countdown/preview.py](src/countdown/preview.py)).
 
 ## Does Not Own
 
