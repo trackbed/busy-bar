@@ -48,7 +48,8 @@ tests/           pytest tests (test_*.py)
 ```
 
 An app is a library with `src/<module>/__main__.py`; `python -m <module>`
-starts it.
+starts it. Its `src/<module>/preview.py` prints sample frames for the app
+catalogue ([tools/catalogue](../tools/catalogue/README.md)).
 
 ## The Nx Python Plugin
 
@@ -57,12 +58,13 @@ turns every `{apps,libs,tools}/<name>/pyproject.toml` into an Nx project
 ([ADR 0002](adr/0002-local-python-nx-plugin.md)). Each target runs with the
 project directory as its working directory:
 
-| Target      | Command                                      | Inferred when                     |
-| ----------- | -------------------------------------------- | --------------------------------- |
-| `lint`      | `uv run ruff check`                          | always                            |
-| `typecheck` | `uv run mypy --config-file=<root> src tests` | always                            |
-| `test`      | `uv run pytest --rootdir=. --cov ...`        | the project has `tests/`          |
-| `start`     | `uv run python -m <module>`                  | `src/<module>/__main__.py` exists |
+| Target      | Command                                      | Inferred when                                     |
+| ----------- | -------------------------------------------- | ------------------------------------------------- |
+| `lint`      | `uv run ruff check`                          | always                                            |
+| `typecheck` | `uv run mypy --config-file=<root> src tests` | always                                            |
+| `test`      | `uv run pytest --rootdir=. --cov ...`        | the project has `tests/`                          |
+| `start`     | `uv run python -m <module>`                  | `src/<module>/__main__.py` exists                 |
+| `preview`   | `uv run python -m <module>.preview`          | `src/<module>/preview.py` and `__main__.py` exist |
 
 `lint`, `typecheck`, and `test` are cached. Their inputs are the project's
 files, the root `pyproject.toml`, `uv.lock`, and `.python-version`;
