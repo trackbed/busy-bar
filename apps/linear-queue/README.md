@@ -13,6 +13,7 @@ When ready runs low, it is time for another backlog-refine pass.
   search, 250 issues a page, up to 5,000 per count (a `+` marks a lower
   bound), every 3 minutes and a minute after a failure.
 - The layout ([src/render.ts](src/render.ts)).
+- Sample frames for the app catalogue ([src/preview.ts](src/preview.ts)).
 
 ## Does Not Own
 

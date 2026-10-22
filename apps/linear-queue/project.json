@@ -9,6 +9,10 @@
       "command": "node src/main.ts",
       "options": { "cwd": "{projectRoot}" },
       "continuous": true
+    },
+    "preview": {
+      "command": "node src/preview.ts",
+      "options": { "cwd": "{projectRoot}" }
     }
   }
 }
