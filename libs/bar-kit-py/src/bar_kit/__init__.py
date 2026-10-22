@@ -16,6 +16,7 @@ from bar_kit.config import (
 from bar_kit.display import BACK_DISPLAY, FRONT_DISPLAY, DisplaySize, rgba
 from bar_kit.fonts import ELLIPSIS, fit_text, text_width
 from bar_kit.poll import Poller, PollFailure, Snapshot
+from bar_kit.preview import Preview, PreviewScene, PreviewStep, print_preview
 from bar_kit.run import (
     DEFAULT_PRIORITY,
     DisplayClient,
@@ -38,6 +39,9 @@ __all__ = [
     "DisplaySize",
     "PollFailure",
     "Poller",
+    "Preview",
+    "PreviewScene",
+    "PreviewStep",
     "Render",
     "Snapshot",
     "create_busy_bar",
@@ -45,6 +49,7 @@ __all__ = [
     "install_shutdown_handlers",
     "is_cloud_address",
     "load_bar_config",
+    "print_preview",
     "rgba",
     "run_bar_app",
     "text_width",
