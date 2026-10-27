@@ -20,6 +20,7 @@ import {
 import { rawPcmSound } from '../formats/sound.ts';
 import { ApiError } from '../server/http.ts';
 import type { InputEvent } from '../server/protobuf.ts';
+import { DEFAULT_SETTINGS, INITIAL_SNAPSHOT } from './busy-timer.ts';
 import type { DeviceEvent, Key } from './device.ts';
 import { Device } from './device.ts';
 import type { AssetSource } from './elements.ts';
@@ -457,5 +458,129 @@ describe('Device', () => {
     device.setName('B');
 
     expect(listener).toHaveBeenCalledExactlyOnceWith({ type: 'settings' });
+  });
+
+  describe('BUSY timer', () => {
+    const CARD = 'c0ffee00-0000-4000-8000-00000000abcd';
+    const simple = (at: number, leftMs: number, paused = false) => ({
+      snapshot: {
+        type: 'SIMPLE',
+        card_id: CARD,
+        is_paused: paused,
+        time_left_ms: leftMs,
+        busy_bar_settings: { ...DEFAULT_SETTINGS, theme: 'on_air' },
+      },
+      snapshot_timestamp_ms: at,
+    });
+
+    it('starts as a bar that never ran its timer', async () => {
+      const { device } = await setup();
+
+      expect(device.busySnapshot).toStrictEqual(INITIAL_SNAPSHOT);
+    });
+
+    it('records the switch starting and stopping an infinite timer', async () => {
+      const { device, clock } = await setup();
+      device.setBusySnapshot(simple(START, 60_000));
+      clock.now += 1000;
+
+      device.setTimerRunning(true);
+
+      expect(device.busySnapshot).toStrictEqual({
+        snapshot: {
+          type: 'INFINITE',
+          card_id: '00000000-0000-0000-0000-000000000000',
+          is_paused: false,
+          busy_bar_settings: { ...DEFAULT_SETTINGS, theme: 'on_air' },
+        },
+        snapshot_timestamp_ms: START + 1000,
+      });
+
+      clock.now += 1000;
+      device.setTimerRunning(false);
+
+      expect(device.busySnapshot).toStrictEqual({
+        snapshot: {
+          type: 'NOT_STARTED',
+          busy_bar_settings: { ...DEFAULT_SETTINGS, theme: 'on_air' },
+        },
+        snapshot_timestamp_ms: START + 2000,
+      });
+      expect(device.timerRunning).toBe(false);
+    });
+
+    it('runs a newer snapshot and ignores an older one', async () => {
+      const { device, events } = await setup();
+      device.setBusySnapshot(simple(START, 60_000));
+
+      expect(device.timerRunning).toBe(true);
+      expect(device.screen.loaderPriority).toBe(TIMER_PRIORITY);
+
+      device.setBusySnapshot({
+        snapshot: { type: 'NOT_STARTED' },
+        snapshot_timestamp_ms: START,
+      });
+
+      expect(device.busySnapshot).toStrictEqual(simple(START, 60_000));
+      expect(events).toStrictEqual([{ type: 'settings' }]);
+    });
+
+    it('refuses a snapshot it cannot parse', async () => {
+      const { device } = await setup();
+
+      expect(() => {
+        device.setBusySnapshot({ snapshot: { type: 'SIMPLE' } });
+      }).toThrow(new ApiError(400, 'Failed to parse snapshot'));
+      expect(device.busySnapshot).toStrictEqual(INITIAL_SNAPSHOT);
+    });
+
+    it('frees the screen when the timer runs out, keeping its snapshot', async () => {
+      vi.useFakeTimers();
+      const { device, events } = await setup();
+      device.setBusySnapshot(simple(START, 60_000));
+
+      vi.advanceTimersByTime(59_999);
+
+      expect(device.timerRunning).toBe(true);
+
+      vi.advanceTimersByTime(1);
+
+      expect(device.timerRunning).toBe(false);
+      expect(device.screen.loaderPriority).toBe(IDLE_PRIORITY);
+      expect(device.busySnapshot).toStrictEqual(simple(START, 60_000));
+      expect(events).toStrictEqual([
+        { type: 'settings' },
+        { type: 'settings' },
+      ]);
+    });
+
+    it('does not run a timer that ran out before it arrived', async () => {
+      const { device } = await setup();
+
+      device.setBusySnapshot(simple(START - 2000, 1000));
+
+      expect(device.timerRunning).toBe(false);
+    });
+
+    it('holds the screen while the timer is paused', async () => {
+      vi.useFakeTimers();
+      const { device } = await setup();
+      device.setBusySnapshot(simple(START, 1000, true));
+
+      vi.advanceTimersByTime(60_000);
+
+      expect(device.timerRunning).toBe(true);
+    });
+
+    it('forgets the end of a timer that a new snapshot replaced', async () => {
+      vi.useFakeTimers();
+      const { device } = await setup();
+      device.setBusySnapshot(simple(START, 1000));
+      device.setTimerRunning(true);
+
+      vi.advanceTimersByTime(60_000);
+
+      expect(device.timerRunning).toBe(true);
+    });
   });
 });

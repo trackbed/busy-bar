@@ -6,6 +6,14 @@ import type { Sound } from '../formats/sound.ts';
 import type { Rgba } from '../render/canvas.ts';
 import { ApiError } from '../server/http.ts';
 import type { InputEvent } from '../server/protobuf.ts';
+import type { BusySnapshot } from './busy-timer.ts';
+import {
+  INITIAL_SNAPSHOT,
+  parseBusySnapshot,
+  startedTimer,
+  stoppedTimer,
+  stopsAt,
+} from './busy-timer.ts';
 import type { AssetSource } from './elements.ts';
 import { devicePath, parseDrawRequest } from './elements.ts';
 import { IDLE_PRIORITY, Screen, TIMER_PRIORITY } from './screen.ts';
@@ -54,7 +62,9 @@ export class Device {
   #brightness: 'auto' | number = 'auto';
   #volume = 50;
   #name = 'BUSY Bar Emulator';
+  #timer: BusySnapshot = INITIAL_SNAPSHOT;
   #timerRunning = false;
+  #timerEnd: ReturnType<typeof setTimeout> | undefined;
   readonly #now: () => number;
   readonly #listeners = new Set<(event: DeviceEvent) => void>();
   readonly #sounds = new Map<string, Sound>();
@@ -88,8 +98,14 @@ export class Device {
     return this.#name;
   }
 
+  /** Whether the BUSY timer works, rests, or is paused. */
   get timerRunning(): boolean {
     return this.#timerRunning;
+  }
+
+  /** What `GET /api/busy/snapshot` answers: the timer's last change. */
+  get busySnapshot(): BusySnapshot {
+    return this.#timer;
   }
 
   /** Follow the device; returns a function that stops following. */
@@ -152,13 +168,30 @@ export class Device {
   }
 
   /**
-   * Run or stop the BUSY timer. While it runs (or is paused) the firmware's
-   * loader holds the screen above every app priority.
+   * Start or stop the BUSY timer, as the page's switch does: starting runs
+   * an infinite timer, a BUSY session without an end.
    */
   setTimerRunning(running: boolean): void {
-    this.#timerRunning = running;
-    this.screen.setLoaderPriority(running ? TIMER_PRIORITY : IDLE_PRIORITY);
-    this.#emit({ type: 'settings' });
+    const settings = this.#timer.snapshot.busy_bar_settings;
+    this.#applyTimer(
+      running
+        ? startedTimer(this.#now(), settings)
+        : stoppedTimer(this.#now(), settings),
+    );
+  }
+
+  /**
+   * Handle `PUT /api/busy/snapshot`. Like the firmware, the bar ignores a
+   * snapshot no newer than the one it holds and still answers OK.
+   */
+  setBusySnapshot(body: unknown): void {
+    const snapshot = parseBusySnapshot(body, this.#now());
+    if (snapshot === undefined) {
+      throw new ApiError(400, 'Failed to parse snapshot');
+    }
+    if (snapshot.snapshot_timestamp_ms > this.#timer.snapshot_timestamp_ms) {
+      this.#applyTimer(snapshot);
+    }
   }
 
   setBrightness(value: 'auto' | number): void {
@@ -212,6 +245,31 @@ export class Device {
   /** A sound the page was told to play. */
   sound(id: string): Sound | undefined {
     return this.#sounds.get(id);
+  }
+
+  /**
+   * Run the timer from `snapshot`. While it runs (or is paused) the
+   * firmware's loader holds the screen above every app priority; a timer
+   * that runs out frees it without recording a new snapshot.
+   */
+  #applyTimer(snapshot: BusySnapshot): void {
+    this.#timer = snapshot;
+    clearTimeout(this.#timerEnd);
+    const end = stopsAt(snapshot);
+    const running = end === undefined || end > this.#now();
+    if (running && end !== undefined) {
+      // A timer may run for a day; it must not keep the process alive.
+      this.#timerEnd = setTimeout(() => {
+        this.#setTimerRunning(false);
+      }, end - this.#now()).unref();
+    }
+    this.#setTimerRunning(running);
+  }
+
+  #setTimerRunning(running: boolean): void {
+    this.#timerRunning = running;
+    this.screen.setLoaderPriority(running ? TIMER_PRIORITY : IDLE_PRIORITY);
+    this.#emit({ type: 'settings' });
   }
 
   #emit(event: DeviceEvent): void {

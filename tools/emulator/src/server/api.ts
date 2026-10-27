@@ -69,6 +69,7 @@ const ROUTES: Readonly<
   '/api/assets/upload': { POST: upload, DELETE: deleteUploads },
   '/api/screen': { GET: screen },
   '/api/input': { POST: input },
+  '/api/busy/snapshot': { GET: getBusySnapshot, PUT: setBusySnapshot },
 };
 
 /** Answer one `/api/...` request. */
@@ -83,7 +84,7 @@ export async function handleApi(
       response.writeHead(200, {
         'access-control-allow-origin': '*',
         'access-control-allow-headers': '*',
-        'access-control-allow-methods': 'GET, POST, DELETE, OPTIONS',
+        'access-control-allow-methods': 'GET, POST, PUT, DELETE, OPTIONS',
       });
       response.end();
       return;
@@ -444,6 +445,27 @@ function input(
     throw new ApiError(400, 'Bad Request');
   }
   context.device.press(key);
+  sendOk(response);
+}
+
+function getBusySnapshot(
+  _request: IncomingMessage,
+  _url: URL,
+  context: ApiContext,
+  response: ServerResponse,
+): void {
+  sendJson(response, 200, context.device.busySnapshot);
+}
+
+async function setBusySnapshot(
+  request: IncomingMessage,
+  _url: URL,
+  context: ApiContext,
+  response: ServerResponse,
+): Promise<void> {
+  context.device.setBusySnapshot(
+    lenientJson(await readBody(request, MAX_JSON_BYTES)),
+  );
   sendOk(response);
 }
 
