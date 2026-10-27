@@ -22,6 +22,10 @@ variables and behave the same way.
 - Background data (`createPoller`): fetch a source every `intervalMs`, try
   again after `retryMs` when it fails, and keep the latest value (`latest()`)
   and the last failure (`failure()`) for a pure render function.
+- The buttons, wheel, and mode selector (`listenForInput`): read the bar's
+  status stream over Node's WebSocket, hand each `InputEvent` to a handler,
+  reopen the stream after it drops, and log a handler that throws. The cloud
+  does not stream input, so there it warns once and returns.
 - Text for the bitmap fonts: `toBarText` turns any text into printable ASCII
   the fonts draw (`Nørreport` becomes `Noerreport`, a backtick an
   apostrophe), `textWidth` measures it in pixels from busy-lib's font maps,

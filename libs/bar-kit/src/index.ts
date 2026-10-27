@@ -22,6 +22,8 @@ export type { DisplaySize } from './display.ts';
 export { BACK_DISPLAY, FRONT_DISPLAY, rgba } from './display.ts';
 export type { BarFont } from './fonts.ts';
 export { ELLIPSIS, fitText, textWidth } from './fonts.ts';
+export type { InputEvent, ListenForInputOptions } from './input.ts';
+export { listenForInput } from './input.ts';
 export type { PollFailure, Poller, PollerOptions, Snapshot } from './poller.ts';
 export { createPoller } from './poller.ts';
 export type { Preview, PreviewScene, PreviewStep } from './preview.ts';
