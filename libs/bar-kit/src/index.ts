@@ -3,6 +3,7 @@
 
 export type {
   AnimationElement,
+  BusySnapshot,
   CountdownElement,
   ImageElement,
   RectangleElement,

@@ -34,7 +34,8 @@ variables and behave the same way.
   what an app's `preview` target prints with `printPreview`, as one line of
   JSON ([tools/catalogue](../../tools/catalogue/README.md)).
 - Re-exports of busy-lib's element types (`TextElement`, `RectangleElement`,
-  and others) so apps need only this package.
+  and others) and of `BusySnapshot`, what `BusySnapshotGet` answers about the
+  BUSY timer, so apps need only this package.
 
 ## Does Not Own
 
