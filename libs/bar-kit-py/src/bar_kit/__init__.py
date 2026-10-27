@@ -15,6 +15,7 @@ from bar_kit.config import (
 )
 from bar_kit.display import BACK_DISPLAY, FRONT_DISPLAY, DisplaySize, rgba
 from bar_kit.fonts import ELLIPSIS, fit_text, text_width
+from bar_kit.input import listen_for_input
 from bar_kit.poll import Poller, PollFailure, Snapshot
 from bar_kit.preview import Preview, PreviewScene, PreviewStep, print_preview
 from bar_kit.run import (
@@ -48,6 +49,7 @@ __all__ = [
     "fit_text",
     "install_shutdown_handlers",
     "is_cloud_address",
+    "listen_for_input",
     "load_bar_config",
     "print_preview",
     "rgba",

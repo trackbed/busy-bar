@@ -22,7 +22,8 @@ doing (the skill it runs, when it runs one), and for how long.
 
 ## Does Not Own
 
-- Connection settings, the frame loop, and shutdown handling. Those live in
+- Connection settings, the frame loop, shutdown handling, and reading the
+  bar's input stream. Those live in
   [`bar-kit-py`](../../libs/bar-kit-py/README.md).
 - Claude Code itself. The board only listens: it cannot answer prompts or
   steer agents.

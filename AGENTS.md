@@ -76,9 +76,10 @@ These apply to every task. Break one only when the user names a concrete reason.
 - `libs/bar-kit/` (TypeScript) and `libs/bar-kit-py/` (Python): connection
   settings (`BUSYBAR_ADDR`, `BUSYBAR_TOKEN`), display sizes, `rgba()`, the
   frame loop (`runBarApp` / `run_bar_app`), background polling
-  (`createPoller` / `Poller`), and text that fits the bitmap fonts
-  (`toBarText`, `textWidth`, `fitText`). The two kits share one contract;
-  change both together.
+  (`createPoller` / `Poller`), the bar's buttons and wheel
+  (`listenForInput` / `listen_for_input`), and text that fits the bitmap
+  fonts (`toBarText`, `textWidth`, `fitText`). The two kits share one
+  contract; change both together.
 - `tools/emulator/`: a BUSY Bar on the computer, built from the open
   firmware: the HTTP API, both displays with animations, and a browser page.
   Start it with `NX_DAEMON=false yarn nx run emulator:start` and point an app

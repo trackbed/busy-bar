@@ -113,11 +113,13 @@ The bar reports its three buttons (OK, BACK, START), the wheel, and the mode
 selector (BUSY, CUSTOM, OFF, APPS, SETTINGS) on its status WebSocket,
 `/api/status/ws`, as protobuf.
 
-- busylib's `AsyncBusyBar.stream_status_ws()` decodes the stream, and
-  `busylib.features.input_events(message)` turns each message into typed
-  `ButtonEvent`, `EncoderEvent`, and `SelectorEvent` values.
-- The TypeScript client's `StateStream` runs in browsers only, so an app that
-  reads input is simplest in Python.
+- Both kits read it: `listenForInput` in TypeScript, over Node's WebSocket,
+  and `listen_for_input` in Python, over busylib's
+  `AsyncBusyBar.stream_status_ws()`. A client sends `{"enable": true}`, then
+  gets protobuf `State` messages; input is `StateUpdate` field 11. The bar
+  takes four clients at a time.
+- The TypeScript client's own `StateStream` runs in browsers only: it needs a
+  Web Worker.
 - The stream is local: the cloud refuses it, so input needs USB or Wi-Fi.
 - Every listener gets every event, whichever app is on screen. The selector is
   reported only when it moves.

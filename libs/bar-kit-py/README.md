@@ -22,6 +22,10 @@ both read the same environment variables and behave the same way.
 - Background data (`Poller`): fetch a source every `interval` seconds, try
   again after `retry` when it fails, and keep the latest value (`latest`) and
   the last failure (`failure`) for a pure render function.
+- The buttons, wheel, and mode selector (`listen_for_input`): read busylib's
+  status stream, hand each `InputEvent` to a handler, reopen the stream after
+  it drops, and log a handler that raises. The cloud does not stream input,
+  so there it warns once and returns.
 - Text for the bitmap fonts: `to_bar_text` turns any text into printable ASCII
   the fonts draw (`Nørreport` becomes `Noerreport`, a backtick an
   apostrophe), `text_width` measures it in pixels, and `fit_text` cuts it to
