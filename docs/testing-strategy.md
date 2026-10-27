@@ -8,7 +8,8 @@ Status: Current.
 2. **Mock only the boundary.** Replace the busylib client with a fake that
    records draws (`BarDisplayClient` in TypeScript, `DisplayClient` in
    Python), and pin the clock and process signals. Keep the project's own
-   modules real.
+   modules real. Convex functions run against `convex-test`'s in-memory
+   backend ([ADR 0005](adr/0005-convex-between-bars.md)).
 3. **Assert what the bar receives**: the `application_name`, the elements,
    and their text, position, and colour. Avoid asserting how the code got
    there.

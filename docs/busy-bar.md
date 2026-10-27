@@ -107,6 +107,29 @@ bar ships, with no upload. busylib lists three that ship with the firmware:
 `shared/sounds/calendar_reminder_ends.snd`, and
 `shared/sounds/volume_change.snd`.
 
+## BUSY Timer
+
+`GET /api/busy/snapshot` (`BusySnapshotGet` in TypeScript) reports the BUSY
+timer; `PUT` runs the timer from a snapshot. Checked against the firmware
+source (`services/busy_timer`) on 2026-10-26:
+
+- A snapshot is `NOT_STARTED`, `INFINITE`, `SIMPLE` (`time_left_ms`), or
+  `INTERVAL` (the current interval, its time left, and the work and rest
+  lengths), each with `is_paused`, plus `snapshot_timestamp_ms`.
+- The firmware records a snapshot only when the timer starts, pauses,
+  resumes, skips, or stops. Time left counts from `snapshot_timestamp_ms`,
+  not from now, and a timer that runs out keeps reporting the snapshot that
+  started it. Work out where a running timer is from the timestamp, as
+  [`apps/intercom`](../apps/intercom/src/timer.ts) does.
+- Intervals alternate work (even index) and rest and end on the last work
+  interval. Without `is_autostart_enabled`, the timer stops at the start of
+  each new interval and waits for START.
+- `PUT` refuses a snapshot stamped more than a minute ahead of the bar's
+  clock, and ignores one no newer than the snapshot it holds. The timer
+  counts from the stamp, so bars that get the same snapshot end together;
+  [`apps/intercom`](../apps/intercom/src/focus.ts) starts a team focus that
+  way.
+
 ## Input
 
 The bar reports its three buttons (OK, BACK, START), the wheel, and the mode
