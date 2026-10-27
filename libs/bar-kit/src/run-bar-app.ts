@@ -94,10 +94,7 @@ export async function runBarApp(options: RunBarAppOptions): Promise<void> {
         shown = new Set([...shown, ...drawn]);
         if (stale.length > 0) {
           operation = 'Deleting stale elements from';
-          await client.DisplayClear(
-            { application_name: name, element_ids: stale },
-            { signal },
-          );
+          await deleteElements(client, name, stale, signal);
         }
         shown = drawn;
       } catch (error) {
@@ -116,6 +113,47 @@ export async function runBarApp(options: RunBarAppOptions): Promise<void> {
       log.warn(`[${name}] Clearing the BUSY Bar display failed:`, error);
     }
   }
+}
+
+/**
+ * Delete `ids` from the app's canvas. The bar refuses the whole request
+ * with a 400 when one of them is gone already, as after BACK or the mode
+ * switch closed the canvas or the BUSY timer took the screen. Then each id
+ * is deleted on its own, and those the bar no longer has are forgotten. Any
+ * other failure throws, so every id is tried again on a later frame.
+ */
+async function deleteElements(
+  client: BarDisplayClient,
+  name: string,
+  ids: readonly string[],
+  signal: AbortSignal,
+): Promise<void> {
+  const remove = (elementIds: string[]): Promise<unknown> =>
+    client.DisplayClear(
+      { application_name: name, element_ids: elementIds },
+      { signal },
+    );
+  try {
+    await remove([...ids]);
+  } catch (error) {
+    if (!isGone(error)) {
+      throw error;
+    }
+    for (const id of ids.length > 1 ? ids : []) {
+      try {
+        await remove([id]);
+      } catch (single) {
+        if (!isGone(single)) {
+          throw single;
+        }
+      }
+    }
+  }
+}
+
+/** busy-lib's error for a 400: the bar holds no such element for the app. */
+function isGone(error: unknown): boolean {
+  return error instanceof Error && 'status' in error && error.status === 400;
 }
 
 /** Anything that reports process signals, such as `process`. */

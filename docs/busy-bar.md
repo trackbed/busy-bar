@@ -63,7 +63,10 @@ an `id`. Element types are `text`, `image`, `animation`, `countdown`,
 **Draws merge.** A draw from the app on screen updates the elements it names,
 by `id`, and leaves the others in place; a draw from another app replaces
 everything. An element the app stops sending stays until it is deleted, so
-the kits' frame loops delete the ids a frame no longer draws. A draw that
+the kits' frame loops delete the ids a frame no longer draws. A delete that
+names an id the canvas no longer has, after BACK, the mode switch, or the
+BUSY timer closed it, fails whole with a 400 (`one of element_ids is
+non-existent`), so the loops then delete id by id and forget the gone ones. A draw that
 fails part-way (an `id` redrawn with another type or display, or more than
 100 elements) still applies the elements before the failing one.
 
@@ -104,17 +107,42 @@ bar ships, with no upload. busylib lists three that ship with the firmware:
 `shared/sounds/calendar_reminder_ends.snd`, and
 `shared/sounds/volume_change.snd`.
 
+## BUSY Timer
+
+`GET /api/busy/snapshot` (`BusySnapshotGet` in TypeScript) reports the BUSY
+timer; `PUT` runs the timer from a snapshot. Checked against the firmware
+source (`services/busy_timer`) on 2026-10-26:
+
+- A snapshot is `NOT_STARTED`, `INFINITE`, `SIMPLE` (`time_left_ms`), or
+  `INTERVAL` (the current interval, its time left, and the work and rest
+  lengths), each with `is_paused`, plus `snapshot_timestamp_ms`.
+- The firmware records a snapshot only when the timer starts, pauses,
+  resumes, skips, or stops. Time left counts from `snapshot_timestamp_ms`,
+  not from now, and a timer that runs out keeps reporting the snapshot that
+  started it. Work out where a running timer is from the timestamp, as
+  [`apps/intercom`](../apps/intercom/src/timer.ts) does.
+- Intervals alternate work (even index) and rest and end on the last work
+  interval. Without `is_autostart_enabled`, the timer stops at the start of
+  each new interval and waits for START.
+- `PUT` refuses a snapshot stamped more than a minute ahead of the bar's
+  clock, and ignores one no newer than the snapshot it holds. The timer
+  counts from the stamp, so bars that get the same snapshot end together;
+  [`apps/intercom`](../apps/intercom/src/focus.ts) starts a team focus that
+  way.
+
 ## Input
 
 The bar reports its three buttons (OK, BACK, START), the wheel, and the mode
 selector (BUSY, CUSTOM, OFF, APPS, SETTINGS) on its status WebSocket,
 `/api/status/ws`, as protobuf.
 
-- busylib's `AsyncBusyBar.stream_status_ws()` decodes the stream, and
-  `busylib.features.input_events(message)` turns each message into typed
-  `ButtonEvent`, `EncoderEvent`, and `SelectorEvent` values.
-- The TypeScript client's `StateStream` runs in browsers only, so an app that
-  reads input is simplest in Python.
+- Both kits read it: `listenForInput` in TypeScript, over Node's WebSocket,
+  and `listen_for_input` in Python, over busylib's
+  `AsyncBusyBar.stream_status_ws()`. A client sends `{"enable": true}`, then
+  gets protobuf `State` messages; input is `StateUpdate` field 11. The bar
+  takes four clients at a time.
+- The TypeScript client's own `StateStream` runs in browsers only: it needs a
+  Web Worker.
 - The stream is local: the cloud refuses it, so input needs USB or Wi-Fi.
 - Every listener gets every event, whichever app is on screen. The selector is
   reported only when it moves.

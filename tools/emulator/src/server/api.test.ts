@@ -174,7 +174,7 @@ describe('handleApi', () => {
     expect(answer.headers.get('access-control-allow-origin')).toBe('*');
     expect(answer.headers.get('access-control-allow-headers')).toBe('*');
     expect(answer.headers.get('access-control-allow-methods')).toBe(
-      'GET, POST, DELETE, OPTIONS',
+      'GET, POST, PUT, DELETE, OPTIONS',
     );
   });
 
@@ -249,6 +249,7 @@ describe('handleApi', () => {
     ['PUT', '/api/audio/volume', 'GET, POST'],
     ['PATCH', '/api/assets/upload', 'POST, DELETE'],
     ['DELETE', '/api/screen', 'GET'],
+    ['POST', '/api/busy/snapshot', 'GET, PUT'],
   ])('answers %s %s with 405, allowing %s', async (method, path, allow) => {
     const answer = await call(method, path);
 
@@ -899,6 +900,55 @@ describe('POST /api/input', () => {
       expect(answer.status).toBe(400);
       expect(answer.body).toStrictEqual(error('Bad Request'));
       expect(events).toStrictEqual([]);
+    },
+  );
+});
+
+describe('/api/busy/snapshot', () => {
+  const SIMPLE = {
+    snapshot: {
+      type: 'SIMPLE',
+      card_id: 'c0ffee00-0000-4000-8000-00000000abcd',
+      is_paused: false,
+      time_left_ms: 1_500_000,
+      busy_bar_settings: {
+        theme: 'on_air',
+        show_work_phase_only: false,
+        trigger_smart_home: true,
+      },
+    },
+    snapshot_timestamp_ms: STARTED_AT,
+  };
+
+  it('answers what a bar that never ran its timer reports', async () => {
+    const answer = await call('GET', '/api/busy/snapshot');
+
+    expect(answer.status).toBe(200);
+    expect(answer.text).toBe(
+      '{"snapshot":{"type":"NOT_STARTED","busy_bar_settings":{"theme":"busy","show_work_phase_only":false,"trigger_smart_home":true}},"snapshot_timestamp_ms":0}',
+    );
+  });
+
+  it('runs the timer from the snapshot it is given', async () => {
+    const put = await call('PUT', '/api/busy/snapshot', {
+      body: JSON.stringify(SIMPLE),
+    });
+
+    expect(put.body).toStrictEqual(OK);
+    expect(device.timerRunning).toBe(true);
+    expect((await call('GET', '/api/busy/snapshot')).body).toStrictEqual(
+      SIMPLE,
+    );
+  });
+
+  it.each(['', 'snapshot', '[]', '{}', JSON.stringify(SIMPLE.snapshot)])(
+    'refuses the body %j with 400',
+    async (body) => {
+      const answer = await call('PUT', '/api/busy/snapshot', { body });
+
+      expect(answer.status).toBe(400);
+      expect(answer.body).toStrictEqual(error('Failed to parse snapshot'));
+      expect(device.timerRunning).toBe(false);
     },
   );
 });

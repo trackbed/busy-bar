@@ -1,0 +1,13 @@
+{
+  "name": "@busy-bar-apps/intercom",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "@busy-bar-apps/bar-kit": "workspace:0.0.1",
+    "convex": "1.47.0"
+  },
+  "devDependencies": {
+    "convex-test": "0.0.62"
+  }
+}

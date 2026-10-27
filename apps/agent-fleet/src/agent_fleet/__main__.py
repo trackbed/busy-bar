@@ -11,7 +11,7 @@ import os
 import sys
 from datetime import UTC, datetime
 
-from agent_fleet.controls import Chime, Controls, listen_for_input
+from agent_fleet.controls import Chime, Controls
 from agent_fleet.fleet import Fleet
 from agent_fleet.hooks import hook_settings, parse_hook
 from agent_fleet.render import render
@@ -20,6 +20,7 @@ from agent_fleet.settings import FleetSettings, load_settings
 from bar_kit import (
     create_busy_bar,
     install_shutdown_handlers,
+    listen_for_input,
     load_bar_config,
     run_bar_app,
 )

@@ -1,0 +1,31 @@
+{
+  "name": "intercom",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "apps/intercom/src",
+  "projectType": "application",
+  "tags": ["type:app", "lang:ts"],
+  "targets": {
+    "start": {
+      "command": "node src/main.ts",
+      "options": { "cwd": "{projectRoot}" },
+      "continuous": true
+    },
+    "preview": {
+      "command": "node src/preview.ts",
+      "options": { "cwd": "{projectRoot}" }
+    },
+    "backend": {
+      "command": "convex dev --typecheck disable",
+      "options": { "cwd": "{projectRoot}" },
+      "continuous": true
+    },
+    "deploy": {
+      "command": "convex deploy --typecheck disable",
+      "options": { "cwd": "{projectRoot}" }
+    },
+    "convex": {
+      "command": "convex",
+      "options": { "cwd": "{projectRoot}" }
+    }
+  }
+}

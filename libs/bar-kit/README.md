@@ -16,9 +16,16 @@ variables and behave the same way.
   (the bar keeps them otherwise), log failed draws and keep going, clear the
   display on shutdown (`shutdownSignal`). Failed element deletions are retried
   on later frames, including IDs drawn while an earlier cleanup was failing.
+  When BACK, the mode switch, or the BUSY timer has closed the canvas, the
+  bar refuses a deletion that names an element it no longer has, so the loop
+  then deletes the IDs one at a time and forgets the ones that are gone.
 - Background data (`createPoller`): fetch a source every `intervalMs`, try
   again after `retryMs` when it fails, and keep the latest value (`latest()`)
   and the last failure (`failure()`) for a pure render function.
+- The buttons, wheel, and mode selector (`listenForInput`): read the bar's
+  status stream over Node's WebSocket, hand each `InputEvent` to a handler,
+  reopen the stream after it drops, and log a handler that throws. The cloud
+  does not stream input, so there it warns once and returns.
 - Text for the bitmap fonts: `toBarText` turns any text into printable ASCII
   the fonts draw (`Nørreport` becomes `Noerreport`, a backtick an
   apostrophe), `textWidth` measures it in pixels from busy-lib's font maps,
@@ -27,7 +34,8 @@ variables and behave the same way.
   what an app's `preview` target prints with `printPreview`, as one line of
   JSON ([tools/catalogue](../../tools/catalogue/README.md)).
 - Re-exports of busy-lib's element types (`TextElement`, `RectangleElement`,
-  and others) so apps need only this package.
+  and others) and of `BusySnapshot`, what `BusySnapshotGet` answers about the
+  BUSY timer, so apps need only this package.
 
 ## Does Not Own
 

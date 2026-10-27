@@ -18,6 +18,7 @@
     "/.context",
     "/.nx",
     "/.venv",
+    "**/convex/_generated",
     "**/coverage",
     "**/dist",
     "uv.lock",

@@ -2,16 +2,10 @@
 
 import asyncio
 import logging
-from collections.abc import AsyncIterator, Awaitable, Callable, Mapping
+from collections.abc import Awaitable, Callable, Mapping
 from datetime import UTC, datetime, timedelta
 
-from busylib.features import (
-    ButtonEvent,
-    EncoderEvent,
-    InputEvent,
-    SelectorEvent,
-    input_events,
-)
+from busylib.features import ButtonEvent, EncoderEvent, InputEvent, SelectorEvent
 
 from agent_fleet.fleet import Fleet, Status
 
@@ -29,7 +23,6 @@ SOUNDS: Mapping[Status, str] = {
 _FOCUS_POSITIONS = frozenset({"busy", "custom", "off"})
 
 DEFAULT_MIN_GAP = timedelta(seconds=5)
-RECONNECT_SECONDS = 5.0
 
 
 def _utc_now() -> datetime:
@@ -113,32 +106,3 @@ class Controls:
                 self._chime.focused = position in _FOCUS_POSITIONS
             case _:
                 pass
-
-
-async def listen_for_input(
-    stream: Callable[[], AsyncIterator[object]],
-    handle: Callable[[InputEvent], None],
-    *,
-    reconnect_seconds: float = RECONNECT_SECONDS,
-) -> None:
-    """Feed the bar's input events to `handle` until cancelled.
-
-    `stream` opens the bar's status stream, such as busylib's
-    `AsyncBusyBar.stream_status_ws`. A dropped stream reconnects after
-    `reconnect_seconds`; the cloud has no stream, so input then stays off.
-    """
-    while True:
-        try:
-            async for message in stream():
-                if isinstance(message, Mapping):
-                    for event in input_events(message):
-                        handle(event)
-        except NotImplementedError:
-            logger.warning(
-                "The wheel and buttons need a direct connection to the bar; "
-                "the cloud does not stream them."
-            )
-            return
-        except Exception:  # The bar rebooted or left the network.
-            logger.warning("Lost the bar's input stream.", exc_info=True)
-        await asyncio.sleep(reconnect_seconds)

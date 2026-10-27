@@ -76,9 +76,10 @@ These apply to every task. Break one only when the user names a concrete reason.
 - `libs/bar-kit/` (TypeScript) and `libs/bar-kit-py/` (Python): connection
   settings (`BUSYBAR_ADDR`, `BUSYBAR_TOKEN`), display sizes, `rgba()`, the
   frame loop (`runBarApp` / `run_bar_app`), background polling
-  (`createPoller` / `Poller`), and text that fits the bitmap fonts
-  (`toBarText`, `textWidth`, `fitText`). The two kits share one contract;
-  change both together.
+  (`createPoller` / `Poller`), the bar's buttons and wheel
+  (`listenForInput` / `listen_for_input`), and text that fits the bitmap
+  fonts (`toBarText`, `textWidth`, `fitText`). The two kits share one
+  contract; change both together.
 - `tools/emulator/`: a BUSY Bar on the computer, built from the open
   firmware: the HTTP API, both displays with animations, and a browser page.
   Start it with `NX_DAEMON=false yarn nx run emulator:start` and point an app
@@ -98,6 +99,7 @@ Full layout, naming, and tags → [docs/project-structure.md](docs/project-struc
 
 - BUSY Bar API, displays, fonts, connecting → [docs/busy-bar.md](docs/busy-bar.md). Text must be printable ASCII; the front display is 72×16 and apps draw on 148×80 of the back.
 - Checking an app without a bar, or the bar's exact behaviour → [tools/emulator/README.md](tools/emulator/README.md).
+- Convex functions, or an app that shares state between bars → [apps/intercom/README.md](apps/intercom/README.md) and [ADR 0005](docs/adr/0005-convex-between-bars.md).
 - New app or library, tags, naming → [docs/project-structure.md](docs/project-structure.md).
 - TypeScript config, runtime, ESLint, Vitest → [docs/typescript.md](docs/typescript.md).
 - Python, uv, Ruff, mypy, pytest, the Nx Python plugin → [docs/python.md](docs/python.md).
@@ -111,6 +113,7 @@ Full layout, naming, and tags → [docs/project-structure.md](docs/project-struc
 
 - Added, removed, or rewired a TypeScript project: run `NX_DAEMON=false yarn nx sync` and commit the tsconfig changes. CI runs `nx sync:check`.
 - Changed Python dependencies: run `uv lock` and commit `uv.lock`. CI installs with `--locked`.
+- Added or removed a file in an app's `src/convex/`: run `NX_DAEMON=false yarn nx run <app>:backend -- --once` and commit `src/convex/_generated/`. A shell that cannot prompt gets a local deployment, with no login.
 - Changed `package.json` dependencies: run `yarn install` and commit `yarn.lock`.
 - Changed a kit's public behavior: update the other language's kit and both READMEs.
 - Changed what an app draws or how it works: update its `preview` scenes and steps.

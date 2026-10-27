@@ -40,6 +40,10 @@ behaviour and copies none of it.
   `await_previous_end`, from stock animations and uploaded `.anim` files.
 - The status WebSocket (`/api/status/ws`): input events, front frames, and
   heartbeats as protobuf, for busylib's input readers.
+- The BUSY timer's snapshot ([src/device/busy-timer.ts](src/device/busy-timer.ts)):
+  `GET /api/busy/snapshot` and `PUT` with the firmware's checks, and the
+  screen held while a timer works, rests, or is paused. The page's BUSY
+  switch starts an infinite timer and stops whatever runs.
 - A small public API for tools ([src/index.ts](src/index.ts)):
   `openFirmwareAssets` syncs and opens the pinned assets, and
   `screenshotDraw` validates one draw request as the API does and returns
@@ -67,6 +71,11 @@ behaviour and copies none of it.
   than the layout rules predict, and the emulator follows the rules.
 - `DELETE /api/audio/play` answers at once; the bar waits for the sound to
   fade out.
+- A BUSY timer that runs out frees the screen at once. The emulator has none
+  of the bar's BUSY screens, so nothing finalizes the session, and
+  `GET /api/busy/snapshot` keeps the snapshot that started the timer, as the
+  firmware does until its BUSY app finalizes it.
+- `/api/busy/profiles` is not emulated.
 
 ## Start Here
 

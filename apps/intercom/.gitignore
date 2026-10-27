@@ -1,0 +1,3 @@
+# The Convex CLI looks for this line here, not in the root .gitignore, and
+# writes this file when it is missing.
+.env.local
