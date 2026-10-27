@@ -8,5 +8,10 @@
     "eslint/no-console": "off",
     "no-unused-vars": "off"
   },
-  "ignorePatterns": ["**/dist/**", "**/coverage/**", ".venv/**"]
+  "ignorePatterns": [
+    "**/convex/_generated/**",
+    "**/dist/**",
+    "**/coverage/**",
+    ".venv/**"
+  ]
 }
