@@ -63,7 +63,10 @@ an `id`. Element types are `text`, `image`, `animation`, `countdown`,
 **Draws merge.** A draw from the app on screen updates the elements it names,
 by `id`, and leaves the others in place; a draw from another app replaces
 everything. An element the app stops sending stays until it is deleted, so
-the kits' frame loops delete the ids a frame no longer draws. A draw that
+the kits' frame loops delete the ids a frame no longer draws. A delete that
+names an id the canvas no longer has, after BACK, the mode switch, or the
+BUSY timer closed it, fails whole with a 400 (`one of element_ids is
+non-existent`), so the loops then delete id by id and forget the gone ones. A draw that
 fails part-way (an `id` redrawn with another type or display, or more than
 100 elements) still applies the elements before the failing one.
 

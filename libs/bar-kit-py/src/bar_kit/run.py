@@ -5,9 +5,11 @@ import logging
 import signal
 from collections.abc import Callable, Sequence
 from datetime import datetime
+from http import HTTPStatus
 from typing import Protocol
 
 from busylib import types
+from busylib.exceptions import BusyBarAPIError
 
 from bar_kit._clock import utc_now, wait_for_stop
 
@@ -80,7 +82,7 @@ async def run_bar_app(  # noqa: PLR0913 - keyword-only settings, one per concern
                 shown = list(dict.fromkeys([*shown, *drawn]))
                 if stale:
                     operation = "Deleting stale elements from"
-                    await client.display_clear(application_name=name, element_ids=stale)
+                    await _delete_elements(client, name, stale)
                 shown = drawn
             except Exception:  # A dropped draw must not end the app.
                 logger.warning(
@@ -94,6 +96,32 @@ async def run_bar_app(  # noqa: PLR0913 - keyword-only settings, one per concern
             logger.warning(
                 "[%s] Clearing the BUSY Bar display failed.", name, exc_info=True
             )
+
+
+async def _delete_elements(
+    client: DisplayClient, name: str, element_ids: Sequence[str]
+) -> None:
+    """Delete `element_ids` from the app's canvas.
+
+    The bar refuses the whole request with a 400 when one of them is gone
+    already, as after BACK or the mode switch closed the canvas or the BUSY
+    timer took the screen. Then each id is deleted on its own, and those the
+    bar no longer has are forgotten. Any other failure raises, so every id is
+    tried again on a later frame.
+    """
+    try:
+        await client.display_clear(application_name=name, element_ids=element_ids)
+    except BusyBarAPIError as error:
+        if error.status_code != HTTPStatus.BAD_REQUEST:
+            raise
+        for element_id in element_ids if len(element_ids) > 1 else []:
+            try:
+                await client.display_clear(
+                    application_name=name, element_ids=[element_id]
+                )
+            except BusyBarAPIError as single:
+                if single.status_code != HTTPStatus.BAD_REQUEST:
+                    raise
 
 
 def install_shutdown_handlers(stop: asyncio.Event) -> None:

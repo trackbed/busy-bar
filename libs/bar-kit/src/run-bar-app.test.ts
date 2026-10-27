@@ -171,6 +171,125 @@ describe('runBarApp', () => {
     );
   });
 
+  it('forgets IDs the bar no longer has and deletes the rest one by one', async () => {
+    const controller = new AbortController();
+    const client = fakeClient(controller, 3);
+    const gone = Object.assign(
+      new Error('one of element_ids is non-existent'),
+      { status: 400 },
+    );
+    client.DisplayClear.mockRejectedValueOnce(gone).mockRejectedValueOnce(gone);
+    const extra = {
+      id: 'extra',
+      type: 'text',
+      text: 'X',
+      font: 'small',
+    } as const;
+    const kept = { ...extra, id: 'kept' };
+    const frames: BarElements[] = [[...FRAME, extra, kept], FRAME, FRAME];
+    let frame = 0;
+    const log = { warn: vi.fn<(...data: unknown[]) => void>() };
+
+    await runBarApp({
+      name: 'demo',
+      client,
+      render: () => frames[frame++] ?? FRAME,
+      intervalMs: 0,
+      signal: controller.signal,
+      log,
+    });
+
+    const options = { signal: controller.signal };
+    expect(client.DisplayClear.mock.calls).toStrictEqual([
+      [{ application_name: 'demo', element_ids: ['extra', 'kept'] }, options],
+      [{ application_name: 'demo', element_ids: ['extra'] }, options],
+      [{ application_name: 'demo', element_ids: ['kept'] }, options],
+      [{ application_name: 'demo' }],
+    ]);
+    expect(log.warn).not.toHaveBeenCalled();
+  });
+
+  it('forgets a single ID the bar no longer has without asking again', async () => {
+    const controller = new AbortController();
+    const client = fakeClient(controller, 3);
+    client.DisplayClear.mockRejectedValueOnce(
+      Object.assign(new Error('one of element_ids is non-existent'), {
+        status: 400,
+      }),
+    );
+    const extra = {
+      id: 'extra',
+      type: 'text',
+      text: 'X',
+      font: 'small',
+    } as const;
+    const frames: BarElements[] = [[...FRAME, extra], FRAME, FRAME];
+    let frame = 0;
+
+    await runBarApp({
+      name: 'demo',
+      client,
+      render: () => frames[frame++] ?? FRAME,
+      intervalMs: 0,
+      signal: controller.signal,
+    });
+
+    expect(client.DisplayClear.mock.calls).toStrictEqual([
+      [
+        { application_name: 'demo', element_ids: ['extra'] },
+        { signal: controller.signal },
+      ],
+      [{ application_name: 'demo' }],
+    ]);
+  });
+
+  it('retries a deletion that fails on its own for another reason', async () => {
+    const controller = new AbortController();
+    const client = fakeClient(controller, 3);
+    client.DisplayClear.mockRejectedValueOnce(
+      Object.assign(
+        new Error('this application_name is currently not displaying anything'),
+        {
+          status: 400,
+        },
+      ),
+    ).mockRejectedValueOnce(new Error('bar offline'));
+    const extra = {
+      id: 'extra',
+      type: 'text',
+      text: 'X',
+      font: 'small',
+    } as const;
+    const frames: BarElements[] = [
+      [...FRAME, extra, { ...extra, id: 'more' }],
+      FRAME,
+      FRAME,
+    ];
+    let frame = 0;
+    const log = { warn: vi.fn<(...data: unknown[]) => void>() };
+
+    await runBarApp({
+      name: 'demo',
+      client,
+      render: () => frames[frame++] ?? FRAME,
+      intervalMs: 0,
+      signal: controller.signal,
+      log,
+    });
+
+    const options = { signal: controller.signal };
+    expect(client.DisplayClear.mock.calls).toStrictEqual([
+      [{ application_name: 'demo', element_ids: ['extra', 'more'] }, options],
+      [{ application_name: 'demo', element_ids: ['extra'] }, options],
+      [{ application_name: 'demo', element_ids: ['extra', 'more'] }, options],
+      [{ application_name: 'demo' }],
+    ]);
+    expect(log.warn).toHaveBeenCalledExactlyOnceWith(
+      '[demo] Deleting stale elements from the BUSY Bar failed:',
+      new Error('bar offline'),
+    );
+  });
+
   it('remembers what the last draw that went through showed', async () => {
     const controller = new AbortController();
     let calls = 0;

@@ -16,6 +16,9 @@ both read the same environment variables and behave the same way.
   (the bar keeps them otherwise), log failed draws and keep going, clear the
   display on shutdown (`install_shutdown_handlers`). Failed element deletions
   are retried on later frames, including IDs drawn during failed cleanup.
+  When BACK, the mode switch, or the BUSY timer has closed the canvas, the
+  bar refuses a deletion that names an element it no longer has, so the loop
+  then deletes the IDs one at a time and forgets the ones that are gone.
 - Background data (`Poller`): fetch a source every `interval` seconds, try
   again after `retry` when it fails, and keep the latest value (`latest`) and
   the last failure (`failure`) for a pure render function.

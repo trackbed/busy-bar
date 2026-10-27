@@ -16,6 +16,9 @@ variables and behave the same way.
   (the bar keeps them otherwise), log failed draws and keep going, clear the
   display on shutdown (`shutdownSignal`). Failed element deletions are retried
   on later frames, including IDs drawn while an earlier cleanup was failing.
+  When BACK, the mode switch, or the BUSY timer has closed the canvas, the
+  bar refuses a deletion that names an element it no longer has, so the loop
+  then deletes the IDs one at a time and forgets the ones that are gone.
 - Background data (`createPoller`): fetch a source every `intervalMs`, try
   again after `retryMs` when it fails, and keep the latest value (`latest()`)
   and the last failure (`failure()`) for a pure render function.

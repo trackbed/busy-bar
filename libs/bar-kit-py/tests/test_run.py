@@ -7,6 +7,7 @@ from datetime import UTC, datetime
 
 import pytest
 from busylib import types
+from busylib.exceptions import BusyBarAPIError
 
 from bar_kit import DEFAULT_PRIORITY, install_shutdown_handlers, run_bar_app
 
@@ -32,6 +33,9 @@ class FakeClient:
         self.failing_draw = failing_draw
         self.failing_clear = failing_clear
         self.failing_deletions = 0
+        self.deletion_error: Exception = ConnectionError("bar offline")
+        self.gone: set[str] = set()
+        """IDs the bar no longer has: deleting one is a 400, as on the bar."""
         self.drawn: list[types.DisplayElements] = []
         self.cleared: list[str] = []
         self.deleted: list[list[str]] = []
@@ -55,11 +59,14 @@ class FakeClient:
             self.cleared.append(application_name)
         else:
             self.deleted.append(list(element_ids))
-        if self.failing_clear or (
-            element_ids is not None and len(self.deleted) <= self.failing_deletions
-        ):
+            if self.gone.intersection(element_ids):
+                message = "one of element_ids is non-existent"
+                raise BusyBarAPIError(message, status_code=400)
+        if self.failing_clear:
             message = "bar offline"
             raise ConnectionError(message)
+        if element_ids is not None and len(self.deleted) <= self.failing_deletions:
+            raise self.deletion_error
         return None
 
 
@@ -128,12 +135,17 @@ async def test_remembers_what_the_last_draw_that_went_through_showed() -> None:
     assert client.deleted == [["extra"]]
 
 
+@pytest.mark.parametrize(
+    "error",
+    [ConnectionError("bar offline"), BusyBarAPIError("Server error", status_code=503)],
+)
 async def test_retries_deletions_and_remembers_ids_drawn_while_cleanup_failed(
-    caplog: pytest.LogCaptureFixture,
+    caplog: pytest.LogCaptureFixture, error: Exception
 ) -> None:
     stop = asyncio.Event()
     client = FakeClient(stop, frames=3)
     client.failing_deletions = 1
+    client.deletion_error = error
     fresh = types.TextElement(id="fresh", text="F", font="small")
     frames = iter([[*FRAME, EXTRA], [*FRAME, fresh], FRAME])
 
@@ -149,6 +161,71 @@ async def test_retries_deletions_and_remembers_ids_drawn_while_cleanup_failed(
     assert client.deleted == [["extra"], ["extra", "fresh"]]
     assert client.cleared == ["demo"]
     assert [record.getMessage() for record in caplog.records] == [
+        "[demo] Deleting stale elements from the BUSY Bar failed."
+    ]
+
+
+async def test_forgets_ids_the_bar_no_longer_has_and_deletes_the_rest(
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    stop = asyncio.Event()
+    client = FakeClient(stop, frames=3)
+    client.gone = {"extra"}
+    kept = types.TextElement(id="kept", text="K", font="small")
+    frames = iter([[*FRAME, EXTRA, kept], FRAME, FRAME])
+
+    with caplog.at_level(logging.WARNING, logger="bar_kit.run"):
+        await run_bar_app(
+            name="demo",
+            client=client,
+            render=lambda _now: next(frames),
+            interval=0,
+            stop=stop,
+        )
+
+    assert client.deleted == [["extra", "kept"], ["extra"], ["kept"]]
+    assert caplog.records == []
+
+
+async def test_forgets_a_single_id_the_bar_no_longer_has() -> None:
+    stop = asyncio.Event()
+    client = FakeClient(stop, frames=3)
+    client.gone = {"extra"}
+    frames = iter([[*FRAME, EXTRA], FRAME, FRAME])
+
+    await run_bar_app(
+        name="demo",
+        client=client,
+        render=lambda _now: next(frames),
+        interval=0,
+        stop=stop,
+    )
+
+    assert client.deleted == [["extra"]]
+
+
+async def test_retries_every_id_when_a_single_deletion_fails_otherwise(
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    stop = asyncio.Event()
+    client = FakeClient(stop, frames=3)
+    client.gone = {"extra"}
+    client.failing_deletions = 3
+    client.deletion_error = BusyBarAPIError("Server error", status_code=503)
+    more = types.TextElement(id="more", text="M", font="small")
+    frames = iter([[*FRAME, EXTRA, more], FRAME, FRAME])
+
+    with caplog.at_level(logging.WARNING, logger="bar_kit.run"):
+        await run_bar_app(
+            name="demo",
+            client=client,
+            render=lambda _now: next(frames),
+            interval=0,
+            stop=stop,
+        )
+
+    assert client.deleted[:3] == [["extra", "more"], ["extra"], ["more"]]
+    assert [record.getMessage() for record in caplog.records][:1] == [
         "[demo] Deleting stale elements from the BUSY Bar failed."
     ]
 
