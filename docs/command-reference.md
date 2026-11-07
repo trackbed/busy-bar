@@ -118,4 +118,4 @@ Auto-merge is enabled, so `gh pr merge --auto --squash` merges a PR once
 **CI** passes.
 
 Inspect what GitHub enforces with
-`gh api repos/Abildtoft/kramme-busy-bar-apps/rules/branches/main`.
+`gh api repos/trackbed/busy-bar/rules/branches/main`.
