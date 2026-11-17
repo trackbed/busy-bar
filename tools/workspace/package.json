@@ -7,8 +7,8 @@
     "./package.json": "./package.json"
   },
   "dependencies": {
-    "@nx/devkit": "23.3.0",
-    "nx": "23.3.0",
+    "@nx/devkit": "24.0.5",
+    "nx": "24.0.5",
     "smol-toml": "1.9.1"
   },
   "generators": "./generators.json"
