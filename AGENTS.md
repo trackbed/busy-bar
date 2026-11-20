@@ -8,11 +8,15 @@ clients. TypeScript uses Yarn workspaces; Python uses a uv workspace.
 
 - This file holds the always-on rules. [docs/README.md](docs/README.md) indexes
   everything else.
-- Use the pinned Node version (`.node-version`; `nvm install` switches to it),
-  then install before any Nx command: `corepack enable && yarn install && uv sync --all-packages`.
-- `yarn bootstrap:status` is a read-only readiness check. Run it first when
-  Nx or a tool fails in a way that looks environmental. If Yarn cannot launch
-  scripts, run `node scripts/check-workspace-ready.mjs` directly.
+- Set up a new checkout or worktree with `bash scripts/setup-workspace.sh`
+  before any Nx command. It installs the pinned Node (`.node-version`) with
+  mise, fnm, or nvm when the shell runs another version, then runs
+  `corepack enable`, `yarn install` (which installs the Git hooks), and
+  `uv sync --all-packages`. Nx needs the pinned Node first on PATH; the script
+  prints how to put it there.
+- `node scripts/check-workspace-ready.mjs` is a read-only readiness check that
+  needs only Node. Run it first when Nx or a tool fails in a way that looks
+  environmental; it prints the command that fixes each problem.
 
 # Hard Rules
 

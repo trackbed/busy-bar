@@ -2,7 +2,9 @@
 // Read-only readiness check that works before anything is installed: the
 // pinned Node version, the Yarn install, uv, the Python environment, and the
 // Git hooks. Prints one line per problem with the command that fixes it.
-// `yarn bootstrap:status` runs it; `--quiet` prints only problems.
+// Run it as `node scripts/check-workspace-ready.mjs`, which needs only Node;
+// `yarn bootstrap:status` runs it too once Yarn can start. `--quiet` prints
+// only problems.
 
 import { spawnSync } from 'node:child_process';
 import { existsSync, readFileSync, statSync } from 'node:fs';
@@ -16,7 +18,7 @@ const problems = [];
 const pinnedNode = readFileSync(join(root, '.node-version'), 'utf8').trim();
 if (process.version !== `v${pinnedNode}`) {
   problems.push(
-    `Node ${process.version} is running; the workspace pins ${pinnedNode}. Run \`nvm install\` (or \`fnm use\`) in the repository root.`,
+    `Node ${process.version} is running; the workspace pins ${pinnedNode}. Install Node ${pinnedNode} and put it first on PATH: \`bash scripts/setup-workspace.sh\` installs it with mise, fnm, or nvm and prints how.`,
   );
 }
 

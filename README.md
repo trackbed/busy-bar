@@ -25,9 +25,9 @@ for its language.
 
 ## Prerequisites
 
-- **Node.js 24.21.0**, pinned in `.node-version` and `.nvmrc`. With nvm, run
-  `nvm install` in the repository root. Node 24 ships Corepack, which provides
-  the pinned Yarn 4.18.1.
+- **Node.js 24**, the exact release pinned in `.node-version` and `.nvmrc`.
+  The setup script below installs it with mise, fnm, or nvm. Node 24 ships
+  Corepack, which provides the Yarn release `packageManager` pins.
 - **uv** ([install guide](https://docs.astral.sh/uv/getting-started/installation/)),
   in the range `required-version` in the root `pyproject.toml` allows; uv
   refuses to run outside it. uv downloads Python 3.14 itself.
@@ -40,14 +40,20 @@ for its language.
 ## Install
 
 ```sh
-corepack enable
-yarn install            # Node packages and the Git hooks
-uv sync --all-packages  # Python 3.14 and the Python packages
-yarn bootstrap:status   # read-only check that everything is in place
+bash scripts/setup-workspace.sh
 ```
 
-If Yarn cannot launch the readiness check, run
-`node scripts/check-workspace-ready.mjs` directly with the pinned Node runtime.
+It installs the pinned Node if your shell runs another version, then runs:
+
+```sh
+corepack enable
+yarn install                            # Node packages and the Git hooks
+uv sync --all-packages                  # Python 3.14 and the Python packages
+node scripts/check-workspace-ready.mjs  # read-only check that everything is in place
+```
+
+Run the last line on its own whenever a tool fails in a way that looks
+environmental; it needs only Node and prints a fix for each problem.
 
 ## Run an app
 

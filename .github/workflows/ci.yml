@@ -41,6 +41,7 @@ jobs:
       - uses: ./.github/actions/setup-workspace
 
       - uses: nrwl/nx-set-shas@e602fada7ad5987b0f7b1905e7a99ea1c661514c # v5.1.0
+        id: shas
 
       # Nx keeps its task cache and the cache index together under ~/.nx.
       - name: Restore Nx cache
@@ -53,18 +54,25 @@ jobs:
             nx-${{ runner.os }}-
 
       - name: Check formatting
+        # Run every check once the workspace is set up, even after one fails,
+        # so a single push reports every problem.
+        if: ${{ !cancelled() && steps.shas.outcome == 'success' }}
         run: yarn format:check
 
       - name: Check TypeScript project references
+        if: ${{ !cancelled() && steps.shas.outcome == 'success' }}
         run: yarn nx sync:check
 
       - name: Check project tags, targets, and boundaries
+        if: ${{ !cancelled() && steps.shas.outcome == 'success' }}
         run: yarn nx run repo:check-projects
 
       - name: Check for unused files, exports, and dependencies
+        if: ${{ !cancelled() && steps.shas.outcome == 'success' }}
         run: yarn nx run repo:knip
 
       - name: Lint, type-check, and test
+        if: ${{ !cancelled() && steps.shas.outcome == 'success' }}
         env:
           EVENT_NAME: ${{ github.event_name }}
         run: |
