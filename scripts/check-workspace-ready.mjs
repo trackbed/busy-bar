@@ -35,7 +35,16 @@ function isFresh(artifact, source) {
   );
 }
 
-if (!isFresh('node_modules/.yarn-state.yml', 'yarn.lock')) {
+// Yarn rewrites .yarn-state.yml when it relinks node_modules and its install
+// state (installStatePath in .yarnrc.yml) when the lockfile changes, so an
+// install after a lockfile change can leave either one older than yarn.lock.
+if (
+  !existsSync(join(root, 'node_modules/.yarn-state.yml')) ||
+  !(
+    isFresh('node_modules/.yarn-state.yml', 'yarn.lock') ||
+    isFresh('node_modules/.yarn-install-state.gz', 'yarn.lock')
+  )
+) {
   problems.push(
     'Node dependencies are missing or older than yarn.lock. Run `corepack enable && yarn install`.',
   );
