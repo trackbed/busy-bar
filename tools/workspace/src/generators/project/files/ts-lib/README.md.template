@@ -7,11 +7,11 @@ library owns.
 
 - Replace with the responsibilities this library takes on.
 
-## Does not own
+## Does Not Own
 
 - Connection settings and the frame loop: [`bar-kit`](<%= offset %>libs/bar-kit/README.md).
 
-## Start here
+## Start Here
 
 - `src/index.ts`: the public API. Import the library as
   `@busy-bar-apps/<%= name %>`.

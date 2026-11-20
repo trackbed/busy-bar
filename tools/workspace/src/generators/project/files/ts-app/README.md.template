@@ -6,12 +6,12 @@ A BUSY Bar app written in TypeScript. Replace this line with what it shows.
 
 - What the app draws (`src/render.ts`) and how often it redraws (`src/main.ts`).
 
-## Does not own
+## Does Not Own
 
 - Connection settings, the frame loop, and shutdown handling. Those live in
   [`bar-kit`](<%= offset %>libs/bar-kit/README.md).
 
-## Start here
+## Start Here
 
 - `src/render.ts`: maps a moment in time to display elements. Keep it pure so
   tests can pin the time.

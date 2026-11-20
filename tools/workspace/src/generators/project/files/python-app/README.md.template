@@ -7,12 +7,12 @@ A BUSY Bar app written in Python. Replace this line with what it shows.
 - What the app draws (`src/<%= moduleName %>/render.py`) and how often it
   redraws (`src/<%= moduleName %>/__main__.py`).
 
-## Does not own
+## Does Not Own
 
 - Connection settings, the frame loop, and shutdown handling. Those live in
   [`bar-kit-py`](<%= offset %>libs/bar-kit-py/README.md).
 
-## Start here
+## Start Here
 
 - `src/<%= moduleName %>/render.py`: maps a moment in time to display
   elements. Keep it pure so tests can pin the time.

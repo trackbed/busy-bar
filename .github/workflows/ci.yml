@@ -133,11 +133,43 @@ jobs:
         # uv marks the audit command as a preview feature.
         run: uv audit --preview-features audit-command
 
+  generated:
+    name: Generated projects
+    # The project templates are not source any other check reads, so generate
+    # one project of each kind weekly and check them like the real projects.
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: ./.github/actions/setup-workspace
+
+      - name: Generate one project of each kind
+        env:
+          # The new projects join yarn.lock and uv.lock in this throwaway checkout.
+          UV_LOCKED: 'false'
+          YARN_ENABLE_IMMUTABLE_INSTALLS: 'false'
+        run: |
+          yarn nx g @busy-bar-apps/workspace:project ci-ts-app --language=ts --interactive=false
+          yarn nx g @busy-bar-apps/workspace:project ci-ts-lib --language=ts --type=lib --interactive=false
+          yarn nx g @busy-bar-apps/workspace:project ci-python-app --language=python --interactive=false
+          yarn nx g @busy-bar-apps/workspace:project ci-python-lib --language=python --type=lib --interactive=false
+          yarn nx sync
+
+      - name: Check the generated projects
+        run: |
+          yarn format:check
+          yarn nx run repo:check-projects
+          yarn nx run-many -t lint typecheck test -p ci-ts-app ci-ts-lib ci-python-app ci-python-lib --outputStyle=static
+
   ci:
     # The only check branch protection needs to require.
     name: CI
     if: always()
-    needs: [verify, workflows, audit]
+    needs: [verify, workflows, audit, generated]
     runs-on: ubuntu-24.04
     timeout-minutes: 5
     steps:

@@ -32,7 +32,10 @@ Nx loads it straight from source.
 
 - Changing a template: generate a throwaway project of that variant, run
   `nx run-many -t lint typecheck test -p <name>` and `yarn format:check`, then
-  delete it. Generated projects must pass on first run.
+  delete it. Generated projects must pass on first run; the weekly CI run's
+  Generated projects job checks all four variants.
+- New Python projects copy the `[build-system]` table of
+  `libs/bar-kit-py/pyproject.toml`, so Dependabot's bumps reach them too.
 - Changing inferred targets: update [docs/python.md](../../docs/python.md) in
   the same change.
 

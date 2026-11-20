@@ -25,6 +25,19 @@ members = ["libs/bar-kit-py", "apps/countdown"]
 target-version = "py314"
 `;
 
+const KIT_BUILD_SYSTEM = `[build-system]
+requires = ["uv_build>=0.13.7,<0.14"]
+build-backend = "uv_build"`;
+
+const KIT_PYPROJECT = `[project]
+name = "bar-kit"
+
+${KIT_BUILD_SYSTEM}
+
+[tool.coverage.run]
+branch = true
+`;
+
 /** What `uv run python -c ...` reports for the module-name probe. */
 function probeResult(
   status: number | null,
@@ -57,6 +70,7 @@ describe('projectGenerator', () => {
       JSON.stringify({ files: [], references: [{ path: './libs/bar-kit' }] }),
     );
     tree.write('pyproject.toml', ROOT_PYPROJECT);
+    tree.write('libs/bar-kit-py/pyproject.toml', KIT_PYPROJECT);
     vi.mocked(spawnSync).mockReturnValue(probeResult(0));
   });
 
@@ -159,6 +173,70 @@ describe('projectGenerator', () => {
     );
     expect(tree.read('libs/weather-api/pyproject.toml', 'utf8')).not.toContain(
       'bar-kit',
+    );
+  });
+
+  it.each([
+    ['app', 'apps/weather-station'],
+    ['lib', 'libs/weather-station'],
+  ] as const)(
+    "gives a Python %s the kit's build backend requirement",
+    (type, directory) => {
+      projectGenerator(tree, {
+        name: 'weather-station',
+        language: 'python',
+        type,
+        skipInstall: true,
+      });
+
+      expect(tree.read(`${directory}/pyproject.toml`, 'utf8')).toContain(
+        `\n${KIT_BUILD_SYSTEM}\n\n[tool.coverage.run]`,
+      );
+    },
+  );
+
+  it('copies the build backend from the end of the kit file too', () => {
+    tree.write(
+      'libs/bar-kit-py/pyproject.toml',
+      `[project]\nname = "bar-kit"\n\n${KIT_BUILD_SYSTEM}\n`,
+    );
+
+    projectGenerator(tree, {
+      name: 'weather-station',
+      language: 'python',
+      type: 'lib',
+      skipInstall: true,
+    });
+
+    expect(tree.read('libs/weather-station/pyproject.toml', 'utf8')).toContain(
+      KIT_BUILD_SYSTEM,
+    );
+  });
+
+  it('needs the kit to declare its build backend', () => {
+    tree.delete('libs/bar-kit-py/pyproject.toml');
+    expect(() =>
+      projectGenerator(tree, {
+        name: 'weather-api',
+        language: 'python',
+        type: 'lib',
+        skipInstall: true,
+      }),
+    ).toThrow('libs/bar-kit-py/pyproject.toml must declare [build-system]');
+
+    tree.write(
+      'libs/bar-kit-py/pyproject.toml',
+      '[project]\nname = "bar-kit"\n',
+    );
+
+    expect(() =>
+      projectGenerator(tree, {
+        name: 'weather-station',
+        language: 'python',
+        skipInstall: true,
+      }),
+    ).toThrow(
+      'libs/bar-kit-py/pyproject.toml must declare [build-system]; new Python projects copy it.',
     );
   });
 

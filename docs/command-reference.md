@@ -89,8 +89,10 @@ merge groups, and pushes to `main`:
   one check that [branch protection](#branch-protection) requires.
 
 A weekly scheduled run, also startable by hand, runs every target on every
-project and adds the **Dependency audit** job (`yarn npm audit` and
-`uv audit`).
+project and adds two jobs: **Dependency audit** (`yarn npm audit` and
+`uv audit`), and **Generated projects**, which generates one project of each
+kind and runs the format check, the project check, `lint`, `typecheck`, and
+`test` on them.
 
 Every action is pinned to a full commit SHA with a version comment; zizmor
 enforces the pins and Dependabot proposes updates. Before you change a
