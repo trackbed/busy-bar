@@ -13,7 +13,8 @@ requests.
 - The GitHub query and its parsing ([src/github.ts](src/github.ts)): one
   GraphQL request a minute with two searches, your open pull requests (up to
   50, with checks and auto-merge) and the ones merged since local midnight.
-- Noticing merges and newly failing checks ([src/watch.ts](src/watch.ts)).
+- Each poll ([src/watch.ts](src/watch.ts)): noticing merges and newly
+  failing checks, and the sound that announces them.
 - The layout ([src/render.ts](src/render.ts)).
 - Sample frames for the app catalogue ([src/preview.ts](src/preview.ts)).
 

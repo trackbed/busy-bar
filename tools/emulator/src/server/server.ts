@@ -7,13 +7,14 @@ import { createServer } from 'node:http';
 import type { AddressInfo } from 'node:net';
 import type { Duplex } from 'node:stream';
 
+import { ApiError } from '../device/api-error.ts';
 import type { Device, DeviceEvent } from '../device/device.ts';
 import type { Canvas } from '../render/canvas.ts';
 import type { SceneRenderer } from '../render/scene.ts';
 import { screenshotPng } from '../render/screenshot.ts';
 import type { ApiContext } from './api.ts';
 import { handleApi, packGrey4 } from './api.ts';
-import { ApiError, sendBytes, sendError, sendJson } from './http.ts';
+import { sendBytes, sendError, sendJson } from './http.ts';
 import { LiveChannel } from './live.ts';
 import type { PageFile } from './page.ts';
 import { StatusStream } from './status-stream.ts';

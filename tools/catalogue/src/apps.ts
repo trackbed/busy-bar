@@ -16,6 +16,7 @@ const LANGUAGES = { 'lang:ts': 'TypeScript', 'lang:python': 'Python' } as const;
 
 type Language = (typeof LANGUAGES)[keyof typeof LANGUAGES];
 
+/** An app the catalogue shows: a `type:app` project with a `preview` target. */
 export interface AppProject {
   readonly name: string;
   /** The project directory, relative to the workspace root. */

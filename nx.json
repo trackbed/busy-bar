@@ -19,13 +19,16 @@
     "lintGlobals": [
       "{workspaceRoot}/.oxlintrc.json",
       "{workspaceRoot}/eslint.factory.mjs",
-      "{workspaceRoot}/eslint.nx-boundaries.mjs"
+      "{workspaceRoot}/eslint.nx-boundaries.mjs",
+      "{workspaceRoot}/project-boundaries.mjs"
     ],
     "vitestGlobals": ["{workspaceRoot}/vitest.factory.mjs"],
+    "barKitTextWidths": ["{workspaceRoot}/bar-kit-text-widths.json"],
     "rootTooling": [
       "{workspaceRoot}/*.mjs",
       "{workspaceRoot}/*.d.mts",
-      "{workspaceRoot}/scripts/**/*"
+      "{workspaceRoot}/scripts/**/*",
+      "{workspaceRoot}/tools/workspace/src/**/*"
     ],
     "typescriptToolDependencies": [
       {

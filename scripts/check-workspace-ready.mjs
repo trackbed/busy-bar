@@ -2,7 +2,9 @@
 // Read-only readiness check that works before anything is installed: the
 // pinned Node version, the Yarn install, uv, the Python environment, and the
 // Git hooks. Prints one line per problem with the command that fixes it.
-// `yarn bootstrap:status` runs it; `--quiet` prints only problems.
+// Run it as `node scripts/check-workspace-ready.mjs`, which needs only Node;
+// `yarn bootstrap:status` runs it too once Yarn can start. `--quiet` prints
+// only problems.
 
 import { spawnSync } from 'node:child_process';
 import { existsSync, readFileSync, statSync } from 'node:fs';
@@ -16,7 +18,7 @@ const problems = [];
 const pinnedNode = readFileSync(join(root, '.node-version'), 'utf8').trim();
 if (process.version !== `v${pinnedNode}`) {
   problems.push(
-    `Node ${process.version} is running; the workspace pins ${pinnedNode}. Run \`nvm install\` (or \`fnm use\`) in the repository root.`,
+    `Node ${process.version} is running; the workspace pins ${pinnedNode}. Install Node ${pinnedNode} and put it first on PATH: \`bash scripts/setup-workspace.sh\` installs it with mise, fnm, or nvm and prints how.`,
   );
 }
 
@@ -33,7 +35,16 @@ function isFresh(artifact, source) {
   );
 }
 
-if (!isFresh('node_modules/.yarn-state.yml', 'yarn.lock')) {
+// Yarn rewrites .yarn-state.yml when it relinks node_modules and its install
+// state (installStatePath in .yarnrc.yml) when the lockfile changes, so an
+// install after a lockfile change can leave either one older than yarn.lock.
+if (
+  !existsSync(join(root, 'node_modules/.yarn-state.yml')) ||
+  !(
+    isFresh('node_modules/.yarn-state.yml', 'yarn.lock') ||
+    isFresh('node_modules/.yarn-install-state.gz', 'yarn.lock')
+  )
+) {
   problems.push(
     'Node dependencies are missing or older than yarn.lock. Run `corepack enable && yarn install`.',
   );

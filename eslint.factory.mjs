@@ -66,11 +66,12 @@ const typeScriptRules = {
       requireDefaultForNonUnion: false,
     },
   ],
-  // Object-literal assertions (`{ ... } as Foo`) skip excess-property checks.
-  // Annotate the variable or use `satisfies` instead.
+  // No type assertions (`value as Foo`): narrow with a runtime check, annotate
+  // the variable, or use `satisfies`. `as const` is not an assertion and stays
+  // allowed.
   '@typescript-eslint/consistent-type-assertions': [
     'error',
-    { assertionStyle: 'as', objectLiteralTypeAssertions: 'never' },
+    { assertionStyle: 'never' },
   ],
   eqeqeq: ['error', 'always', { null: 'ignore' }],
 };

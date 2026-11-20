@@ -21,7 +21,8 @@
     },
     "deploy": {
       "command": "convex deploy --typecheck disable",
-      "options": { "cwd": "{projectRoot}" }
+      "options": { "cwd": "{projectRoot}" },
+      "dependsOn": ["typecheck"]
     },
     "convex": {
       "command": "convex",

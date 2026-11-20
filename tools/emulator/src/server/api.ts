@@ -4,18 +4,12 @@
 
 import type { IncomingMessage, ServerResponse } from 'node:http';
 
+import { ApiError } from '../device/api-error.ts';
 import type { Device, Key } from '../device/device.ts';
 import { KEYS } from '../device/device.ts';
 import type { AssetSource } from '../device/elements.ts';
 import { isSanePath } from '../device/elements.ts';
-import {
-  ApiError,
-  readBody,
-  sendBytes,
-  sendError,
-  sendJson,
-  sendOk,
-} from './http.ts';
+import { readBody, sendBytes, sendError, sendJson, sendOk } from './http.ts';
 
 /** The API version the emulator reports, as the pinned firmware does. */
 export const API_SEMVER = '27.14.0';

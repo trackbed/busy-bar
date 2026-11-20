@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import type { InputEvent } from './protobuf.ts';
+import type { InputEvent } from '../device/device.ts';
 import { encodeInputState, ProtoWriter } from './protobuf.ts';
 
 const TIMESTAMP = 1_760_961_600_000;

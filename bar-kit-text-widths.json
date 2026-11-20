@@ -1,0 +1,117 @@
+{
+  "description": "The text widths both kits must give: libs/bar-kit (textWidth) and libs/bar-kit-py (text_width) test against this file, so changing one kit's widths fails the other kit's tests until both agree. `advances` lists, for each font, the printable ASCII characters of each advance width in pixels, from the font maps busy-lib ships. `samples` are whole strings.",
+  "advances": {
+    "tiny": {
+      "2": "!',.:;ijl|",
+      "3": " ()[]`fgr",
+      "4": "\"$*+-0123456789<=>?@ABCDEFGHIJLPRSTX^_abcdehknopqstuvxyz{}",
+      "5": "%&/KNOQUZ\\~",
+      "6": "#MVWYmw"
+    },
+    "small": {
+      "2": " !',.:Iil|",
+      "3": "()-/1;[\\]fjrt",
+      "4": "\"$*+023456789<=>?JLTVXYZ^_`abcdeghknopqsuvxyz{}",
+      "5": "%&@ABCDEFGHKNOPQRSU~",
+      "6": "#MWmw"
+    },
+    "normal": {
+      "2": "':",
+      "3": "!(),;[]|",
+      "4": "\"*-.<>Iijlr{}",
+      "5": " /JL\\_`abcdefghknopqstuyz",
+      "6": "#$+0123456789=?ABCDEFGHKNOPQRSTUVXYZ^mvwx~",
+      "7": "&",
+      "8": "%@MW"
+    },
+    "condensed": {
+      "2": "':",
+      "3": "!(),;[]|",
+      "4": "\"*-.<>Iijlr{}",
+      "5": " /0123456789JL\\_`abcdefghknopqstuyz",
+      "6": "#$+=?ABCDEFGHKNOPQRSTUVXYZ^mvwx~",
+      "7": "&",
+      "8": "%@MW"
+    },
+    "bold": {
+      "2": "':",
+      "3": ",;",
+      "4": "!\"()*-.[]|",
+      "5": " <>I_`ijlr{}",
+      "6": "/EFJL\\abcdefghknopqstuyz~",
+      "7": "+0123456789=?ABCDGHKOPQRSTUXYZ^vx",
+      "8": "#&NVmw",
+      "9": "$%",
+      "10": "@M",
+      "11": "W"
+    },
+    "large": {
+      "2": "':|",
+      "3": "!,;[]",
+      "4": "\"()-.Iijl{}",
+      "5": "1<>frt",
+      "6": " *+/=?\\^_`abcdeghknopqsuvxyz",
+      "7": "023456789BCEFJKLPRSZ",
+      "8": "$ADGHNOQTUVXYm~",
+      "9": "#&",
+      "10": "%@MWw"
+    },
+    "extra_large": {
+      "3": "!',.:;|",
+      "4": " -[]",
+      "5": "()1<>I_`i",
+      "6": "\"/\\{}",
+      "7": "*+=?EFJLTZefjltz",
+      "8": "023456789ABCDGHKNOPQRSUXY^abcdghknopqrsuxy~",
+      "9": "$MVWmvw",
+      "10": "#&",
+      "11": "%",
+      "12": "@"
+    },
+    "global": {
+      "2": "!',.:;Iil|",
+      "3": " ()[]`j",
+      "4": "\"*1<>^ftv{}",
+      "5": "-/47=?EFJLPRY\\_bcdeghknopqrsuxyz",
+      "6": "$%&+0235689ABCDGHKNOQSTUVXZaw~",
+      "7": "#@",
+      "8": "MWm"
+    },
+    "superscript": {
+      "2": "':",
+      "3": "!(),;[]|",
+      "4": "\"*-.0123456789<>Iijlr{}",
+      "5": " /JL\\_`abcdefghknopqstuyz",
+      "6": "#$+=?ABCDEFGHKNOPQRSTUVXYZ^mvwx~",
+      "7": "&",
+      "8": "%@MW"
+    }
+  },
+  "samples": [
+    {
+      "text": "3 NEED YOU",
+      "font": "small",
+      "width": 42
+    },
+    {
+      "text": "quebec done 4m",
+      "font": "tiny",
+      "width": 56
+    },
+    {
+      "text": "Hello, World!",
+      "font": "normal",
+      "width": 61
+    },
+    {
+      "text": "09:05",
+      "font": "extra_large",
+      "width": 35
+    },
+    {
+      "text": "",
+      "font": "small",
+      "width": 0
+    }
+  ]
+}

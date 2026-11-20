@@ -1,6 +1,7 @@
 // Downloads the firmware's stock assets at a pinned commit and verifies each
 // file against its Git blob hash. The assets are CC-BY-SA and OFL licensed,
-// so the repository records only their paths and hashes, never the files.
+// so the repository records only their paths and hashes, never the files
+// (docs/adr/0004-firmware-emulator.md).
 
 import { createHash } from 'node:crypto';
 import { mkdir, readFile, rename, writeFile } from 'node:fs/promises';

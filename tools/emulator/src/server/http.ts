@@ -3,16 +3,7 @@
 
 import type { IncomingMessage, ServerResponse } from 'node:http';
 
-/** A request the API refuses, answered as the firmware does. */
-export class ApiError extends Error {
-  override readonly name = 'ApiError';
-  readonly status: number;
-
-  constructor(status: number, message: string) {
-    super(message);
-    this.status = status;
-  }
-}
+import { ApiError } from '../device/api-error.ts';
 
 /** Read the whole body, refusing anything larger than `limit` bytes. */
 export async function readBody(

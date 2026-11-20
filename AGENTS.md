@@ -8,11 +8,15 @@ clients. TypeScript uses Yarn workspaces; Python uses a uv workspace.
 
 - This file holds the always-on rules. [docs/README.md](docs/README.md) indexes
   everything else.
-- Use the pinned Node version (`.node-version`; `nvm install` switches to it),
-  then install before any Nx command: `corepack enable && yarn install && uv sync --all-packages`.
-- `yarn bootstrap:status` is a read-only readiness check. Run it first when
-  Nx or a tool fails in a way that looks environmental. If Yarn cannot launch
-  scripts, run `node scripts/check-workspace-ready.mjs` directly.
+- Set up a new checkout or worktree with `bash scripts/setup-workspace.sh`
+  before any Nx command. It installs the pinned Node (`.node-version`) with
+  mise, fnm, or nvm when the shell runs another version, then runs
+  `corepack enable`, `yarn install` (which installs the Git hooks), and
+  `uv sync --all-packages`. Nx needs the pinned Node first on PATH; the script
+  prints how to put it there.
+- `node scripts/check-workspace-ready.mjs` is a read-only readiness check that
+  needs only Node. Run it first when Nx or a tool fails in a way that looks
+  environmental; it prints the command that fixes each problem.
 
 # Hard Rules
 
@@ -37,20 +41,24 @@ These apply to every task. Break one only when the user names a concrete reason.
   imports must use `import type`. `tsc` is TypeScript 7; the `typescript`
   package is the TypeScript 6 API that ESLint and Nx load. Why → [ADR 0003](docs/adr/0003-typescript-from-source.md).
 - **TypeScript discipline**: no `any`, no non-null assertions (`!`), and no
-  `as` casts to silence the compiler; narrow with runtime checks. Read
-  environment variables with bracket access (`process.env['NAME']`).
+  type assertions (`value as Foo`; `as const` is fine): narrow with runtime
+  checks. Lint fails on all three. Read environment variables with bracket
+  access (`process.env['NAME']`).
 - **Python**: every Python project is listed in `[tool.uv.workspace].members`
   in the root `pyproject.toml`; the Nx plugin fails the graph otherwise. A
   dependency on another member needs `<name> = { workspace = true }` under
   `[tool.uv.sources]`. mypy runs in strict mode; fix types rather than adding
-  `# type: ignore`.
+  `# type: ignore`. Explicit `Any` and `typing.cast` fail mypy and Ruff:
+  type untrusted values as `object` and narrow them with `isinstance`.
 - **Dependencies**: pin exact versions everywhere: no `^` or `~` in
   `package.json`, `==` in `pyproject.toml`, and `workspace:0.0.1` for internal
-  TypeScript packages. New releases must be seven days old (Yarn, uv, and
-  Dependabot all enforce it). Never bypass the gate or enable install scripts
-  without the user's approval. Policy → [docs/dependencies.md](docs/dependencies.md).
+  TypeScript packages; `repo:check-projects` fails on anything else. New
+  releases must be seven days old (Yarn, uv, and Dependabot all enforce it).
+  Never bypass the gate or enable install scripts without the user's
+  approval. Policy → [docs/dependencies.md](docs/dependencies.md).
 - **Suppressions** need a reason: `// eslint-disable-next-line <rule> -- <reason>`
-  (lint fails without one) and `# noqa: <CODE> - <reason>`.
+  (ESLint fails without one) and `# noqa: <CODE> - <reason>` (Ruff fails
+  without the code; review checks the reason).
 - **Ratchet, don't preserve**: never lower a coverage threshold or loosen a
   lint rule to make a change pass.
 - **Greenfield posture**: aim for the cleanest end state. Replace obsolete
@@ -78,8 +86,13 @@ These apply to every task. Break one only when the user names a concrete reason.
   frame loop (`runBarApp` / `run_bar_app`), background polling
   (`createPoller` / `Poller`), the bar's buttons and wheel
   (`listenForInput` / `listen_for_input`), and text that fits the bitmap
-  fonts (`toBarText`, `textWidth`, `fitText`). The two kits share one
-  contract; change both together.
+  fonts (`toBarText` / `to_bar_text`, `textWidth` / `text_width`,
+  `fitText` / `fit_text`, and `overflowingText` / `overflowing_text` for
+  layout tests). The two kits share one contract; change both together.
+  Both test their text widths against `bar-kit-text-widths.json`.
+- `libs/json-values/` (TypeScript): narrowing untrusted JSON, such as an API
+  response, without casts (`isObject`, `objectAt`, `arrayAt`, `stringAt`,
+  `numberAt`). Use it instead of writing another type guard.
 - `tools/emulator/`: a BUSY Bar on the computer, built from the open
   firmware: the HTTP API, both displays with animations, and a browser page.
   Start it with `NX_DAEMON=false yarn nx run emulator:start` and point an app
@@ -90,8 +103,9 @@ These apply to every task. Break one only when the user names a concrete reason.
 - `tools/workspace/`: the Nx plugin that infers Python targets and graph edges
   (`src/plugins/python.ts`) and the project generator (`src/generators/project/`).
 - Root: `nx.json`, `project-boundaries.mjs`, `eslint.factory.mjs`,
-  `vitest.factory.mjs`, and `pyproject.toml` (uv workspace plus Ruff, mypy,
-  and pytest config).
+  `vitest.factory.mjs`, `pyproject.toml` (uv workspace plus Ruff, mypy,
+  and pytest config), and `bar-kit-text-widths.json` (the glyph widths both
+  kits must give).
 
 Full layout, naming, and tags → [docs/project-structure.md](docs/project-structure.md).
 
@@ -121,6 +135,7 @@ Full layout, naming, and tags → [docs/project-structure.md](docs/project-struc
 # Verification Matrix
 
 - While iterating on one project: `NX_DAEMON=false yarn nx run-many -t lint typecheck test -p <project>`.
+- One test file or one test: turn coverage off as [docs/testing-strategy.md](docs/testing-strategy.md#running-one-test) shows, then run the project's full `test`.
 - Broader changes: `yarn verify:fast`.
 - Before the branch's first push or PR: `yarn verify` once. After that, CI runs it on every push; fix failures with the failing target, not another full sweep.
 - Docs-only change: `yarn format:check`.

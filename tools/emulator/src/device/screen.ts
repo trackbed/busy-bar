@@ -3,8 +3,8 @@
 // (applications/services/canvas/canvas.c in the firmware).
 
 import type { Animation } from '../formats/animation.ts';
-import { ApiError } from '../server/http.ts';
 import { AnimationPlayer } from './animation-player.ts';
+import { ApiError } from './api-error.ts';
 import type { AnimationElement, DrawRequest, Element } from './elements.ts';
 import { MAX_ELEMENTS } from './elements.ts';
 

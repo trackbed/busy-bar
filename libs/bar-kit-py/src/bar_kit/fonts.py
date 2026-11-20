@@ -2,12 +2,18 @@
 
 The fonts are proportional bitmaps, so a layout that has to fit measures its
 text. The widths below are the advances of printable ASCII, the only characters
-the fonts draw, measured from the font maps busy-lib 0.21.1 ships
-(`@busy-app/busy-lib/fonts`). The TypeScript kit's `textWidth` reads the same
-maps.
+the fonts draw, copied from the font maps busy-lib ships
+(`@busy-app/busy-lib/fonts`), which the TypeScript kit's `textWidth` reads.
+Both kits test their widths against `bar-kit-text-widths.json` at the
+workspace root; when busy-lib's maps change, update that file and this table
+together.
 """
 
+from collections.abc import Iterable
+
 from busylib import types
+
+from bar_kit.display import BACK_DISPLAY, FRONT_DISPLAY
 
 ELLIPSIS = ".."
 """What `fit_text` puts after text it cuts short: the fonts have no `…`."""
@@ -135,3 +141,40 @@ def fit_text(text: str, font: types.DisplayFontName, width: int) -> str:
     while cut and text_width(cut, font) > room:
         cut = cut[:-1]
     return cut.rstrip() + ELLIPSIS
+
+
+def overflowing_text(
+    elements: Iterable[types.DisplayElement],
+) -> list[types.TextElement]:
+    """The text elements that run past the left or right edge of their display.
+
+    They are placed the way the bar places them: a label is as wide as its
+    `width`, or as its text without one, and `align` says whether `x` is its
+    left edge, its middle, or the column just past its right edge. Tests check
+    layouts with it; the TypeScript kit's `overflowingText` gives the same
+    answer.
+    """
+    return [
+        element
+        for element in elements
+        if isinstance(element, types.TextElement) and not _fits_display(element)
+    ]
+
+
+def _fits_display(element: types.TextElement) -> bool:
+    display = (
+        BACK_DISPLAY if element.display == types.DisplayName.BACK else FRONT_DISPLAY
+    )
+    width = (
+        element.width
+        if element.width is not None
+        else text_width(element.text, element.font)
+    )
+    align = element.align or "top_left"
+    if align.endswith("left"):
+        left = element.x
+    elif align.endswith("right"):
+        left = element.x - width
+    else:
+        left = element.x - width // 2
+    return left >= 0 and left + width <= display.width

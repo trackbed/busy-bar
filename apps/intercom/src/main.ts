@@ -9,13 +9,13 @@ import {
   shutdownSignal,
 } from '@busy-bar-apps/bar-kit';
 
-import type { Board } from './board.ts';
+import { createBoardFeed } from './board.ts';
 import { createChime } from './chime.ts';
 import { createControls } from './controls.ts';
 import { api } from './convex/_generated/api.js';
 import { createFocusDriver } from './focus.ts';
 import { render } from './render.ts';
-import { createReporter } from './reporter.ts';
+import { createReporter, leaveTeam } from './reporter.ts';
 import { trackScreen } from './screen.ts';
 import { loadSettings } from './settings.ts';
 import { presenceAt } from './timer.ts';
@@ -33,8 +33,6 @@ const bar = createBusyBar(config);
 const screen = trackScreen(bar);
 const convex = new ConvexClient(settings.convexUrl);
 
-let board: Board | undefined;
-let failure: Error | undefined;
 const focus = createFocusDriver({
   name: NAME,
   snapshot: () => bar.BusySnapshotGet(),
@@ -45,26 +43,17 @@ const chime = createChime({
   enabled: settings.sound,
   play: (sound) => bar.AudioPlay({ application_name: NAME, stock_path: sound }),
 });
+const feed = createBoardFeed([focus.observe, chime.observe]);
 const unsubscribe = convex.onUpdate(
   api.team.board,
   { key },
-  (next) => {
-    board = next;
-    failure = undefined;
-    focus.observe(next);
-    chime.observe(next);
-  },
-  // The query itself failed, such as for a key the team no longer knows:
-  // show why rather than the last board.
-  (error) => {
-    board = undefined;
-    failure = error;
-  },
+  feed.update,
+  feed.fail,
 );
 
 const controls = createControls({
   name: NAME,
-  board: () => board,
+  board: feed.board,
   onScreen: screen.onScreen,
   knock: (to) => convex.mutation(api.knocks.send, { key, to }),
   answer: (knock, reply) =>
@@ -99,8 +88,8 @@ try {
       client: screen.client,
       render: (now) =>
         render(now, {
-          board,
-          failure,
+          board: feed.board(),
+          failure: feed.failure(),
           connected: convex.connectionState().isWebSocketConnected,
           selected: controls.selected(),
           focusMinutes: settings.focusMinutes,
@@ -112,15 +101,10 @@ try {
 } finally {
   unsubscribe();
   focus.stop();
-  // Show the bar offline at once rather than when its heartbeat expires,
-  // without holding up the exit when the deployment is out of reach.
-  await Promise.race([
-    convex.mutation(api.bars.leave, { key }).catch((error: unknown) => {
-      console.warn(`[${NAME}] Leaving the team failed:`, error);
-    }),
-    new Promise((resolve) => {
-      setTimeout(resolve, LEAVE_TIMEOUT_MS).unref();
-    }),
-  ]);
+  await leaveTeam({
+    name: NAME,
+    leave: () => convex.mutation(api.bars.leave, { key }),
+    timeoutMs: LEAVE_TIMEOUT_MS,
+  });
   await convex.close();
 }

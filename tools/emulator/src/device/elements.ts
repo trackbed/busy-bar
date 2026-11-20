@@ -4,11 +4,13 @@
 // absent, as mongoose's JSON getters treat it), and the same messages, so
 // apps see the same 400s as on a real bar.
 
+import { isObject } from '@busy-bar-apps/json-values';
+
 import type { Bitmap } from '../formats/png.ts';
 import { parseXpm, XpmError } from '../formats/xpm.ts';
 import type { Rgba } from '../render/canvas.ts';
 import { parseColor } from '../render/canvas.ts';
-import { ApiError } from '../server/http.ts';
+import { ApiError } from './api-error.ts';
 
 export const FONTS = [
   'tiny',
@@ -428,10 +430,6 @@ function parseXpmElement(field: JsonFields, common: Common): XpmElement {
 
 function strictColor(value: string): Rgba | undefined {
   return /^#[0-9a-f]{8}$/iu.test(value) ? parseColor(value) : undefined;
-}
-
-function isObject(value: unknown): value is Json {
-  return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
 
 function quoted(choices: readonly string[]): string {

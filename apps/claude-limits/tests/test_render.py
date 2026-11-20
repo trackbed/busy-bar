@@ -5,7 +5,7 @@ import pytest
 from busylib import types
 from samples import NOW
 
-from bar_kit import BACK_DISPLAY, FRONT_DISPLAY, PollFailure, Snapshot, text_width
+from bar_kit import BACK_DISPLAY, FRONT_DISPLAY, PollFailure, Snapshot, overflowing_text
 from claude_limits.render import (
     BARS_WIDTH,
     BARS_X,
@@ -203,18 +203,8 @@ def test_keeps_every_text_inside_its_display() -> None:
         )
     )
 
-    for element in elements.values():
-        if isinstance(element, types.TextElement) and element.align != "top_right":
-            limit = (
-                FRONT_DISPLAY.width
-                if element.display == types.DisplayName.FRONT
-                else BACK_DISPLAY.width
-            )
-            assert element.x + text_width(element.text, element.font) <= limit, (
-                element.id
-            )
-
-    # Right-aligned elements anchor inside the display too.
+    assert [element.id for element in overflowing_text(elements.values())] == []
+    # Other elements start inside their display too.
     assert [
         element.id
         for element in elements.values()

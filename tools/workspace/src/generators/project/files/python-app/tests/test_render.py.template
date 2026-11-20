@@ -2,6 +2,7 @@ from datetime import UTC, datetime
 
 from busylib import types
 
+from bar_kit import FRONT_DISPLAY, fit_text
 from <%= moduleName %>.render import render
 
 
@@ -9,5 +10,5 @@ def test_draws_the_title_on_the_front_display() -> None:
     (element,) = render(datetime(2026, 1, 1, tzinfo=UTC))
 
     assert isinstance(element, types.TextElement)
-    assert element.text == "<%= title %>"
+    assert element.text == fit_text("<%= title %>", "normal", FRONT_DISPLAY.width)
     assert element.display == types.DisplayName.FRONT

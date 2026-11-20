@@ -52,3 +52,36 @@ export function createReporter(options: ReporterOptions): Reporter {
     },
   };
 }
+
+export interface LeaveOptions {
+  /** Names the app in log messages. */
+  readonly name: string;
+  /** Tell the team this bar left, such as the `bars:leave` mutation. */
+  readonly leave: () => Promise<unknown>;
+  /** How long to wait for `leave` before giving up. */
+  readonly timeoutMs: number;
+  readonly log?: Pick<Console, 'warn'>;
+}
+
+/**
+ * Tell the team this bar left as the app stops, so it shows offline at once
+ * rather than when its heartbeat expires. Gives up after `timeoutMs`, so an
+ * unreachable deployment does not hold up the exit, and logs a failure.
+ */
+export async function leaveTeam(options: LeaveOptions): Promise<void> {
+  const { name, leave, timeoutMs, log = console } = options;
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  await Promise.race([
+    leave().then(
+      () => undefined,
+      (error: unknown) => {
+        log.warn(`[${name}] Leaving the team failed:`, error);
+      },
+    ),
+    new Promise<void>((resolve) => {
+      timer = setTimeout(resolve, timeoutMs);
+      timer.unref();
+    }),
+  ]);
+  clearTimeout(timer);
+}

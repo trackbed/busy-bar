@@ -16,12 +16,13 @@ import type { AssetRoot } from '../__tests__/asset-root.ts';
 import { assetRoot } from '../__tests__/asset-root.ts';
 import { solidPng } from '../__tests__/fixtures.ts';
 import type { AssetLibrary } from '../assets/library.ts';
+import { ApiError } from '../device/api-error.ts';
 import type { DeviceEvent } from '../device/device.ts';
 import { Device } from '../device/device.ts';
 import { rawPcmSound } from '../formats/sound.ts';
 import type { ApiContext } from './api.ts';
 import { API_SEMVER, handleApi } from './api.ts';
-import { ApiError, sendError } from './http.ts';
+import { sendError } from './http.ts';
 
 /** 2025-10-20T12:00:00Z. */
 const STARTED_AT = 1_760_961_600_000;

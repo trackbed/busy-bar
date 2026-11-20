@@ -3,7 +3,8 @@
 // `type:*` tag (its layer) and one `lang:*` tag (its language); see
 // docs/project-structure.md#tags. ESLint enforces these rules on TypeScript
 // imports, and `repo:check-projects` enforces them on every project graph
-// edge, including the ones the Python plugin reads from pyproject.toml.
+// edge, including the ones the Python plugin finds in pyproject.toml and in
+// Python imports.
 
 /** @typedef {{ sourceTag: string, onlyDependOnLibsWithTags: string[] }} DepConstraint */
 

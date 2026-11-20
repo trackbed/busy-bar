@@ -3,5 +3,10 @@
   "$schema": "../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "libs/bar-kit/src",
   "projectType": "library",
-  "tags": ["type:lib", "lang:ts"]
+  "tags": ["type:lib", "lang:ts"],
+  "targets": {
+    "test": {
+      "inputs": ["...", "barKitTextWidths"]
+    }
+  }
 }

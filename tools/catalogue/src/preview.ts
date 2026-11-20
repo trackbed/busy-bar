@@ -7,6 +7,7 @@ import { arrayAt, isObject, stringAt } from '@busy-bar-apps/json-values';
 
 import { CatalogueError } from './error.ts';
 
+/** One step of how the app works, as the preview tells it. */
 export interface PreviewStep {
   readonly label: string;
   readonly text: string;
@@ -18,6 +19,7 @@ interface PreviewScene {
   readonly elements: readonly unknown[];
 }
 
+/** What an app's `preview` target prints, once parsed. */
 export interface Preview {
   readonly summary: string;
   readonly steps: readonly PreviewStep[];

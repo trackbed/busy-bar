@@ -5,7 +5,7 @@ import type { CreateDependenciesContext, CreateNodesResult } from '@nx/devkit';
 import { AggregateCreateNodesError, DependencyType } from '@nx/devkit';
 import { describe, expect, it } from 'vitest';
 
-import { createDependencies, createNodes } from './python.ts';
+import { createDependencies, createNodes, importedModules } from './python.ts';
 
 const [pattern, createNodesFunction] = createNodes;
 
@@ -159,6 +159,32 @@ describe('createNodes', () => {
   });
 });
 
+/** A context for `createDependencies` over `files`, a workspace's Python files. */
+function dependencyContext(
+  root: string,
+  files: Record<string, string[]> = {},
+): CreateDependenciesContext {
+  const projectFileMap = Object.fromEntries(
+    Object.entries(files).map(([project, paths]) => [
+      project,
+      paths.map((file) => ({ file, hash: '' })),
+    ]),
+  );
+  return {
+    externalNodes: {},
+    nxJsonConfiguration: {},
+    workspaceRoot: root,
+    fileMap: { projectFileMap, nonProjectFiles: [] },
+    filesToProcess: { projectFileMap: {}, nonProjectFiles: [] },
+    projects: {
+      countdown: { root: 'apps/countdown' },
+      'bar-kit-py': { root: 'libs/bar-kit-py' },
+      clock: { root: 'apps/clock' },
+      repo: { root: '.' },
+    },
+  };
+}
+
 describe('createDependencies', () => {
   it('adds one static edge per workspace member a project requires', async () => {
     const root = workspace({
@@ -166,21 +192,9 @@ describe('createDependencies', () => {
       'apps/countdown/pyproject.toml': APP_PYPROJECT,
       'libs/bar-kit-py/pyproject.toml': LIB_PYPROJECT,
     });
-    const context: CreateDependenciesContext = {
-      externalNodes: {},
-      nxJsonConfiguration: {},
-      workspaceRoot: root,
-      fileMap: { projectFileMap: {}, nonProjectFiles: [] },
-      filesToProcess: { projectFileMap: {}, nonProjectFiles: [] },
-      projects: {
-        countdown: { root: 'apps/countdown' },
-        'bar-kit-py': { root: 'libs/bar-kit-py' },
-        clock: { root: 'apps/clock' },
-        repo: { root: '.' },
-      },
-    };
-
-    expect(await createDependencies(undefined, context)).toEqual([
+    expect(
+      await createDependencies(undefined, dependencyContext(root)),
+    ).toEqual([
       {
         source: 'countdown',
         target: 'bar-kit-py',
@@ -188,5 +202,91 @@ describe('createDependencies', () => {
         sourceFile: 'apps/countdown/pyproject.toml',
       },
     ]);
+  });
+
+  it('adds an edge for every Python file that imports a required member', async () => {
+    const root = workspace({
+      'pyproject.toml': ROOT_PYPROJECT,
+      'apps/countdown/pyproject.toml': APP_PYPROJECT,
+      'apps/countdown/src/countdown/render.py':
+        'from bar_kit import FRONT_DISPLAY\nfrom .settings import Settings\n',
+      'apps/countdown/tests/test_render.py':
+        'import bar_kit.fonts\nimport pytest\n',
+      'libs/bar-kit-py/pyproject.toml': LIB_PYPROJECT,
+      'libs/bar-kit-py/src/bar_kit/run.py':
+        'from bar_kit.display import rgba\n',
+    });
+
+    expect(
+      await createDependencies(
+        undefined,
+        dependencyContext(root, {
+          countdown: [
+            'apps/countdown/pyproject.toml',
+            'apps/countdown/src/countdown/render.py',
+            'apps/countdown/tests/test_render.py',
+          ],
+          'bar-kit-py': ['libs/bar-kit-py/src/bar_kit/run.py'],
+        }),
+      ),
+    ).toEqual([
+      {
+        source: 'countdown',
+        target: 'bar-kit-py',
+        type: DependencyType.static,
+        sourceFile: 'apps/countdown/pyproject.toml',
+      },
+      {
+        source: 'countdown',
+        target: 'bar-kit-py',
+        type: DependencyType.static,
+        sourceFile: 'apps/countdown/src/countdown/render.py',
+      },
+      {
+        source: 'countdown',
+        target: 'bar-kit-py',
+        type: DependencyType.static,
+        sourceFile: 'apps/countdown/tests/test_render.py',
+      },
+    ]);
+  });
+
+  it('fails the graph for an import of a member the project does not require', () => {
+    const root = workspace({
+      'pyproject.toml': ROOT_PYPROJECT,
+      'apps/countdown/pyproject.toml': '[project]\nname = "countdown"\n',
+      'apps/countdown/src/countdown/render.py': 'import bar_kit\n',
+      'libs/bar-kit-py/pyproject.toml': LIB_PYPROJECT,
+    });
+
+    expect(() =>
+      createDependencies(
+        undefined,
+        dependencyContext(root, {
+          countdown: ['apps/countdown/src/countdown/render.py'],
+        }),
+      ),
+    ).toThrow(
+      'apps/countdown/src/countdown/render.py imports bar_kit from libs/bar-kit-py, but apps/countdown/pyproject.toml does not require bar-kit. If project-boundaries.mjs allows the dependency, declare it with `uv add --package countdown bar-kit`; see docs/python.md.',
+    );
+  });
+});
+
+describe('importedModules', () => {
+  it('names the top-level module of every absolute import', () => {
+    expect(
+      importedModules(
+        [
+          'import asyncio',
+          'import bar_kit.fonts, json as j',
+          '    from bar_kit.display import rgba',
+          'from claude_limits import board',
+          'from . import render',
+          'from .settings import load',
+          '# import commented_out',
+          'important = "import inside a string"',
+        ].join('\n'),
+      ),
+    ).toStrictEqual(['asyncio', 'bar_kit', 'json', 'bar_kit', 'claude_limits']);
   });
 });

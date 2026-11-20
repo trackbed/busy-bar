@@ -15,8 +15,9 @@ build-backend = "uv_build"
 [tool.coverage.run]
 branch = true
 source = ["src"]
-# The process entry points only wire the modules together (__main__.py) or
-# print sample frames (preview.py); the other modules hold the behavior.
+# The process entry points only read settings and connect the modules
+# (__main__.py) or print sample frames (preview.py). What a poll does lives in
+# board.py, tested with the other modules.
 omit = ["src/claude_limits/__main__.py", "src/claude_limits/preview.py"]
 
 [tool.coverage.report]

@@ -10,5 +10,8 @@
       "default": "./src/index.ts"
     },
     "./package.json": "./package.json"
+  },
+  "dependencies": {
+    "@busy-bar-apps/json-values": "workspace:0.0.1"
   }
 }

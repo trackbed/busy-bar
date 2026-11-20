@@ -18,10 +18,9 @@ import {
   STOCK_SOUND,
 } from '../__tests__/asset-root.ts';
 import { rawPcmSound } from '../formats/sound.ts';
-import { ApiError } from '../server/http.ts';
-import type { InputEvent } from '../server/protobuf.ts';
+import { ApiError } from './api-error.ts';
 import { DEFAULT_SETTINGS, INITIAL_SNAPSHOT } from './busy-timer.ts';
-import type { DeviceEvent, Key } from './device.ts';
+import type { DeviceEvent, InputEvent, Key } from './device.ts';
 import { Device } from './device.ts';
 import type { AssetSource } from './elements.ts';
 import { HOLD_MS, IDLE_PRIORITY, TIMER_PRIORITY } from './screen.ts';

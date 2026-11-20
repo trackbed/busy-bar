@@ -4,16 +4,16 @@ Status: Current.
 
 ## Toolchain
 
-| Tool       | Version | Pinned in                              |
-| ---------- | ------- | -------------------------------------- |
-| Node.js    | 24.21.0 | `.node-version`, `.nvmrc`, `engines`   |
-| Yarn       | 4.18.1  | `packageManager`, provided by Corepack |
-| TypeScript | 7.0.2   | `@typescript/native` (provides `tsc`)  |
-| TS 6 API   | 6.0.2   | `typescript` (loaded by ESLint and Nx) |
-| ESLint     | 10.12.0 | root `package.json`                    |
-| Oxlint     | 1.87.0  | root `package.json`                    |
-| Oxfmt      | 0.72.0  | root `package.json`                    |
-| Vitest     | 5.0.4   | root `package.json`                    |
+| Tool                          | Pinned in                                               |
+| ----------------------------- | ------------------------------------------------------- |
+| Node.js 24                    | `.node-version` and `.nvmrc`; `engines` allows any 24.x |
+| Yarn 4                        | `packageManager`, provided by Corepack                  |
+| TypeScript 7                  | `@typescript/native` in the root `package.json` (`tsc`) |
+| TypeScript 6 API              | `typescript` in the root `package.json` (ESLint and Nx) |
+| ESLint, Oxlint, Oxfmt, Vitest | root `package.json`                                     |
+
+The files in the second column hold the exact versions, and Dependabot bumps
+the npm ones weekly, so this guide names only major versions.
 
 TypeScript 7 is the native compiler and has no JavaScript API yet, so the
 `typescript` package name resolves to the TypeScript 6 API that
@@ -74,8 +74,9 @@ needs types or project context, configured by
 - `tooling`: workspace tooling.
 
 All kinds get typescript-eslint's strict and stylistic type-checked presets,
-Nx module boundaries, import-cycle detection, Vitest rules for tests, and a
-required reason on every `eslint-disable` comment. eslint-plugin-oxlint turns
+a ban on type assertions other than `as const`, Nx module boundaries,
+import-cycle detection, Vitest rules for tests, and a required reason on every
+`eslint-disable` comment. eslint-plugin-oxlint turns
 off ESLint rules that Oxlint already covers.
 
 ## Tests

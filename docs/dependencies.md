@@ -6,12 +6,17 @@ Status: Current.
 
 Every dependency names one exact version:
 
-- `package.json`: `"vitest": "5.0.4"`, never `^5.0.4` or `~5.0.4`. Internal
-  packages use `"workspace:0.0.1"`. `yarn add` pins exactly by default
-  (`defaultSemverRangePrefix` in `.yarnrc.yml`).
-- `pyproject.toml`: `"busylib==2.6.0"`. Internal packages are named without a
-  version and resolve through `[tool.uv.sources]`. `uv add` pins exactly
-  (`add-bounds = "exact"`).
+- `package.json`: `"some-package": "1.2.3"`, never `^1.2.3` or `~1.2.3`.
+  Internal packages use `"workspace:0.0.1"`. `yarn add` pins exactly by
+  default (`defaultSemverRangePrefix` in `.yarnrc.yml`).
+- `pyproject.toml`: `"some-package==1.2.3"`. Internal packages are named
+  without a version and resolve through `[tool.uv.sources]`. `uv add` pins
+  exactly (`add-bounds = "exact"`).
+
+`nx run repo:check-projects` fails on anything else in a `package.json`
+(`dependencies`, `devDependencies`, `optionalDependencies`, `resolutions`) or
+a `pyproject.toml` (dependencies, optional dependencies, and dependency
+groups; `[build-system]` keeps the range uv_build asks for).
 
 The lockfiles (`yarn.lock`, `uv.lock`) pin everything transitive. Commit them
 with the manifest change.
@@ -51,9 +56,9 @@ When a vulnerable version arrives through a dependency that pins it, override
 exactly that version in `resolutions` in the root `package.json`, and record
 it here. Remove the override once the dependent ships the fix.
 
-| Override                           | Why                                                                                                                                                                 | Remove when                     |
-| ---------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------- |
-| `undici@npm:7.29.0` → `npm:7.29.1` | [GHSA-rfgv-xxqx-mfg5](https://github.com/advisories/GHSA-rfgv-xxqx-mfg5), [GHSA-w293-vg96-wgc3](https://github.com/advisories/GHSA-w293-vg96-wgc3), via `nx` 23.3.0 | `nx` depends on undici ≥ 7.29.1 |
+None are in place. Record each one in a table with the override, why it is
+needed (the advisory and the dependency that pins the vulnerable version), and
+when to remove it.
 
 ## Updates and Audits
 

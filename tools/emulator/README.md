@@ -57,6 +57,9 @@ behaviour and copies none of it.
 - How apps connect: the kits read `BUSYBAR_ADDR` ([docs/busy-bar.md](../../docs/busy-bar.md#connecting)).
 - The bar's built-in apps, menus, Wi-Fi, BLE, Matter, updates, and the cloud.
   While no app draws, the displays stay dark.
+- Why the emulator reimplements the firmware instead of reusing its code, and
+  why the firmware's assets are downloaded rather than committed:
+  [ADR 0004](../../docs/adr/0004-firmware-emulator.md).
 
 ## Known Differences
 

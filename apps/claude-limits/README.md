@@ -14,7 +14,8 @@ account reaches its limit.
   ([src/claude_limits/rotation.py](src/claude_limits/rotation.py)).
 - Judging each account the way the tool does
   ([src/claude_limits/board.py](src/claude_limits/board.py)): its threshold,
-  stale readings, reset windows, and blocked accounts.
+  stale readings, reset windows, and blocked accounts, and the sound for a
+  rotation or every account reaching its limit.
 - The layout ([src/claude_limits/render.py](src/claude_limits/render.py)).
 - Sample frames for the app catalogue ([src/claude_limits/preview.py](src/claude_limits/preview.py)).
 

@@ -1,17 +1,29 @@
 """How full each account is, judged the way the rotation tool judges it."""
 
+import asyncio
+import logging
+from collections.abc import Awaitable, Callable, Mapping
 from dataclasses import dataclass
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
+from pathlib import Path
 from typing import Literal
 
 from bar_kit import to_bar_text
-from claude_limits.rotation import Account, Rotation, Window
+from claude_limits.rotation import Account, Rotation, Window, read_rotation
+
+logger = logging.getLogger(__name__)
 
 type Level = Literal["ok", "high", "limit", "unknown"]
 type Alert = Literal["rotated", "exhausted"]
 
 HIGH_SHARE = 0.8
 """From this share of the rotation threshold on, an account shows as high."""
+
+SOUNDS: Mapping[Alert, str] = {
+    "rotated": "shared/sounds/calendar_reminder_ends.snd",
+    "exhausted": "shared/sounds/calendar_event_starts.snd",
+}
+"""The built-in sound every bar ships for each alert."""
 
 
 @dataclass(frozen=True, slots=True)
@@ -97,6 +109,44 @@ def alert_for(
     if previous.current and current.current and previous.current != current.current:
         return "rotated"
     return None
+
+
+def _utc_now() -> datetime:
+    return datetime.now(UTC)
+
+
+class RotationWatch:
+    """Reads the rotation every poll and sounds a change worth a sound.
+
+    The first reading only sets the baseline. A sound that fails to play is
+    logged and the poll still returns the reading.
+    """
+
+    def __init__(
+        self,
+        root: Path,
+        *,
+        play: Callable[[str], Awaitable[object]] | None,
+        read: Callable[[Path], Rotation] = read_rotation,
+        now: Callable[[], datetime] = _utc_now,
+    ) -> None:
+        self._root = root
+        self._play = play
+        self._read = read
+        self._now = now
+        self._previous: Rotation | None = None
+
+    async def fetch(self) -> Rotation:
+        """Read the rotation, for a `Poller`; `play` is None when sounds are off."""
+        rotation = await asyncio.to_thread(self._read, self._root)
+        alert = alert_for(self._previous, rotation, self._now())
+        self._previous = rotation
+        if alert is not None and self._play is not None:
+            try:
+                await self._play(SOUNDS[alert])
+            except Exception:  # A missed sound must not end the app.
+                logger.warning("Playing a sound failed.", exc_info=True)
+        return rotation
 
 
 def usage_at(window: Window | None, rotation: Rotation, now: datetime) -> Usage:

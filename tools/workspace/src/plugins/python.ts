@@ -1,10 +1,10 @@
 // Nx plugin for the Python projects in the uv workspace. Every
 // `{apps,libs,tools}/<name>/pyproject.toml` becomes a project with inferred
 // targets that run the root dev tools through `uv run`, and every dependency
-// on another workspace member becomes a project graph edge. See
-// docs/python.md.
+// on another workspace member, declared or imported, becomes a project graph
+// edge. See docs/python.md.
 
-import { existsSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { basename, dirname, join } from 'node:path';
 import type {
   CreateDependencies,
@@ -35,6 +35,11 @@ const PYTHON_GLOBALS = [
   '{workspaceRoot}/uv.lock',
 ];
 
+/**
+ * One Nx project per workspace member's pyproject.toml, with its inferred
+ * targets. Fails the graph for a pyproject.toml that is not a uv workspace
+ * member.
+ */
 export const createNodes: CreateNodes = [
   PYPROJECT_GLOB,
   (files, options, context) => {
@@ -171,7 +176,12 @@ function hasModule(
 
 /**
  * Add a static edge from each Python project to every workspace member it
- * requires, so `nx affected` and task ordering follow pyproject.toml.
+ * requires in pyproject.toml or imports in its Python files, so
+ * `nx affected`, task ordering, and `repo:check-projects` follow both.
+ *
+ * The members share one environment, so importing a member the project does
+ * not require works locally and breaks wherever the project runs alone. The
+ * graph fails on such an import, with the command that declares it.
  */
 export const createDependencies: CreateDependencies = (_options, context) => {
   const pythonProjects = Object.entries(context.projects).flatMap(
@@ -183,27 +193,82 @@ export const createDependencies: CreateDependencies = (_options, context) => {
     },
   );
 
-  const projectByDistribution = new Map(
-    pythonProjects.map(({ projectName, pyproject }) => [
-      pyproject.name,
-      projectName,
-    ]),
+  const byDistribution = new Map(
+    pythonProjects.map((project) => [project.pyproject.name, project]),
+  );
+  const byModule = new Map(
+    pythonProjects.map((project) => [project.pyproject.moduleName, project]),
   );
 
   return pythonProjects.flatMap(
-    ({ projectName, root, pyproject }): RawProjectGraphDependency[] =>
-      [...new Set(pyproject.requirements)].flatMap((requirement) => {
-        const target = projectByDistribution.get(requirement);
-        return target === undefined || target === projectName
-          ? []
-          : [
-              {
-                source: projectName,
-                target,
-                type: DependencyType.static,
-                sourceFile: `${root}/pyproject.toml`,
-              },
-            ];
-      }),
+    ({ projectName, root, pyproject }): RawProjectGraphDependency[] => {
+      const required = new Set(
+        pyproject.requirements.flatMap((requirement) => {
+          const target = byDistribution.get(requirement);
+          return target === undefined || target.projectName === projectName
+            ? []
+            : [target.projectName];
+        }),
+      );
+      const declared = [...required].map((target) => ({
+        source: projectName,
+        target,
+        type: DependencyType.static,
+        sourceFile: `${root}/pyproject.toml`,
+      }));
+
+      const pythonFiles = (
+        context.fileMap.projectFileMap[projectName] ?? []
+      ).flatMap(({ file }) => (file.endsWith('.py') ? [file] : []));
+      const imported = pythonFiles.flatMap((file) =>
+        [
+          ...new Set(
+            importedModules(
+              readFileSync(join(context.workspaceRoot, file), 'utf8'),
+            ),
+          ),
+        ].flatMap((module) => {
+          const target = byModule.get(module);
+          if (target === undefined || target.projectName === projectName) {
+            return [];
+          }
+          if (!required.has(target.projectName)) {
+            throw new Error(
+              `${file} imports ${module} from ${target.root}, but ${root}/pyproject.toml does not require ${target.pyproject.name}. ` +
+                `If project-boundaries.mjs allows the dependency, declare it with \`uv add --package ${pyproject.name} ${target.pyproject.name}\`; see docs/python.md.`,
+            );
+          }
+          return [
+            {
+              source: projectName,
+              target: target.projectName,
+              type: DependencyType.static,
+              sourceFile: file,
+            },
+          ];
+        }),
+      );
+
+      return [...declared, ...imported];
+    },
   );
 };
+
+// `import a.b, c as d` and `from a.b import c`, at the start of a line.
+// Relative imports (`from . import x`) stay inside the package.
+const IMPORT = /^[ \t]*import[ \t]+([\w. \t,]+)/gm;
+const FROM_IMPORT = /^[ \t]*from[ \t]+([A-Za-z_]\w*)[\w.]*[ \t]+import\b/gm;
+
+/** The top-level modules a Python source file imports. */
+export function importedModules(source: string): string[] {
+  const plain = [...source.matchAll(IMPORT)].flatMap(([, names = '']) =>
+    names
+      .split(',')
+      .flatMap((name) => name.trim().split(/[ \t.]/, 1))
+      .filter((name) => name !== ''),
+  );
+  const from = [...source.matchAll(FROM_IMPORT)].flatMap(([, module = '']) => [
+    module,
+  ]);
+  return [...plain, ...from];
+}

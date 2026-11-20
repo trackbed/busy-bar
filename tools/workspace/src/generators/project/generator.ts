@@ -24,6 +24,9 @@ const NAME = /^[a-z][a-z\d]*(-[a-z\d]+)*$/;
 const MEMBERS = /^members\s*=\s*\[([^\]]*)\]/m;
 const QUOTED = /["']([^"']+)["']/g;
 const PROJECT_DIRECTORIES = ['apps', 'libs', 'tools'];
+// New Python projects copy this file's `[build-system]` table, which
+// Dependabot keeps current, rather than a range frozen in a template.
+const BUILD_SYSTEM_SOURCE = 'libs/bar-kit-py/pyproject.toml';
 
 // A TypeScript library exports a function named after the project, and a
 // Python project is imported by its name, so neither may be a reserved word.
@@ -38,6 +41,11 @@ const PYTHON_KEYWORDS = new Set(
   ),
 );
 
+/**
+ * Write a new app or library in `apps/` or `libs/` from the templates in
+ * `files/<language>-<type>/`, then wire it into the Yarn or uv workspace. The
+ * returned callback installs dependencies unless `skipInstall` is set.
+ */
 export function projectGenerator(
   tree: Tree,
   options: ProjectGeneratorOptions,
@@ -80,6 +88,7 @@ export function projectGenerator(
       moduleName,
       title: name.replaceAll('-', ' ').toUpperCase(),
       offset: offsetFromRoot(directory),
+      buildSystem: language === 'python' ? kitBuildSystem(tree) : '',
     },
   );
 
@@ -89,6 +98,7 @@ export function projectGenerator(
       if (!skipInstall) {
         installPackagesTask(tree, true);
       }
+      formatProject(tree.root, directory, language);
     };
   }
 
@@ -97,7 +107,38 @@ export function projectGenerator(
     if (!skipInstall) {
       execFileSync('uv', ['lock'], { cwd: tree.root, stdio: 'inherit' });
     }
+    formatProject(tree.root, directory, language);
   };
+}
+
+/**
+ * Format the new project with the workspace's formatters, so it passes
+ * `yarn format:check` whatever its name: a short name fits a list on one line
+ * that a long one does not, and Ruff sorts the module among the imports.
+ */
+function formatProject(
+  root: string,
+  directory: string,
+  language: ProjectGeneratorOptions['language'],
+): void {
+  const run = (command: string, args: readonly string[]): void => {
+    execFileSync(command, args, { cwd: root, stdio: 'inherit' });
+  };
+  run('yarn', ['oxfmt', directory]);
+  if (language === 'python') {
+    // --frozen: format with the installed tools, leaving uv.lock alone.
+    const ruff = ['run', '--frozen', '--quiet', 'ruff'];
+    run('uv', [
+      ...ruff,
+      'check',
+      '--select',
+      'I',
+      '--fix',
+      '--quiet',
+      directory,
+    ]);
+    run('uv', [...ruff, 'format', '--quiet', directory]);
+  }
 }
 
 /**
@@ -131,6 +172,24 @@ function assertPythonModuleIsFree(root: string, moduleName: string): void {
       `Could not check the module name with uv; is uv installed? ${probe.error?.message ?? probe.stderr}`,
     );
   }
+}
+
+/** The `[build-system]` table of the Python kit's pyproject.toml. */
+function kitBuildSystem(tree: Tree): string {
+  const lines = (tree.read(BUILD_SYSTEM_SOURCE, 'utf8') ?? '').split('\n');
+  const start = lines.indexOf('[build-system]');
+  if (start === -1) {
+    throw new Error(
+      `${BUILD_SYSTEM_SOURCE} must declare [build-system]; new Python projects copy it.`,
+    );
+  }
+  const end = lines.findIndex(
+    (line, index) => index > start && line.startsWith('['),
+  );
+  return lines
+    .slice(start, end === -1 ? undefined : end)
+    .join('\n')
+    .trim();
 }
 
 /** Reference the new project from the solution tsconfig.json. */

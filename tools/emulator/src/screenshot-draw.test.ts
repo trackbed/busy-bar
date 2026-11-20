@@ -3,9 +3,9 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { AssetRoot } from './__tests__/asset-root.ts';
 import { assetRoot } from './__tests__/asset-root.ts';
 import type { AssetLibrary } from './assets/library.ts';
+import { ApiError } from './device/api-error.ts';
 import { decodePng } from './formats/png.ts';
 import { screenshotDraw } from './screenshot-draw.ts';
-import { ApiError } from './server/http.ts';
 
 const NOW = Date.parse('2026-10-21T09:00:00Z');
 

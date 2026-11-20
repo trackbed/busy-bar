@@ -3,18 +3,7 @@
 // worth a dependency. Field numbers follow bsb-protobuf (state.proto,
 // input.proto), the schema busylib decodes with.
 
-/** A button, the wheel, or the mode selector, as the bar reports it. */
-export type InputEvent =
-  | {
-      readonly kind: 'button';
-      readonly button: 'ok' | 'back' | 'start';
-      readonly action: 'press' | 'release';
-    }
-  | {
-      readonly kind: 'selector';
-      readonly position: 'busy' | 'custom' | 'off' | 'apps' | 'settings';
-    }
-  | { readonly kind: 'wheel'; readonly delta: number };
+import type { InputEvent } from '../device/device.ts';
 
 const BUTTONS = { ok: 0, back: 1, start: 2 } as const;
 const ACTIONS = { press: 0, release: 1 } as const;

@@ -8,16 +8,19 @@ shell to use the daemon.
 
 ## Setup
 
-| Command                  | What it does                                   |
-| ------------------------ | ---------------------------------------------- |
-| `corepack enable`        | Provide the pinned Yarn                        |
-| `yarn install`           | Install Node packages and the Git hooks        |
-| `uv sync --all-packages` | Install Python 3.14 and every Python package   |
-| `yarn bootstrap:status`  | Read-only readiness check with fix-it commands |
+| Command                                  | What it does                                                              |
+| ---------------------------------------- | ------------------------------------------------------------------------- |
+| `bash scripts/setup-workspace.sh`        | Everything below, after installing the pinned Node with mise, fnm, or nvm |
+| `corepack enable`                        | Provide the pinned Yarn                                                   |
+| `yarn install`                           | Install Node packages and the Git hooks                                   |
+| `uv sync --all-packages`                 | Install Python 3.14 and every Python package                              |
+| `node scripts/check-workspace-ready.mjs` | Read-only readiness check with fix-it commands                            |
 
-If Yarn cannot launch scripts because dependencies or its install state are
-missing, run `node scripts/check-workspace-ready.mjs` directly. It needs only
-the pinned Node runtime and prints the commands that repair the environment.
+The readiness check needs only Node, so it works before anything is
+installed. `yarn bootstrap:status` runs the same check, but only once Yarn can
+start: without an install, Yarn fails first and writes its own state file.
+The setup script cannot change the PATH of the shell that ran it; when that
+shell runs another Node, it prints the line that puts the pinned one first.
 
 ## Everyday
 
@@ -54,6 +57,7 @@ the branch affects compared with `origin/main`.
 | Before the first push or PR | `yarn verify` (also Knip and `test`)                                   |
 | Docs only                   | `yarn format:check`                                                    |
 
+Both run every check even after one fails, then list the ones that failed.
 Run `yarn verify` once before you push, not after every edit. Once a PR is
 open, CI runs the same checks on every push.
 
@@ -77,16 +81,18 @@ finish in seconds.
 merge groups, and pushes to `main`:
 
 - **Verify**: formatting, `nx sync:check`, `repo:check-projects`,
-  `repo:knip`, and `nx affected -t lint typecheck test`. The Nx cache in
-  `~/.nx` is restored between runs. `nrwl/nx-set-shas` supplies the base
-  commit.
+  `repo:knip`, and `nx affected -t lint typecheck test`, each one even after
+  an earlier one fails. The Nx cache in `~/.nx` is restored between runs.
+  `nrwl/nx-set-shas` supplies the base commit.
 - **Workflow lint**: actionlint (checksum-verified) and zizmor.
 - **CI**: passes only if every other job succeeded or was skipped. It is the
   one check that [branch protection](#branch-protection) requires.
 
 A weekly scheduled run, also startable by hand, runs every target on every
-project and adds the **Dependency audit** job (`yarn npm audit` and
-`uv audit`).
+project and adds two jobs: **Dependency audit** (`yarn npm audit` and
+`uv audit`), and **Generated projects**, which generates one project of each
+kind and runs the format check, the project check, `lint`, `typecheck`, and
+`test` on them.
 
 Every action is pinned to a full commit SHA with a version comment; zizmor
 enforces the pins and Dependabot proposes updates. Before you change a

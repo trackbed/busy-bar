@@ -25,6 +25,19 @@ members = ["libs/bar-kit-py", "apps/countdown"]
 target-version = "py314"
 `;
 
+const KIT_BUILD_SYSTEM = `[build-system]
+requires = ["uv_build>=0.13.7,<0.14"]
+build-backend = "uv_build"`;
+
+const KIT_PYPROJECT = `[project]
+name = "bar-kit"
+
+${KIT_BUILD_SYSTEM}
+
+[tool.coverage.run]
+branch = true
+`;
+
 /** What `uv run python -c ...` reports for the module-name probe. */
 function probeResult(
   status: number | null,
@@ -57,6 +70,7 @@ describe('projectGenerator', () => {
       JSON.stringify({ files: [], references: [{ path: './libs/bar-kit' }] }),
     );
     tree.write('pyproject.toml', ROOT_PYPROJECT);
+    tree.write('libs/bar-kit-py/pyproject.toml', KIT_PYPROJECT);
     vi.mocked(spawnSync).mockReturnValue(probeResult(0));
   });
 
@@ -80,7 +94,7 @@ describe('projectGenerator', () => {
       dependencies: { '@busy-bar-apps/bar-kit': 'workspace:0.0.1' },
     });
     expect(tree.read('apps/weather-station/src/render.ts', 'utf8')).toContain(
-      "text: 'WEATHER STATION'",
+      "text: fitText('WEATHER STATION', 'normal', FRONT_DISPLAY.width)",
     );
     expect(tree.read('apps/weather-station/src/main.ts', 'utf8')).toContain(
       "name: 'weather-station'",
@@ -162,27 +176,118 @@ describe('projectGenerator', () => {
     );
   });
 
-  it('links a new TypeScript project with yarn install', async () => {
+  it.each([
+    ['app', 'apps/weather-station'],
+    ['lib', 'libs/weather-station'],
+  ] as const)(
+    "gives a Python %s the kit's build backend requirement",
+    (type, directory) => {
+      projectGenerator(tree, {
+        name: 'weather-station',
+        language: 'python',
+        type,
+        skipInstall: true,
+      });
+
+      expect(tree.read(`${directory}/pyproject.toml`, 'utf8')).toContain(
+        `\n${KIT_BUILD_SYSTEM}\n\n[tool.coverage.run]`,
+      );
+    },
+  );
+
+  it('copies the build backend from the end of the kit file too', () => {
+    tree.write(
+      'libs/bar-kit-py/pyproject.toml',
+      `[project]\nname = "bar-kit"\n\n${KIT_BUILD_SYSTEM}\n`,
+    );
+
+    projectGenerator(tree, {
+      name: 'weather-station',
+      language: 'python',
+      type: 'lib',
+      skipInstall: true,
+    });
+
+    expect(tree.read('libs/weather-station/pyproject.toml', 'utf8')).toContain(
+      KIT_BUILD_SYSTEM,
+    );
+  });
+
+  it('needs the kit to declare its build backend', () => {
+    tree.delete('libs/bar-kit-py/pyproject.toml');
+    expect(() =>
+      projectGenerator(tree, {
+        name: 'weather-api',
+        language: 'python',
+        type: 'lib',
+        skipInstall: true,
+      }),
+    ).toThrow('libs/bar-kit-py/pyproject.toml must declare [build-system]');
+
+    tree.write(
+      'libs/bar-kit-py/pyproject.toml',
+      '[project]\nname = "bar-kit"\n',
+    );
+
+    expect(() =>
+      projectGenerator(tree, {
+        name: 'weather-station',
+        language: 'python',
+        skipInstall: true,
+      }),
+    ).toThrow(
+      'libs/bar-kit-py/pyproject.toml must declare [build-system]; new Python projects copy it.',
+    );
+  });
+
+  const OPTIONS = { cwd: '/virtual', stdio: 'inherit' } as const;
+  const FORMAT_TS = ['yarn', ['oxfmt', 'apps/weather-station'], OPTIONS];
+  const formatPython = (directory: string): unknown[][] => [
+    ['yarn', ['oxfmt', directory], OPTIONS],
+    [
+      'uv',
+      [
+        'run',
+        '--frozen',
+        '--quiet',
+        'ruff',
+        'check',
+        '--select',
+        'I',
+        '--fix',
+        '--quiet',
+        directory,
+      ],
+      OPTIONS,
+    ],
+    [
+      'uv',
+      ['run', '--frozen', '--quiet', 'ruff', 'format', '--quiet', directory],
+      OPTIONS,
+    ],
+  ];
+
+  it('links and formats a new TypeScript project', async () => {
     await projectGenerator(tree, { name: 'weather-station', language: 'ts' })();
 
     expect(installPackagesTask).toHaveBeenCalledExactlyOnceWith(tree, true);
-    expect(execFileSync).not.toHaveBeenCalled();
+    expect(vi.mocked(execFileSync).mock.calls).toStrictEqual([FORMAT_TS]);
   });
 
-  it('relocks the uv workspace after a new Python project', async () => {
+  it('relocks the uv workspace and formats a new Python project', async () => {
     await projectGenerator(tree, {
       name: 'weather-station',
       language: 'python',
     })();
 
-    expect(execFileSync).toHaveBeenCalledExactlyOnceWith('uv', ['lock'], {
-      cwd: tree.root,
-      stdio: 'inherit',
-    });
+    expect(vi.mocked(execFileSync).mock.calls).toStrictEqual([
+      ['uv', ['lock'], OPTIONS],
+      ...formatPython('apps/weather-station'),
+    ]);
     expect(installPackagesTask).not.toHaveBeenCalled();
   });
 
-  it('skips the install when asked to', async () => {
+  it('skips the install when asked to, but still formats', async () => {
     await projectGenerator(tree, {
       name: 'weather-station',
       language: 'ts',
@@ -196,7 +301,10 @@ describe('projectGenerator', () => {
     })();
 
     expect(installPackagesTask).not.toHaveBeenCalled();
-    expect(execFileSync).not.toHaveBeenCalled();
+    expect(vi.mocked(execFileSync).mock.calls).toStrictEqual([
+      FORMAT_TS,
+      ...formatPython('libs/weather-api'),
+    ]);
   });
 
   it('rejects names that are not kebab-case', () => {

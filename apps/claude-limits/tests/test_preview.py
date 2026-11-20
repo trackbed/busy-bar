@@ -1,6 +1,6 @@
 from busylib import types
 
-from bar_kit import BACK_DISPLAY, FRONT_DISPLAY, text_width
+from bar_kit import overflowing_text
 from claude_limits.preview import preview
 from claude_limits.render import LEVEL_COLORS
 
@@ -21,15 +21,6 @@ def test_goes_from_room_to_spare_to_every_account_limited() -> None:
 
 
 def test_fits_every_text_on_its_display() -> None:
-    overflowing = [
-        element.text
-        for scene in preview().scenes
-        for element in scene.elements
-        if isinstance(element, types.TextElement)
-        and text_width(element.text, element.font)
-        > (
-            BACK_DISPLAY if element.display == types.DisplayName.BACK else FRONT_DISPLAY
-        ).width
-    ]
+    elements = [element for scene in preview().scenes for element in scene.elements]
 
-    assert overflowing == []
+    assert overflowing_text(elements) == []
