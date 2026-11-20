@@ -94,7 +94,7 @@ describe('projectGenerator', () => {
       dependencies: { '@busy-bar-apps/bar-kit': 'workspace:0.0.1' },
     });
     expect(tree.read('apps/weather-station/src/render.ts', 'utf8')).toContain(
-      "text: 'WEATHER STATION'",
+      "text: fitText('WEATHER STATION', 'normal', FRONT_DISPLAY.width)",
     );
     expect(tree.read('apps/weather-station/src/main.ts', 'utf8')).toContain(
       "name: 'weather-station'",
