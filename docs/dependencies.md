@@ -13,6 +13,11 @@ Every dependency names one exact version:
   without a version and resolve through `[tool.uv.sources]`. `uv add` pins
   exactly (`add-bounds = "exact"`).
 
+`nx run repo:check-projects` fails on anything else in a `package.json`
+(`dependencies`, `devDependencies`, `optionalDependencies`, `resolutions`) or
+a `pyproject.toml` (dependencies, optional dependencies, and dependency
+groups; `[build-system]` keeps the range uv_build asks for).
+
 The lockfiles (`yarn.lock`, `uv.lock`) pin everything transitive. Commit them
 with the manifest change.
 

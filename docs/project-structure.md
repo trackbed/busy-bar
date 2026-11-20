@@ -65,8 +65,8 @@ Every project carries exactly one tag from each family. The rules live in
 
 Two checks enforce the rules: ESLint's `@nx/enforce-module-boundaries` on
 TypeScript imports, and `NX_DAEMON=false yarn nx run repo:check-projects` on
-every project graph edge, including the ones the Python plugin reads from
-`pyproject.toml`. Use the tags to select projects:
+every project graph edge, including the ones the Python plugin finds in
+`pyproject.toml` and in Python imports. Use the tags to select projects:
 `nx run-many -t test -p tag:lang:python`.
 
 Add a tag family only when it enables a dependency rule the current tags

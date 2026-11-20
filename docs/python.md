@@ -32,7 +32,10 @@ interpreter at `.venv/bin/python`.
 
 Because the environment is shared, a project can import a package that only a
 different project declares. It works locally and breaks wherever the project
-runs alone, so declare every import in the project's own `pyproject.toml`.
+runs alone, so declare every import in the project's own `pyproject.toml`. The
+Nx plugin fails the graph when a project imports another workspace member it
+does not require; it cannot tell which third-party package an import comes
+from, so those stay a review check.
 
 ## Project Anatomy
 
@@ -68,10 +71,12 @@ files, the root `pyproject.toml`, `uv.lock`, and `.python-version`;
 `typecheck` and `test` also hash the source of the projects they depend on.
 
 The plugin adds a graph edge for every requirement that names another
-workspace member, so `nx affected`, `nx graph`, and `repo:check-projects`
-see Python dependencies. It fails the graph with a fix-it message when a
-`pyproject.toml` is missing from the members list, because outside the
-workspace `uv run` would quietly create a second environment.
+workspace member, and for every Python file that imports one, so
+`nx affected`, `nx graph`, and `repo:check-projects` see Python dependencies.
+It fails the graph with a fix-it message when a `pyproject.toml` is missing
+from the members list, because outside the workspace `uv run` would quietly
+create a second environment, and when a file imports a member its project
+does not require.
 
 ## Dependencies
 

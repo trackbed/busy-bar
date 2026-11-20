@@ -27,7 +27,8 @@
     "rootTooling": [
       "{workspaceRoot}/*.mjs",
       "{workspaceRoot}/*.d.mts",
-      "{workspaceRoot}/scripts/**/*"
+      "{workspaceRoot}/scripts/**/*",
+      "{workspaceRoot}/tools/workspace/src/**/*"
     ],
     "typescriptToolDependencies": [
       {

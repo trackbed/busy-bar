@@ -63,7 +63,7 @@ jobs:
         if: ${{ !cancelled() && steps.shas.outcome == 'success' }}
         run: yarn nx sync:check
 
-      - name: Check project tags, targets, and boundaries
+      - name: Check project tags, targets, boundaries, and pins
         if: ${{ !cancelled() && steps.shas.outcome == 'success' }}
         run: yarn nx run repo:check-projects
 

@@ -52,9 +52,10 @@ These apply to every task. Break one only when the user names a concrete reason.
   type untrusted values as `object` and narrow them with `isinstance`.
 - **Dependencies**: pin exact versions everywhere: no `^` or `~` in
   `package.json`, `==` in `pyproject.toml`, and `workspace:0.0.1` for internal
-  TypeScript packages. New releases must be seven days old (Yarn, uv, and
-  Dependabot all enforce it). Never bypass the gate or enable install scripts
-  without the user's approval. Policy → [docs/dependencies.md](docs/dependencies.md).
+  TypeScript packages; `repo:check-projects` fails on anything else. New
+  releases must be seven days old (Yarn, uv, and Dependabot all enforce it).
+  Never bypass the gate or enable install scripts without the user's
+  approval. Policy → [docs/dependencies.md](docs/dependencies.md).
 - **Suppressions** need a reason: `// eslint-disable-next-line <rule> -- <reason>`
   (ESLint fails without one) and `# noqa: <CODE> - <reason>` (Ruff fails
   without the code; review checks the reason).
