@@ -1,7 +1,7 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
 import type { Checks, PullRequests } from './github.ts';
-import { MergeWatch } from './watch.ts';
+import { ALERT_SOUNDS, createTickerFetch, MergeWatch } from './watch.ts';
 
 const NOW = new Date('2026-10-20T10:00:00Z');
 const LATER = new Date('2026-10-20T10:01:00Z');
@@ -92,5 +92,85 @@ describe('MergeWatch', () => {
     );
 
     expect(alert).toBe('merged');
+  });
+});
+
+describe('createTickerFetch', () => {
+  const SIGNAL = new AbortController().signal;
+
+  type Options = Parameters<typeof createTickerFetch>[0];
+
+  function setup(overrides: Partial<Options> = {}) {
+    const log = { warn: vi.fn<Console['warn']>() };
+    const play = vi.fn<(stockPath: string) => Promise<unknown>>(() =>
+      Promise.resolve(),
+    );
+    const readings: PullRequests[] = [];
+    const pullRequests = vi.fn<Options['pullRequests']>(() =>
+      Promise.resolve(readings.shift() ?? pulls({})),
+    );
+    const fetch = createTickerFetch({
+      name: 'test',
+      pullRequests,
+      play,
+      now: () => NOW,
+      log,
+      ...overrides,
+    });
+    return { fetch, play, log, pullRequests, readings };
+  }
+
+  it('reads the pull requests as of now', async () => {
+    const { fetch, pullRequests } = setup();
+
+    const state = await fetch(SIGNAL);
+
+    expect(pullRequests).toHaveBeenCalledWith(NOW, SIGNAL);
+    expect(state).toStrictEqual({ pulls: pulls({}), celebration: undefined });
+  });
+
+  it('plays the sound for a merge, then for checks that broke', async () => {
+    const { fetch, play, readings } = setup();
+    readings.push(
+      pulls({ checks: ['pending'] }),
+      pulls({ merged: [1], checks: ['pending'] }),
+      pulls({ merged: [1], checks: ['failing'] }),
+    );
+
+    await fetch(SIGNAL);
+    await fetch(SIGNAL);
+    await fetch(SIGNAL);
+
+    expect(play.mock.calls).toStrictEqual([
+      [ALERT_SOUNDS.merged],
+      [ALERT_SOUNDS.failing],
+    ]);
+  });
+
+  it('stays silent with sounds off and still celebrates', async () => {
+    const { fetch, readings } = setup({ play: undefined });
+    readings.push(pulls({}), pulls({ merged: [7] }));
+
+    await fetch(SIGNAL);
+    const state = await fetch(SIGNAL);
+
+    expect(state.celebration?.merge.number).toBe(7);
+  });
+
+  it('logs a sound that fails and still returns the reading', async () => {
+    const failure = new Error('speaker busy');
+    const { fetch, log, readings } = setup({
+      play: () => Promise.reject(failure),
+    });
+    readings.push(pulls({}), pulls({ merged: [3] }));
+
+    await fetch(SIGNAL);
+    const state = await fetch(SIGNAL);
+
+    expect(state.celebration?.merge.number).toBe(3);
+    expect(log.warn).toHaveBeenCalledWith(
+      '[test] Playing a sound failed:',
+      failure,
+    );
   });
 });

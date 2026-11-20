@@ -135,3 +135,32 @@ def test_the_selector_mutes_the_chime_during_focus(
     controls.handle(SelectorEvent(position=position))
 
     assert chime.focused is focused
+
+
+def hook(event: str, **fields: object) -> dict[str, object]:
+    return {"hook_event_name": event, "session_id": "s1", "cwd": "/repos/app", **fields}
+
+
+async def test_a_hook_updates_its_session_and_chimes_when_it_waits_on_you() -> None:
+    speaker = Speaker()
+    clock = Clock()
+    fleet = Fleet()
+    chime = Chime(speaker.play, enabled=True, now=clock)
+    controls = Controls(fleet, chime, now=clock)
+
+    controls.hook(hook("UserPromptSubmit", prompt="fix the build"))
+    controls.hook(hook("Stop"))
+    await chime.wait()
+
+    assert speaker.played == [SOUNDS["done"]]
+    assert fleet.view(NOW).needs_you == 1
+
+
+def test_ignores_a_payload_the_board_has_no_use_for() -> None:
+    fleet = Fleet()
+    controls = Controls(fleet, Chime(Speaker().play, enabled=True))
+
+    controls.hook({"hook_event_name": "Unknown", "session_id": "s1"})
+    controls.hook(["not", "a", "hook"])
+
+    assert fleet.view(NOW).rows == ()

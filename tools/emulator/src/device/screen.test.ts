@@ -1,8 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { Animation } from '../formats/animation.ts';
-import { ApiError } from '../server/http.ts';
 import { AnimationPlayer } from './animation-player.ts';
+import { ApiError } from './api-error.ts';
 import type {
   AnimationElement,
   DrawRequest,

@@ -7,7 +7,8 @@ export default createProjectVitestConfig({
     functions: 95,
     lines: 95,
   },
-  // The process entry points only wire the kit together (main.ts) or print
-  // sample frames (preview.ts); render.ts holds the behavior.
+  // The process entry points only connect Convex, the bar, and the modules
+  // (main.ts) or print sample frames (preview.ts). The modules they connect
+  // hold the behavior and are tested.
   coverageExclude: ['src/main.ts', 'src/preview.ts'],
 });

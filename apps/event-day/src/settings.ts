@@ -1,3 +1,5 @@
+import { DEFAULT_PRIORITY } from '@busy-bar-apps/bar-kit';
+
 import type { BoothRef } from './photocraft.ts';
 
 /** What the event-day board needs from the environment. */
@@ -19,7 +21,6 @@ export class EventSettingsError extends Error {
 }
 
 export const DEFAULT_QUIET_MINUTES = 15;
-export const DEFAULT_PRIORITY = 50;
 
 // PhotoCraft's own slug rule.
 const SLUG = /^[a-z0-9][a-z0-9-]{1,46}[a-z0-9]$/u;

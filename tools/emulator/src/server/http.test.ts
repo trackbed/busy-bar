@@ -3,14 +3,8 @@ import { createServer, IncomingMessage } from 'node:http';
 import { Socket } from 'node:net';
 import { describe, expect, it } from 'vitest';
 
-import {
-  ApiError,
-  readBody,
-  sendBytes,
-  sendError,
-  sendJson,
-  sendOk,
-} from './http.ts';
+import { ApiError } from '../device/api-error.ts';
+import { readBody, sendBytes, sendError, sendJson, sendOk } from './http.ts';
 
 type Handler = (
   request: IncomingMessage,

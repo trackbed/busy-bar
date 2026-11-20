@@ -163,3 +163,40 @@ export function nameOf(board: Board, id: string): string {
 export function minutesLeft(ms: number): number {
   return Math.ceil(ms / 60_000);
 }
+
+/** The team's board as its subscription last delivered it. */
+export interface BoardFeed {
+  /** The last board; none before the first one or after a failed query. */
+  readonly board: () => Board | undefined;
+  /** Why the last query failed, until the next board arrives. */
+  readonly failure: () => Error | undefined;
+  /** Take a new board, clear any failure, and hand it to every listener. */
+  readonly update: (next: Board) => void;
+  /**
+   * Take a failed query, such as for a key the team no longer knows: drop the
+   * board, so the screen shows why rather than an old board.
+   */
+  readonly fail: (error: Error) => void;
+}
+
+export function createBoardFeed(
+  listeners: readonly ((board: Board) => void)[],
+): BoardFeed {
+  let board: Board | undefined;
+  let failure: Error | undefined;
+  return {
+    board: () => board,
+    failure: () => failure,
+    update: (next) => {
+      board = next;
+      failure = undefined;
+      for (const listen of listeners) {
+        listen(next);
+      }
+    },
+    fail: (error) => {
+      board = undefined;
+      failure = error;
+    },
+  };
+}

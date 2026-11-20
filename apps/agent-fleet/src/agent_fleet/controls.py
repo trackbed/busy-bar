@@ -1,4 +1,5 @@
-"""The bar's wheel, buttons, and speaker, as the fleet board uses them."""
+"""The bar's wheel, buttons, and speaker, and Claude Code's hooks, as the fleet
+board uses them."""
 
 import asyncio
 import logging
@@ -8,6 +9,7 @@ from datetime import UTC, datetime, timedelta
 from busylib.features import ButtonEvent, EncoderEvent, InputEvent, SelectorEvent
 
 from agent_fleet.fleet import Fleet, Status
+from agent_fleet.hooks import parse_hook
 
 logger = logging.getLogger(__name__)
 
@@ -79,11 +81,12 @@ class Chime:
 
 
 class Controls:
-    """Maps the bar's input to the board.
+    """Maps the bar's input and Claude Code's hooks to the board.
 
     The wheel moves the highlight, OK marks the highlighted session as seen,
     and BACK marks every session as seen. Moving the selector to a focus
-    position mutes the chime.
+    position mutes the chime. A hook updates its session and chimes when the
+    session starts waiting on you.
     """
 
     def __init__(
@@ -106,3 +109,12 @@ class Controls:
                 self._chime.focused = position in _FOCUS_POSITIONS
             case _:
                 pass
+
+    def hook(self, payload: object) -> None:
+        """Apply one hook payload; one the board has no use for is ignored."""
+        event = parse_hook(payload)
+        if event is None:
+            return
+        alert = self._fleet.apply(event, self._now())
+        if alert is not None:
+            self._chime.ring(alert)

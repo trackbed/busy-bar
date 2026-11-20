@@ -9,11 +9,10 @@ import json
 import logging
 import os
 import sys
-from datetime import UTC, datetime
 
 from agent_fleet.controls import Chime, Controls
 from agent_fleet.fleet import Fleet
-from agent_fleet.hooks import hook_settings, parse_hook
+from agent_fleet.hooks import hook_settings
 from agent_fleet.render import render
 from agent_fleet.server import start_hook_server
 from agent_fleet.settings import FleetSettings, load_settings
@@ -43,16 +42,8 @@ async def main(settings: FleetSettings) -> None:
         chime = Chime(play, enabled=settings.sound)
         controls = Controls(fleet, chime)
 
-        def on_hook(payload: object) -> None:
-            event = parse_hook(payload)
-            if event is None:
-                return
-            alert = fleet.apply(event, datetime.now(UTC))
-            if alert is not None:
-                chime.ring(alert)
-
         server = await start_hook_server(
-            on_hook, host=settings.host, port=settings.port
+            controls.hook, host=settings.host, port=settings.port
         )
         print(f"Listening for Claude Code hooks at {settings.url}")
         listening = asyncio.create_task(

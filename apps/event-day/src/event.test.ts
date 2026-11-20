@@ -1,7 +1,13 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
+import type { ChallengeStatus } from './challenge.ts';
 import type { EventSnapshot } from './event.ts';
-import { boothView, EventWatch } from './event.ts';
+import {
+  ALERT_SOUNDS,
+  boothView,
+  createEventFetch,
+  EventWatch,
+} from './event.ts';
 import type { BoothState, BoothStatus } from './photocraft.ts';
 
 const NOW = new Date('2026-10-20T10:00:00Z');
@@ -83,5 +89,133 @@ describe('EventWatch', () => {
     expect(
       watch.observe(snapshot(booth('a', 'off'), booth('b', 'missing')), NOW),
     ).toBeUndefined();
+  });
+});
+
+describe('createEventFetch', () => {
+  const SIGNAL = new AbortController().signal;
+  const LEADERBOARD: ChallengeStatus = {
+    state: 'live',
+    entries: 37,
+    leader: { name: 'Ada', score: 1200 },
+  };
+
+  type Options = Parameters<typeof createEventFetch>[0];
+
+  function setup(overrides: Partial<Options> = {}) {
+    const log = { warn: vi.fn<Console['warn']>() };
+    const play = vi.fn<(stockPath: string) => Promise<unknown>>(() =>
+      Promise.resolve(),
+    );
+    let statuses = [booth('a', 'live', 1)];
+    const fetch = createEventFetch({
+      name: 'test',
+      booths: [{ eventSlug: 'summit-2026', boothSlug: 'a' }],
+      boothStatus: () => Promise.resolve(statuses[0] ?? booth('a', 'error')),
+      challenge: () => Promise.resolve(LEADERBOARD),
+      quietMs: QUIET_MS,
+      play,
+      now: () => NOW,
+      log,
+      ...overrides,
+    });
+    const next = (state: BoothStatus): void => {
+      statuses = [state];
+    };
+    return { fetch, play, log, next };
+  }
+
+  it('reads every booth and the leaderboard into one snapshot', async () => {
+    const { fetch } = setup();
+
+    expect(await fetch(SIGNAL)).toStrictEqual({
+      booths: [booth('a', 'live', 1)],
+      challenge: LEADERBOARD,
+      challengeProblem: undefined,
+    });
+  });
+
+  it('shows why the leaderboard failed and keeps the booths', async () => {
+    const { fetch } = setup({
+      challenge: () => Promise.reject(new Error('token expired')),
+    });
+
+    expect(await fetch(SIGNAL)).toStrictEqual({
+      booths: [booth('a', 'live', 1)],
+      challenge: undefined,
+      challengeProblem: 'token expired',
+    });
+  });
+
+  it('gives up on the leaderboard with the poll when it is aborted', async () => {
+    const controller = new AbortController();
+    const aborted = new Error('aborted');
+    const { fetch } = setup({
+      challenge: () => {
+        controller.abort();
+        return Promise.reject(aborted);
+      },
+    });
+
+    await expect(fetch(controller.signal)).rejects.toBe(aborted);
+  });
+
+  it('reads no leaderboard when none is set up', async () => {
+    const { fetch } = setup({ challenge: undefined });
+
+    expect(await fetch(SIGNAL)).toMatchObject({
+      challenge: undefined,
+      challengeProblem: undefined,
+    });
+  });
+
+  it('fails the poll for booths without a PhotoCraft URL', async () => {
+    const { fetch } = setup({ boothStatus: undefined });
+
+    await expect(fetch(SIGNAL)).rejects.toThrow('No PhotoCraft URL');
+  });
+
+  it('plays the sound for a booth that goes down or quiet', async () => {
+    const { fetch, play, next } = setup();
+    await fetch(SIGNAL);
+
+    next(booth('a', 'error'));
+    await fetch(SIGNAL);
+    next(booth('a', 'live', 1));
+    await fetch(SIGNAL);
+    next(booth('a', 'live', 20));
+    await fetch(SIGNAL);
+
+    expect(play.mock.calls).toStrictEqual([
+      [ALERT_SOUNDS.down],
+      [ALERT_SOUNDS.quiet],
+    ]);
+  });
+
+  it('stays silent with sounds off', async () => {
+    const { fetch, next } = setup({ play: undefined });
+    await fetch(SIGNAL);
+    next(booth('a', 'error'));
+
+    expect(await fetch(SIGNAL)).toMatchObject({
+      booths: [booth('a', 'error')],
+    });
+  });
+
+  it('logs a sound that fails and still returns the snapshot', async () => {
+    const failure = new Error('speaker busy');
+    const { fetch, log, next } = setup({
+      play: () => Promise.reject(failure),
+    });
+    await fetch(SIGNAL);
+    next(booth('a', 'error'));
+
+    expect(await fetch(SIGNAL)).toMatchObject({
+      booths: [booth('a', 'error')],
+    });
+    expect(log.warn).toHaveBeenCalledWith(
+      '[test] Playing a sound failed:',
+      failure,
+    );
   });
 });

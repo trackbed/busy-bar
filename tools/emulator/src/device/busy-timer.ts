@@ -5,6 +5,8 @@
 // timer starts, pauses, resumes, skips, or stops, so a timer that runs out
 // keeps reporting the snapshot that started it.
 
+import { isObject } from '@busy-bar-apps/json-values';
+
 export interface BusyBarSettings {
   readonly theme: string;
   readonly show_work_phase_only: boolean;
@@ -307,8 +309,4 @@ function within(
   range: { readonly min: number; readonly max: number },
 ): boolean {
   return value >= range.min && value <= range.max;
-}
-
-function isObject(value: unknown): value is Record<string, unknown> {
-  return typeof value === 'object' && value !== null && !Array.isArray(value);
 }

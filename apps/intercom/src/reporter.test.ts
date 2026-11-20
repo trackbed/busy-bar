@@ -3,7 +3,7 @@ import { describe, expect, it, vi } from 'vitest';
 import type { Presence } from './convex/presence.ts';
 import { HEARTBEAT_MS } from './convex/presence.ts';
 import type { ReporterOptions } from './reporter.ts';
-import { createReporter } from './reporter.ts';
+import { createReporter, leaveTeam } from './reporter.ts';
 
 type Send = ReporterOptions['send'];
 
@@ -85,5 +85,55 @@ describe('createReporter', () => {
     await reporter.observe(BUSY, NOW + 2);
 
     expect(log.warn).toHaveBeenCalledTimes(2);
+  });
+});
+
+describe('leaveTeam', () => {
+  function setup(leave: () => Promise<unknown>) {
+    const log = { warn: vi.fn<Console['warn']>() };
+    return {
+      log,
+      done: leaveTeam({ name: 'test', leave, timeoutMs: 2000, log }),
+    };
+  }
+
+  it('tells the team this bar left', async () => {
+    const leave = vi.fn<() => Promise<unknown>>(() => Promise.resolve(null));
+    const { done, log } = setup(leave);
+
+    await done;
+
+    expect(leave).toHaveBeenCalledOnce();
+    expect(log.warn).not.toHaveBeenCalled();
+  });
+
+  it('gives up when the deployment does not answer in time', async () => {
+    vi.useFakeTimers();
+    try {
+      let settled = false;
+      const { done } = setup(() => new Promise(() => undefined));
+      void done.then(() => {
+        settled = true;
+      });
+
+      await vi.advanceTimersByTimeAsync(1999);
+      expect(settled).toBe(false);
+      await vi.advanceTimersByTimeAsync(1);
+      expect(settled).toBe(true);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('logs a failed leave and lets the app stop', async () => {
+    const failure = new Error('offline');
+    const { done, log } = setup(() => Promise.reject(failure));
+
+    await done;
+
+    expect(log.warn).toHaveBeenCalledWith(
+      '[test] Leaving the team failed:',
+      failure,
+    );
   });
 });

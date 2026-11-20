@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest';
 
+import { DEFAULT_PRIORITY } from '@busy-bar-apps/bar-kit';
+
 import {
-  DEFAULT_PRIORITY,
   DEFAULT_QUIET_MINUTES,
   EventSettingsError,
   loadSettings,

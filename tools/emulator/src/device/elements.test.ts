@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import type { Rgba } from '../render/canvas.ts';
-import { ApiError } from '../server/http.ts';
+import { ApiError } from './api-error.ts';
 import type { DrawRequest, Element, ImageCheck } from './elements.ts';
 import {
   ALIGNS,

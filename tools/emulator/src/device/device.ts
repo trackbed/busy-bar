@@ -4,8 +4,7 @@
 import type { AssetLibrary } from '../assets/library.ts';
 import type { Sound } from '../formats/sound.ts';
 import type { Rgba } from '../render/canvas.ts';
-import { ApiError } from '../server/http.ts';
-import type { InputEvent } from '../server/protobuf.ts';
+import { ApiError } from './api-error.ts';
 import type { BusySnapshot } from './busy-timer.ts';
 import {
   INITIAL_SNAPSHOT,
@@ -32,6 +31,19 @@ export const KEYS = [
   'settings',
 ] as const;
 export type Key = (typeof KEYS)[number];
+
+/** A button, the wheel, or the mode selector, as the bar reports it. */
+export type InputEvent =
+  | {
+      readonly kind: 'button';
+      readonly button: 'ok' | 'back' | 'start';
+      readonly action: 'press' | 'release';
+    }
+  | {
+      readonly kind: 'selector';
+      readonly position: 'busy' | 'custom' | 'off' | 'apps' | 'settings';
+    }
+  | { readonly kind: 'wheel'; readonly delta: number };
 
 export type DeviceEvent =
   | { readonly type: 'changed' }

@@ -25,12 +25,14 @@ so the whole team works, and stops, together.
   snapshot only when its timer changes state, so time left counts from the
   snapshot, and a timer that ran out still reports the snapshot that started
   it.
-- Reporting on change, plus a heartbeat ([src/reporter.ts](src/reporter.ts)).
+- Reporting on change, plus a heartbeat, and leaving the team as the app
+  stops ([src/reporter.ts](src/reporter.ts)).
 - What the wheel and buttons do ([src/controls.ts](src/controls.ts)), when
   the app counts as on screen ([src/screen.ts](src/screen.ts)), the sounds
   ([src/chime.ts](src/chime.ts)), and starting this bar's timer for a team
   focus ([src/focus.ts](src/focus.ts)).
-- Reading the board ([src/board.ts](src/board.ts)), the layout
+- Reading the board and keeping the latest one the subscription delivered
+  ([src/board.ts](src/board.ts)), the layout
   ([src/render.ts](src/render.ts)), and sample frames for the app catalogue
   ([src/preview.ts](src/preview.ts)).
 

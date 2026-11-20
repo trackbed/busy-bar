@@ -1270,6 +1270,8 @@ __metadata:
 "@busy-bar-apps/emulator@workspace:0.0.1, @busy-bar-apps/emulator@workspace:tools/emulator":
   version: 0.0.0-use.local
   resolution: "@busy-bar-apps/emulator@workspace:tools/emulator"
+  dependencies:
+    "@busy-bar-apps/json-values": "workspace:0.0.1"
   languageName: unknown
   linkType: soft
 

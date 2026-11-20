@@ -1,7 +1,8 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
 import type { Board, Focus, Knock, TeamBar } from './board.ts';
 import {
+  createBoardFeed,
   FOCUS_ROW,
   incomingKnock,
   minutesLeft,
@@ -161,5 +162,43 @@ describe('team focus', () => {
     expect(runningFocus(board([], focus), at(1))).toBe(focus);
     expect(runningFocus(board([], focus), at(26))).toBeUndefined();
     expect(runningFocus(board(), at(1))).toBeUndefined();
+  });
+});
+
+describe('createBoardFeed', () => {
+  it('keeps the latest board and hands it to every listener', () => {
+    const focus = vi.fn<(board: Board) => void>();
+    const chime = vi.fn<(board: Board) => void>();
+    const feed = createBoardFeed([focus, chime]);
+    const next = board();
+
+    feed.update(ALONE);
+    feed.update(next);
+
+    expect(feed.board()).toBe(next);
+    expect(feed.failure()).toBeUndefined();
+    expect(focus.mock.calls).toStrictEqual([[ALONE], [next]]);
+    expect(chime.mock.calls).toStrictEqual([[ALONE], [next]]);
+  });
+
+  it('shows why the query failed instead of the last board', () => {
+    const feed = createBoardFeed([]);
+    const failure = new Error('Unknown key');
+    feed.update(ALONE);
+
+    feed.fail(failure);
+
+    expect(feed.board()).toBeUndefined();
+    expect(feed.failure()).toBe(failure);
+  });
+
+  it('clears the failure once a board arrives again', () => {
+    const feed = createBoardFeed([]);
+    feed.fail(new Error('Unknown key'));
+
+    feed.update(ALONE);
+
+    expect(feed.board()).toBe(ALONE);
+    expect(feed.failure()).toBeUndefined();
   });
 });
