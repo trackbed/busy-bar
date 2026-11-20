@@ -240,27 +240,54 @@ describe('projectGenerator', () => {
     );
   });
 
-  it('links a new TypeScript project with yarn install', async () => {
+  const OPTIONS = { cwd: '/virtual', stdio: 'inherit' } as const;
+  const FORMAT_TS = ['yarn', ['oxfmt', 'apps/weather-station'], OPTIONS];
+  const formatPython = (directory: string): unknown[][] => [
+    ['yarn', ['oxfmt', directory], OPTIONS],
+    [
+      'uv',
+      [
+        'run',
+        '--frozen',
+        '--quiet',
+        'ruff',
+        'check',
+        '--select',
+        'I',
+        '--fix',
+        '--quiet',
+        directory,
+      ],
+      OPTIONS,
+    ],
+    [
+      'uv',
+      ['run', '--frozen', '--quiet', 'ruff', 'format', '--quiet', directory],
+      OPTIONS,
+    ],
+  ];
+
+  it('links and formats a new TypeScript project', async () => {
     await projectGenerator(tree, { name: 'weather-station', language: 'ts' })();
 
     expect(installPackagesTask).toHaveBeenCalledExactlyOnceWith(tree, true);
-    expect(execFileSync).not.toHaveBeenCalled();
+    expect(vi.mocked(execFileSync).mock.calls).toStrictEqual([FORMAT_TS]);
   });
 
-  it('relocks the uv workspace after a new Python project', async () => {
+  it('relocks the uv workspace and formats a new Python project', async () => {
     await projectGenerator(tree, {
       name: 'weather-station',
       language: 'python',
     })();
 
-    expect(execFileSync).toHaveBeenCalledExactlyOnceWith('uv', ['lock'], {
-      cwd: tree.root,
-      stdio: 'inherit',
-    });
+    expect(vi.mocked(execFileSync).mock.calls).toStrictEqual([
+      ['uv', ['lock'], OPTIONS],
+      ...formatPython('apps/weather-station'),
+    ]);
     expect(installPackagesTask).not.toHaveBeenCalled();
   });
 
-  it('skips the install when asked to', async () => {
+  it('skips the install when asked to, but still formats', async () => {
     await projectGenerator(tree, {
       name: 'weather-station',
       language: 'ts',
@@ -274,7 +301,10 @@ describe('projectGenerator', () => {
     })();
 
     expect(installPackagesTask).not.toHaveBeenCalled();
-    expect(execFileSync).not.toHaveBeenCalled();
+    expect(vi.mocked(execFileSync).mock.calls).toStrictEqual([
+      FORMAT_TS,
+      ...formatPython('libs/weather-api'),
+    ]);
   });
 
   it('rejects names that are not kebab-case', () => {

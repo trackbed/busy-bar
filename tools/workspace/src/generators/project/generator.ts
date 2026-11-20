@@ -98,6 +98,7 @@ export function projectGenerator(
       if (!skipInstall) {
         installPackagesTask(tree, true);
       }
+      formatProject(tree.root, directory, language);
     };
   }
 
@@ -106,7 +107,38 @@ export function projectGenerator(
     if (!skipInstall) {
       execFileSync('uv', ['lock'], { cwd: tree.root, stdio: 'inherit' });
     }
+    formatProject(tree.root, directory, language);
   };
+}
+
+/**
+ * Format the new project with the workspace's formatters, so it passes
+ * `yarn format:check` whatever its name: a short name fits a list on one line
+ * that a long one does not, and Ruff sorts the module among the imports.
+ */
+function formatProject(
+  root: string,
+  directory: string,
+  language: ProjectGeneratorOptions['language'],
+): void {
+  const run = (command: string, args: readonly string[]): void => {
+    execFileSync(command, args, { cwd: root, stdio: 'inherit' });
+  };
+  run('yarn', ['oxfmt', directory]);
+  if (language === 'python') {
+    // --frozen: format with the installed tools, leaving uv.lock alone.
+    const ruff = ['run', '--frozen', '--quiet', 'ruff'];
+    run('uv', [
+      ...ruff,
+      'check',
+      '--select',
+      'I',
+      '--fix',
+      '--quiet',
+      directory,
+    ]);
+    run('uv', [...ruff, 'format', '--quiet', directory]);
+  }
 }
 
 /**

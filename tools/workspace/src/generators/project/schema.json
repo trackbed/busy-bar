@@ -33,7 +33,7 @@
     },
     "skipInstall": {
       "type": "boolean",
-      "description": "Skip `yarn install` or `uv lock` after generating.",
+      "description": "Skip `yarn install` or `uv lock` after generating. The new project is formatted either way.",
       "default": false
     }
   },
