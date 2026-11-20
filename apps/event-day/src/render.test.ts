@@ -1,7 +1,11 @@
 import { describe, expect, it } from 'vitest';
 
 import type { BarElements } from '@busy-bar-apps/bar-kit';
-import { BACK_DISPLAY, FRONT_DISPLAY, textWidth } from '@busy-bar-apps/bar-kit';
+import {
+  BACK_DISPLAY,
+  FRONT_DISPLAY,
+  overflowingText,
+} from '@busy-bar-apps/bar-kit';
 
 import type { ChallengeStatus } from './challenge.ts';
 import type { EventSnapshot } from './event.ts';
@@ -242,17 +246,10 @@ describe('render', () => {
       }),
     );
 
-    const overflowing = [...elements.values()].filter(
-      (element) =>
-        element.type === 'text' &&
-        element.align !== 'top_right' &&
-        (element.x ?? 0) + textWidth(element.text, element.font) >
-          (element.display === 'back'
-            ? BACK_DISPLAY.width
-            : FRONT_DISPLAY.width),
-    );
-    expect(overflowing.map((element) => element.id)).toStrictEqual([]);
-    // Right-aligned elements anchor inside the display too.
+    expect(
+      overflowingText(elements.values()).map((element) => element.id),
+    ).toStrictEqual([]);
+    // Other elements start inside their display too.
     const outside = [...elements.values()].filter(
       (element) =>
         (element.x ?? 0) >=

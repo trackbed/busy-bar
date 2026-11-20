@@ -29,7 +29,11 @@ variables and behave the same way.
 - Text for the bitmap fonts: `toBarText` turns any text into printable ASCII
   the fonts draw (`Nørreport` becomes `Noerreport`, a backtick an
   apostrophe), `textWidth` measures it in pixels from busy-lib's font maps,
-  and `fitText` cuts it to a width with `..`.
+  `fitText` cuts it to a width with `..`, and `overflowingText` finds the
+  text elements that run past their display's edge, for layout tests. Both
+  kits test their widths against
+  [bar-kit-text-widths.json](../../bar-kit-text-widths.json), so they measure
+  alike.
 - The app catalogue's contract (`Preview`, `PreviewScene`, `PreviewStep`):
   what an app's `preview` target prints with `printPreview`, as one line of
   JSON ([tools/catalogue](../../tools/catalogue/README.md)).

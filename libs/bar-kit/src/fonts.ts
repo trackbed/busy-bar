@@ -1,9 +1,11 @@
 // Glyph widths of the bar's fonts, for laying out text. The fonts are
 // proportional bitmaps, so a layout that has to fit measures its text.
 
-import type { TextElement } from '@busy-app/busy-lib';
+import type { DisplayDrawParams, TextElement } from '@busy-app/busy-lib';
 import { registerFontMaps, textWidth as measure } from '@busy-app/busy-lib';
 import * as fontMaps from '@busy-app/busy-lib/fonts';
+
+import { BACK_DISPLAY, FRONT_DISPLAY } from './display.ts';
 
 /** A font the bar draws text in. */
 export type BarFont = TextElement['font'];
@@ -45,4 +47,32 @@ export function fitText(text: string, font: BarFont, width: number): string {
     cut = cut.slice(0, -1);
   }
   return cut.trimEnd() + ELLIPSIS;
+}
+
+/**
+ * The text elements that run past the left or right edge of their display,
+ * placed the way the bar places them: a label is as wide as its `width`, or
+ * as its text without one, and `align` says whether `x` is its left edge, its
+ * middle, or the column just past its right edge. Tests check layouts with it;
+ * the Python kit's `overflowing_text` gives the same answer.
+ */
+export function overflowingText(
+  elements: Iterable<DisplayDrawParams['elements'][number]>,
+): TextElement[] {
+  return [...elements].flatMap((element) =>
+    element.type === 'text' && !fitsDisplay(element) ? [element] : [],
+  );
+}
+
+function fitsDisplay(element: TextElement): boolean {
+  const display = element.display === 'back' ? BACK_DISPLAY : FRONT_DISPLAY;
+  const width = element.width ?? textWidth(element.text, element.font);
+  const x = element.x ?? 0;
+  const align = element.align ?? 'top_left';
+  const left = align.endsWith('left')
+    ? x
+    : align.endsWith('right')
+      ? x - width
+      : x - Math.floor(width / 2);
+  return left >= 0 && left + width <= display.width;
 }

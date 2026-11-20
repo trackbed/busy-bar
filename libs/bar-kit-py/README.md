@@ -28,9 +28,12 @@ both read the same environment variables and behave the same way.
   so there it warns once and returns.
 - Text for the bitmap fonts: `to_bar_text` turns any text into printable ASCII
   the fonts draw (`Nørreport` becomes `Noerreport`, a backtick an
-  apostrophe), `text_width` measures it in pixels, and `fit_text` cuts it to
-  a width with `..`. The widths come from busy-lib's font maps, so both kits
-  measure alike.
+  apostrophe), `text_width` measures it in pixels, `fit_text` cuts it to a
+  width with `..`, and `overflowing_text` finds the text elements that run
+  past their display's edge, for layout tests. The widths are a copy of
+  busy-lib's font maps; both kits test theirs against
+  [bar-kit-text-widths.json](../../bar-kit-text-widths.json), so a change to
+  one kit's widths fails the other's tests until both agree.
 - The app catalogue's contract (`Preview`, `PreviewScene`, `PreviewStep`):
   what an app's `preview` target prints with `print_preview`, as one line of
   JSON, elements serialized the way busylib sends them

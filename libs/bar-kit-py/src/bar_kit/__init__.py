@@ -14,7 +14,7 @@ from bar_kit.config import (
     load_bar_config,
 )
 from bar_kit.display import BACK_DISPLAY, FRONT_DISPLAY, DisplaySize, rgba
-from bar_kit.fonts import ELLIPSIS, fit_text, text_width
+from bar_kit.fonts import ELLIPSIS, fit_text, overflowing_text, text_width
 from bar_kit.input import listen_for_input
 from bar_kit.poll import Poller, PollFailure, Snapshot
 from bar_kit.preview import Preview, PreviewScene, PreviewStep, print_preview
@@ -51,6 +51,7 @@ __all__ = [
     "is_cloud_address",
     "listen_for_input",
     "load_bar_config",
+    "overflowing_text",
     "print_preview",
     "rgba",
     "run_bar_app",

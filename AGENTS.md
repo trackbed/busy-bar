@@ -86,8 +86,9 @@ These apply to every task. Break one only when the user names a concrete reason.
   (`createPoller` / `Poller`), the bar's buttons and wheel
   (`listenForInput` / `listen_for_input`), and text that fits the bitmap
   fonts (`toBarText` / `to_bar_text`, `textWidth` / `text_width`,
-  `fitText` / `fit_text`). The two kits share one contract; change both
-  together.
+  `fitText` / `fit_text`, and `overflowingText` / `overflowing_text` for
+  layout tests). The two kits share one contract; change both together.
+  Both test their text widths against `bar-kit-text-widths.json`.
 - `libs/json-values/` (TypeScript): narrowing untrusted JSON, such as an API
   response, without casts (`isObject`, `objectAt`, `arrayAt`, `stringAt`,
   `numberAt`). Use it instead of writing another type guard.
@@ -101,8 +102,9 @@ These apply to every task. Break one only when the user names a concrete reason.
 - `tools/workspace/`: the Nx plugin that infers Python targets and graph edges
   (`src/plugins/python.ts`) and the project generator (`src/generators/project/`).
 - Root: `nx.json`, `project-boundaries.mjs`, `eslint.factory.mjs`,
-  `vitest.factory.mjs`, and `pyproject.toml` (uv workspace plus Ruff, mypy,
-  and pytest config).
+  `vitest.factory.mjs`, `pyproject.toml` (uv workspace plus Ruff, mypy,
+  and pytest config), and `bar-kit-text-widths.json` (the glyph widths both
+  kits must give).
 
 Full layout, naming, and tags → [docs/project-structure.md](docs/project-structure.md).
 

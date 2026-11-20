@@ -1,7 +1,11 @@
 import { describe, expect, it } from 'vitest';
 
 import type { BarElements } from '@busy-bar-apps/bar-kit';
-import { BACK_DISPLAY, FRONT_DISPLAY, textWidth } from '@busy-bar-apps/bar-kit';
+import {
+  BACK_DISPLAY,
+  FRONT_DISPLAY,
+  overflowingText,
+} from '@busy-bar-apps/bar-kit';
 
 import type { RainHour } from './dmi.ts';
 import type { Co2Reading, PriceSlot } from './energi.ts';
@@ -209,17 +213,10 @@ describe('render', () => {
   it('keeps every text inside its display', () => {
     const elements = render(NOW, data({ rain: rain(10.25, 12.5, 30.75) }));
 
-    const overflowing = elements.filter(
-      (element) =>
-        element.type === 'text' &&
-        element.align !== 'top_right' &&
-        (element.x ?? 0) + textWidth(element.text, element.font) >
-          (element.display === 'back'
-            ? BACK_DISPLAY.width
-            : FRONT_DISPLAY.width),
-    );
-    expect(overflowing.map((element) => element.id)).toStrictEqual([]);
-    // Right-aligned elements anchor inside the display too.
+    expect(
+      overflowingText(elements).map((element) => element.id),
+    ).toStrictEqual([]);
+    // Other elements start inside their display too.
     const outside = elements.filter(
       (element) =>
         (element.x ?? 0) >=

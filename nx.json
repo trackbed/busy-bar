@@ -23,6 +23,7 @@
       "{workspaceRoot}/project-boundaries.mjs"
     ],
     "vitestGlobals": ["{workspaceRoot}/vitest.factory.mjs"],
+    "barKitTextWidths": ["{workspaceRoot}/bar-kit-text-widths.json"],
     "rootTooling": [
       "{workspaceRoot}/*.mjs",
       "{workspaceRoot}/*.d.mts",

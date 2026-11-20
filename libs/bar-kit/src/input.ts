@@ -36,6 +36,7 @@ export interface ListenForInputOptions {
   readonly signal: AbortSignal;
   /** Time to wait before reopening the stream after it drops; 5 seconds. */
   readonly reconnectMs?: number;
+  /** Opens the bar's status stream; tests replace it. Node's WebSocket by default. */
   readonly stream?: StatusStream;
   readonly log?: Pick<Console, 'warn'>;
 }

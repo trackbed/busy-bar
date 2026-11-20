@@ -12,7 +12,7 @@ from agent_fleet.render import (
     format_age,
     render,
 )
-from bar_kit import BACK_DISPLAY, FRONT_DISPLAY, text_width
+from bar_kit import BACK_DISPLAY, FRONT_DISPLAY, overflowing_text
 
 NOW = datetime(2026, 10, 20, 9, 0, tzinfo=UTC)
 
@@ -135,17 +135,9 @@ def test_keeps_long_names_inside_the_displays() -> None:
         )
     )
 
-    for element in elements.values():
-        if not isinstance(element, types.TextElement) or element.align == "top_right":
-            continue
-        limit = (
-            FRONT_DISPLAY.width
-            if element.display == types.DisplayName.FRONT
-            else BACK_DISPLAY.width
-        )
-        assert element.x + text_width(element.text, element.font) <= limit
+    assert [element.id for element in overflowing_text(elements.values())] == []
     assert text(elements, "summary").endswith("..")
-    # Right-aligned elements anchor inside the display too.
+    # Other elements start inside their display too.
     assert [
         element.id
         for element in elements.values()
