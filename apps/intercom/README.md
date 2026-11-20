@@ -98,6 +98,12 @@ One person owns the deployment, on [Convex](https://www.convex.dev/) cloud:
    NX_DAEMON=false yarn nx run intercom:deploy    # push to production for the team
    ```
 
+   `deploy` runs `intercom:typecheck` first. Both targets pass
+   `--typecheck disable` to the Convex CLI: its own check needs a
+   `tsconfig.json` inside `src/convex/` and a `typescript` package that
+   provides `tsc`, and this workspace has neither. `intercom:typecheck`
+   checks `src/convex/` with the workspace's TypeScript 7 instead.
+
 2. Add a bar for each teammate, and send each their key and the production
    URL (`https://<name>.convex.cloud`, in the Convex dashboard). Bar names are
    1 to 12 printable ASCII characters:

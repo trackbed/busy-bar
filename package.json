@@ -49,9 +49,6 @@
     "vite": "8.3.7",
     "vitest": "5.1.0"
   },
-  "resolutions": {
-    "undici@npm:7.29.0": "npm:7.29.1"
-  },
   "engines": {
     "node": "24.x"
   },

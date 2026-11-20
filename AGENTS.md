@@ -37,20 +37,23 @@ These apply to every task. Break one only when the user names a concrete reason.
   imports must use `import type`. `tsc` is TypeScript 7; the `typescript`
   package is the TypeScript 6 API that ESLint and Nx load. Why → [ADR 0003](docs/adr/0003-typescript-from-source.md).
 - **TypeScript discipline**: no `any`, no non-null assertions (`!`), and no
-  `as` casts to silence the compiler; narrow with runtime checks. Read
-  environment variables with bracket access (`process.env['NAME']`).
+  type assertions (`value as Foo`; `as const` is fine): narrow with runtime
+  checks. Lint fails on all three. Read environment variables with bracket
+  access (`process.env['NAME']`).
 - **Python**: every Python project is listed in `[tool.uv.workspace].members`
   in the root `pyproject.toml`; the Nx plugin fails the graph otherwise. A
   dependency on another member needs `<name> = { workspace = true }` under
   `[tool.uv.sources]`. mypy runs in strict mode; fix types rather than adding
-  `# type: ignore`.
+  `# type: ignore`. Explicit `Any` and `typing.cast` fail mypy and Ruff:
+  type untrusted values as `object` and narrow them with `isinstance`.
 - **Dependencies**: pin exact versions everywhere: no `^` or `~` in
   `package.json`, `==` in `pyproject.toml`, and `workspace:0.0.1` for internal
   TypeScript packages. New releases must be seven days old (Yarn, uv, and
   Dependabot all enforce it). Never bypass the gate or enable install scripts
   without the user's approval. Policy → [docs/dependencies.md](docs/dependencies.md).
 - **Suppressions** need a reason: `// eslint-disable-next-line <rule> -- <reason>`
-  (lint fails without one) and `# noqa: <CODE> - <reason>`.
+  (ESLint fails without one) and `# noqa: <CODE> - <reason>` (Ruff fails
+  without the code; review checks the reason).
 - **Ratchet, don't preserve**: never lower a coverage threshold or loosen a
   lint rule to make a change pass.
 - **Greenfield posture**: aim for the cleanest end state. Replace obsolete
@@ -78,8 +81,12 @@ These apply to every task. Break one only when the user names a concrete reason.
   frame loop (`runBarApp` / `run_bar_app`), background polling
   (`createPoller` / `Poller`), the bar's buttons and wheel
   (`listenForInput` / `listen_for_input`), and text that fits the bitmap
-  fonts (`toBarText`, `textWidth`, `fitText`). The two kits share one
-  contract; change both together.
+  fonts (`toBarText` / `to_bar_text`, `textWidth` / `text_width`,
+  `fitText` / `fit_text`). The two kits share one contract; change both
+  together.
+- `libs/json-values/` (TypeScript): narrowing untrusted JSON, such as an API
+  response, without casts (`isObject`, `objectAt`, `arrayAt`, `stringAt`,
+  `numberAt`). Use it instead of writing another type guard.
 - `tools/emulator/`: a BUSY Bar on the computer, built from the open
   firmware: the HTTP API, both displays with animations, and a browser page.
   Start it with `NX_DAEMON=false yarn nx run emulator:start` and point an app

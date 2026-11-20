@@ -38,6 +38,11 @@ const PYTHON_KEYWORDS = new Set(
   ),
 );
 
+/**
+ * Write a new app or library in `apps/` or `libs/` from the templates in
+ * `files/<language>-<type>/`, then wire it into the Yarn or uv workspace. The
+ * returned callback installs dependencies unless `skipInstall` is set.
+ */
 export function projectGenerator(
   tree: Tree,
   options: ProjectGeneratorOptions,

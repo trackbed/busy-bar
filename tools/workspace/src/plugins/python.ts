@@ -35,6 +35,11 @@ const PYTHON_GLOBALS = [
   '{workspaceRoot}/uv.lock',
 ];
 
+/**
+ * One Nx project per workspace member's pyproject.toml, with its inferred
+ * targets. Fails the graph for a pyproject.toml that is not a uv workspace
+ * member.
+ */
 export const createNodes: CreateNodes = [
   PYPROJECT_GLOB,
   (files, options, context) => {

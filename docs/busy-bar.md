@@ -163,8 +163,9 @@ Nx loads from `.env.local` (see `.env.example`):
 - `BUSYBAR_TOKEN`: the Wi-Fi password or the cloud token. The kits send it the
   way the connection expects; the cloud requires it.
 
-Bars ship with firmware 1.0.2 (API 24.3.0), while `busylib` 2.6.0 targets API
-27.5.0. Update the firmware in the web interface before chasing API errors.
+Bars ship with firmware 1.0.2 (API 24.3.0), older than the API that the pinned
+`busylib` targets (`busylib.versioning.API_VERSION`). Update the firmware in
+the web interface before chasing API errors.
 
 ## Emulator
 

@@ -42,7 +42,7 @@ jobs:
 
       - uses: nrwl/nx-set-shas@e602fada7ad5987b0f7b1905e7a99ea1c661514c # v5.1.0
 
-      # Nx 23 keeps its task cache and the cache index together under ~/.nx.
+      # Nx keeps its task cache and the cache index together under ~/.nx.
       - name: Restore Nx cache
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:

@@ -4,16 +4,13 @@ Status: Current.
 
 ## Toolchain
 
-| Tool           | Version   | Pinned in                                    |
-| -------------- | --------- | -------------------------------------------- |
-| Python         | 3.14      | `.python-version`, `requires-python`         |
-| uv             | ≥ 0.11.23 | `[tool.uv] required-version`; CI uses 0.13.0 |
-| Ruff           | 0.17.0    | root `pyproject.toml` `dev` group            |
-| mypy           | 2.4.0     | root `pyproject.toml` `dev` group            |
-| pytest         | 9.1.1     | root `pyproject.toml` `dev` group            |
-| pytest-asyncio | 1.4.0     | root `pyproject.toml` `dev` group            |
-| pytest-cov     | 7.1.0     | root `pyproject.toml` `dev` group            |
+| Tool                                           | Pinned in                                                                                     |
+| ---------------------------------------------- | --------------------------------------------------------------------------------------------- |
+| Python 3.14                                    | `.python-version`, `requires-python`                                                          |
+| uv                                             | `[tool.uv] required-version` (the range uv accepts); CI pins one release in `setup-workspace` |
+| Ruff, mypy, pytest, pytest-asyncio, pytest-cov | root `pyproject.toml` `dev` group                                                             |
 
+Dependabot bumps the `dev` group weekly, so this guide names no tool versions.
 uv installs Python 3.14 itself if it is missing.
 
 ## The uv Workspace
@@ -91,8 +88,10 @@ installs with `--locked`. Policy → [dependencies.md](dependencies.md).
 ## Tools
 
 - **Ruff** formats (`yarn format:write`) and lints with the rule set in the
-  root `pyproject.toml`. `print` is allowed in apps only; libraries log.
-- **mypy** runs in strict mode with `warn_unreachable` and extra error codes.
+  root `pyproject.toml`. `print` is allowed in apps only; libraries log. It
+  rejects `typing.cast` and a `# noqa` without a rule code.
+- **mypy** runs in strict mode with `warn_unreachable`, extra error codes, and
+  `disallow_any_explicit`, so an explicit `Any` fails too.
   busylib is fully annotated but ships without a `py.typed` marker, so the
   config tells mypy to analyse it anyway (`follow_untyped_imports`).
 - **pytest** uses its native TOML configuration in strict mode, turns

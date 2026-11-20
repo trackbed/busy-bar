@@ -37,6 +37,7 @@ export function readPyproject(path: string): PyprojectInfo {
   return parsePyproject(readFileSync(path, 'utf8'), path);
 }
 
+/** Parse pyproject.toml `source`; `path` names the file in errors. */
 export function parsePyproject(source: string, path: string): PyprojectInfo {
   const document = parse(source);
   const project = tableAt(document, ['project']);

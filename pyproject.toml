@@ -52,6 +52,7 @@ select = [
   "LOG", # logging misuse
   "N", # naming
   "PERF", # performance anti-patterns
+  "PGH004", # noqa without a rule code
   "PIE", # unnecessary code
   "PL", # pylint
   "PT", # pytest style
@@ -63,6 +64,7 @@ select = [
   "SLF", # private member access
   "T10", # debugger calls
   "T20", # print calls
+  "TID251", # banned APIs: typing.cast
   "UP", # pyupgrade
   "W", # pycodestyle warnings
 ]
@@ -70,6 +72,9 @@ select = [
 ignore = ["E501"]
 # Display sizes are written the way the hardware docs write them: 72×16.
 allowed-confusables = ["×"]
+
+[tool.ruff.lint.flake8-tidy-imports.banned-api]
+"typing.cast".msg = "Narrow with isinstance instead of casting; see AGENTS.md."
 
 [tool.ruff.lint.per-file-ignores]
 # Apps may print to their terminal; libraries log instead.
@@ -79,6 +84,8 @@ allowed-confusables = ["×"]
 [tool.mypy]
 python_version = "3.14"
 strict = true
+# Untrusted values are `object` and narrowed with isinstance, never `Any`.
+disallow_any_explicit = true
 warn_unreachable = true
 enable_error_code = ["ignore-without-code", "redundant-expr", "truthy-bool"]
 

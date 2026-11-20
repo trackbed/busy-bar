@@ -8,6 +8,7 @@ import type { AppProject } from './apps.ts';
 import { CatalogueError } from './error.ts';
 import type { Preview, PreviewStep } from './preview.ts';
 
+/** One scene of an app's preview, drawn by the emulator. */
 export interface CatalogueScene {
   readonly title: string;
   readonly caption: string;
@@ -17,6 +18,7 @@ export interface CatalogueScene {
   readonly text: { readonly front: string; readonly back: string };
 }
 
+/** One app's section of the catalogue page. */
 export interface CatalogueApp {
   readonly project: AppProject;
   readonly summary: string;

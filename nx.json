@@ -19,7 +19,8 @@
     "lintGlobals": [
       "{workspaceRoot}/.oxlintrc.json",
       "{workspaceRoot}/eslint.factory.mjs",
-      "{workspaceRoot}/eslint.nx-boundaries.mjs"
+      "{workspaceRoot}/eslint.nx-boundaries.mjs",
+      "{workspaceRoot}/project-boundaries.mjs"
     ],
     "vitestGlobals": ["{workspaceRoot}/vitest.factory.mjs"],
     "rootTooling": [
