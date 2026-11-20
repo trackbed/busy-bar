@@ -135,6 +135,7 @@ Full layout, naming, and tags → [docs/project-structure.md](docs/project-struc
 # Verification Matrix
 
 - While iterating on one project: `NX_DAEMON=false yarn nx run-many -t lint typecheck test -p <project>`.
+- One test file or one test: turn coverage off as [docs/testing-strategy.md](docs/testing-strategy.md#running-one-test) shows, then run the project's full `test`.
 - Broader changes: `yarn verify:fast`.
 - Before the branch's first push or PR: `yarn verify` once. After that, CI runs it on every push; fix failures with the failing target, not another full sweep.
 - Docs-only change: `yarn format:check`.

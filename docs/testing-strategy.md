@@ -20,8 +20,10 @@ Status: Current.
    turns warnings into errors.
 6. **Coverage thresholds are per project and apply on every run.** Exclude a
    process entry point (`src/main.ts`, `__main__.py`) instead of writing a
-   test that only executes its lines. Raise thresholds as coverage grows;
-   never lower one to pass.
+   test that only executes its lines, but keep it to reading settings and
+   connecting modules: anything it decides, such as what a poll does or when
+   to play a sound, belongs in a module with tests. Raise thresholds as
+   coverage grows; never lower one to pass.
 7. **Hardware is checked by hand.** Run the app with `nx run <app>:start`
    against the emulator ([tools/emulator](../tools/emulator/README.md)), then
    a real bar, before you rely on a layout. The emulator draws with the
@@ -35,3 +37,25 @@ Status: Current.
 
 TypeScript tests live next to the code as `*.test.ts`; Python tests live in
 `tests/test_*.py`. `async` tests run directly in both languages.
+
+## Running One Test
+
+Every `test` run applies the project's coverage thresholds, so a run of one
+file fails on coverage even when its tests pass. Turn coverage off while you
+iterate, then run the project's whole `test` target before you finish:
+
+```sh
+# TypeScript: one file, then one test in it by name
+NX_DAEMON=false yarn nx run <project>:test -- src/<file>.test.ts --coverage.enabled=false
+NX_DAEMON=false yarn nx run <project>:test -- src/<file>.test.ts -t '<part of its name>' --coverage.enabled=false
+
+# Python: one file, then one test in it by name
+NX_DAEMON=false yarn nx run <project>:test -- tests/test_<module>.py --no-cov
+NX_DAEMON=false yarn nx run <project>:test -- tests/test_<module>.py -k '<part of its name>' --no-cov
+```
+
+The `test` target runs `vitest run`, which never watches. For watch mode, run
+Vitest in the project's directory, in an interactive terminal:
+`yarn run -T vitest --coverage.enabled=false`. The full suite is quick too:
+lint, typecheck, and test for every project take about 20 seconds without a
+cache.
