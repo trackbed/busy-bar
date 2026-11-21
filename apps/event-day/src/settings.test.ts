@@ -1,12 +1,8 @@
 import { describe, expect, it } from 'vitest';
 
-import { DEFAULT_PRIORITY } from '@busy-bar-apps/bar-kit';
+import { DEFAULT_PRIORITY, SettingsError } from '@busy-bar-apps/bar-kit';
 
-import {
-  DEFAULT_QUIET_MINUTES,
-  EventSettingsError,
-  loadSettings,
-} from './settings.ts';
+import { DEFAULT_QUIET_MINUTES, loadSettings } from './settings.ts';
 
 describe('loadSettings', () => {
   it('reads booths with the PhotoCraft URL', () => {
@@ -104,6 +100,14 @@ describe('loadSettings', () => {
       {
         EVENT_DAY_CHALLENGE_URL: 'https://x',
         EVENT_DAY_CHALLENGE_TOKEN: 't',
+        EVENT_DAY_PRIORITY: '1e1',
+      },
+      'from 1 to 100',
+    ],
+    [
+      {
+        EVENT_DAY_CHALLENGE_URL: 'https://x',
+        EVENT_DAY_CHALLENGE_TOKEN: 't',
         EVENT_DAY_QUIET_MINUTES: '0',
       },
       'from 1 to 1440',
@@ -117,7 +121,7 @@ describe('loadSettings', () => {
       'on or off',
     ],
   ])('rejects %j', (env, message) => {
-    expect(() => loadSettings(env)).toThrow(EventSettingsError);
+    expect(() => loadSettings(env)).toThrow(SettingsError);
     expect(() => loadSettings(env)).toThrow(message);
   });
 });

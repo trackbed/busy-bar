@@ -1,4 +1,12 @@
-import { DEFAULT_PRIORITY } from '@busy-bar-apps/bar-kit';
+import {
+  DEFAULT_PRIORITY,
+  envHttpUrl,
+  envSwitch,
+  envWholeNumber,
+  MAX_PRIORITY,
+  MIN_PRIORITY,
+  SettingsError,
+} from '@busy-bar-apps/bar-kit';
 
 import type { BoothRef } from './photocraft.ts';
 
@@ -16,7 +24,7 @@ export interface EventSettings {
 }
 
 /** The environment does not describe a board that can run. */
-export class EventSettingsError extends Error {
+class EventSettingsError extends SettingsError {
   override readonly name = 'EventSettingsError';
 }
 
@@ -34,7 +42,7 @@ type Env = Readonly<Record<string, string | undefined>>;
  * `EVENT_DAY_SOUND` are optional.
  */
 export function loadSettings(env: Env): EventSettings {
-  const photoCraftUrl = url(env, 'EVENT_DAY_PHOTOCRAFT_URL');
+  const photoCraftUrl = envHttpUrl(env, 'EVENT_DAY_PHOTOCRAFT_URL');
   const booths = (env['EVENT_DAY_BOOTHS'] ?? '')
     .split(',')
     .map((entry) => entry.trim())
@@ -46,7 +54,7 @@ export function loadSettings(env: Env): EventSettings {
     );
   }
 
-  const challengeUrl = url(env, 'EVENT_DAY_CHALLENGE_URL');
+  const challengeUrl = envHttpUrl(env, 'EVENT_DAY_CHALLENGE_URL');
   const token = env['EVENT_DAY_CHALLENGE_TOKEN']?.trim() || undefined;
   if ((challengeUrl === undefined) !== (token === undefined)) {
     throw new EventSettingsError(
@@ -62,19 +70,21 @@ export function loadSettings(env: Env): EventSettings {
   return {
     photoCraftUrl,
     booths,
-    quietMinutes: whole(
-      env,
-      'EVENT_DAY_QUIET_MINUTES',
-      DEFAULT_QUIET_MINUTES,
-      1,
-      24 * 60,
-    ),
+    quietMinutes: envWholeNumber(env, 'EVENT_DAY_QUIET_MINUTES', {
+      fallback: DEFAULT_QUIET_MINUTES,
+      min: 1,
+      max: 24 * 60,
+    }),
     challenge:
       challengeUrl === undefined || token === undefined
         ? undefined
         : { convexUrl: challengeUrl, token },
-    priority: whole(env, 'EVENT_DAY_PRIORITY', DEFAULT_PRIORITY, 1, 100),
-    sound: switchOf(env, 'EVENT_DAY_SOUND'),
+    priority: envWholeNumber(env, 'EVENT_DAY_PRIORITY', {
+      fallback: DEFAULT_PRIORITY,
+      min: MIN_PRIORITY,
+      max: MAX_PRIORITY,
+    }),
+    sound: envSwitch(env, 'EVENT_DAY_SOUND'),
   };
 }
 
@@ -86,47 +96,4 @@ function booth(entry: string): BoothRef {
     );
   }
   return { eventSlug, boothSlug };
-}
-
-function url(env: Env, name: string): string | undefined {
-  const raw = env[name]?.trim();
-  if (!raw) {
-    return undefined;
-  }
-  if (!URL.canParse(raw) || !/^https?:$/u.test(new URL(raw).protocol)) {
-    throw new EventSettingsError(
-      `${name} must be an http(s) URL; got ${JSON.stringify(raw)}.`,
-    );
-  }
-  return raw;
-}
-
-function whole(
-  env: Env,
-  name: string,
-  fallback: number,
-  min: number,
-  max: number,
-): number {
-  const raw = env[name]?.trim() ?? '';
-  if (raw === '') {
-    return fallback;
-  }
-  const value = Number(raw);
-  if (!Number.isInteger(value) || value < min || value > max) {
-    throw new EventSettingsError(
-      `${name} must be a whole number from ${min} to ${max}; got ${JSON.stringify(raw)}.`,
-    );
-  }
-  return value;
-}
-
-function switchOf(env: Env, name: string): boolean {
-  const raw = env[name]?.trim().toLowerCase() || 'on';
-  if (raw !== 'on' && raw !== 'off') {
-    throw new EventSettingsError(
-      `${name} must be on or off; got ${JSON.stringify(raw)}.`,
-    );
-  }
-  return raw === 'on';
 }
