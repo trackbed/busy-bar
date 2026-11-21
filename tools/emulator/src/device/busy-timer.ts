@@ -129,32 +129,47 @@ export function parseBusySnapshot(
 }
 
 /**
- * When a timer that runs from `snapshot` goes idle by itself, as
- * busy_timer_update steps it: undefined when it never does, because it is
- * paused, has no end, or waits at a new interval for START.
+ * Whether the timer holds the screen: `free` once it is idle, `held` while
+ * it has no end of its own, or held `until` the moment it goes idle.
  */
-export function stopsAt(snapshot: BusySnapshot): number | undefined {
+export type ScreenHold =
+  | { readonly kind: 'free' }
+  | { readonly kind: 'held' }
+  | { readonly kind: 'until'; readonly at: number };
+
+const FREE: ScreenHold = { kind: 'free' };
+const HELD: ScreenHold = { kind: 'held' };
+
+/**
+ * How a timer run from `snapshot` holds the screen at `now`, as
+ * busy_timer_apply_snapshot and busy_timer_update step it. The loader holds
+ * the screen while the timer works, rests, or is paused; NOT_STARTED is
+ * idle at once. A timer stamped ahead of the bar's clock counts from now,
+ * as busy_timer_update does for a peer whose clock runs ahead. It never
+ * goes idle by itself while paused, without an end, or waiting at a new
+ * interval for START.
+ */
+export function screenHold(snapshot: BusySnapshot, now: number): ScreenHold {
   const timer = snapshot.snapshot;
-  const at = snapshot.snapshot_timestamp_ms;
+  const start = Math.min(snapshot.snapshot_timestamp_ms, now);
   switch (timer.type) {
     case 'NOT_STARTED':
-      return at;
+      return FREE;
     case 'INFINITE':
-      return undefined;
+      return HELD;
     case 'SIMPLE':
-      return timer.is_paused ? undefined : at + timer.time_left_ms;
+      return timer.is_paused
+        ? HELD
+        : holdUntil(start + timer.time_left_ms, now);
     case 'INTERVAL': {
       if (timer.is_paused) {
-        return undefined;
+        return HELD;
       }
       const settings = timer.interval_settings;
       const last = settings.interval_work_cycles_count * 2 - 2;
-      let end = at + timer.current_interval_time_left_ms;
-      if (timer.current_interval >= last) {
-        return end;
-      }
-      if (!settings.is_autostart_enabled) {
-        return undefined;
+      let end = start + timer.current_interval_time_left_ms;
+      if (timer.current_interval < last && !settings.is_autostart_enabled) {
+        return HELD;
       }
       for (let index = timer.current_interval + 1; index <= last; index += 1) {
         end +=
@@ -162,9 +177,13 @@ export function stopsAt(snapshot: BusySnapshot): number | undefined {
             ? settings.interval_work_ms
             : settings.interval_rest_ms;
       }
-      return end;
+      return holdUntil(end, now);
     }
   }
+}
+
+function holdUntil(end: number, now: number): ScreenHold {
+  return end > now ? { kind: 'until', at: end } : FREE;
 }
 
 function parseTimer(json: Record<string, unknown>): BusyTimerState | undefined {

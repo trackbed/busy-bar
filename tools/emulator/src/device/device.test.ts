@@ -571,6 +571,35 @@ describe('Device', () => {
       expect(device.timerRunning).toBe(true);
     });
 
+    it('frees the screen at once for a stopped timer stamped ahead', async () => {
+      const { device } = await setup();
+      device.setBusySnapshot(simple(START, 60_000));
+      device.setBusySnapshot({
+        snapshot: { type: 'NOT_STARTED' },
+        snapshot_timestamp_ms: START + 30_000,
+      });
+
+      expect(device.timerRunning).toBe(false);
+      expect(device.screen.loaderPriority).toBe(IDLE_PRIORITY);
+      // Drawn at once: a refused draw would wait out the hold.
+      await device.draw(body());
+      expect(device.screen.owner).toStrictEqual({ app: 'clock', priority: 50 });
+    });
+
+    it('counts a timer stamped ahead of the clock from now', async () => {
+      vi.useFakeTimers();
+      const { device } = await setup();
+      device.setBusySnapshot(simple(START + 30_000, 60_000));
+
+      vi.advanceTimersByTime(59_999);
+
+      expect(device.timerRunning).toBe(true);
+
+      vi.advanceTimersByTime(1);
+
+      expect(device.timerRunning).toBe(false);
+    });
+
     it('forgets the end of a timer that a new snapshot replaced', async () => {
       vi.useFakeTimers();
       const { device } = await setup();

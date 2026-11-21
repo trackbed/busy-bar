@@ -9,9 +9,9 @@ import type { BusySnapshot } from './busy-timer.ts';
 import {
   INITIAL_SNAPSHOT,
   parseBusySnapshot,
+  screenHold,
   startedTimer,
   stoppedTimer,
-  stopsAt,
 } from './busy-timer.ts';
 import type { AssetSource } from './elements.ts';
 import { devicePath, parseDrawRequest } from './elements.ts';
@@ -110,7 +110,7 @@ export class Device {
     return this.#name;
   }
 
-  /** Whether the BUSY timer works, rests, or is paused. */
+  /** Whether the BUSY timer holds the screen: it works, rests, or is paused. */
   get timerRunning(): boolean {
     return this.#timerRunning;
   }
@@ -260,22 +260,21 @@ export class Device {
   }
 
   /**
-   * Run the timer from `snapshot`. While it runs (or is paused) the
-   * firmware's loader holds the screen above every app priority; a timer
-   * that runs out frees it without recording a new snapshot.
+   * Run the timer from `snapshot`. While it holds the screen the firmware's
+   * loader sits above every app priority; a timer that runs out frees it
+   * without recording a new snapshot.
    */
   #applyTimer(snapshot: BusySnapshot): void {
     this.#timer = snapshot;
     clearTimeout(this.#timerEnd);
-    const end = stopsAt(snapshot);
-    const running = end === undefined || end > this.#now();
-    if (running && end !== undefined) {
+    const hold = screenHold(snapshot, this.#now());
+    if (hold.kind === 'until') {
       // A timer may run for a day; it must not keep the process alive.
       this.#timerEnd = setTimeout(() => {
         this.#setTimerRunning(false);
-      }, end - this.#now()).unref();
+      }, hold.at - this.#now()).unref();
     }
-    this.#setTimerRunning(running);
+    this.#setTimerRunning(hold.kind !== 'free');
   }
 
   #setTimerRunning(running: boolean): void {
