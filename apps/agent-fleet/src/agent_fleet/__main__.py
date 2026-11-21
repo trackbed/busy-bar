@@ -22,6 +22,7 @@ from bar_kit import (
     listen_for_input,
     load_bar_config,
     run_bar_app,
+    track_screen,
 )
 
 NAME = "agent-fleet"
@@ -36,12 +37,13 @@ async def main(settings: FleetSettings) -> None:
     # busylib types `__aenter__` as returning its base client, so keep this
     # reference instead of binding the context manager's result.
     async with client:
+        screen = track_screen(client)
 
         async def play(sound: str) -> object:
             return await client.audio_play(stock_path=sound, application_name=NAME)
 
         chime = Chime(play, enabled=settings.sound)
-        controls = Controls(fleet, chime)
+        controls = Controls(fleet, chime, on_screen=screen.on_screen)
 
         server = await start_hook_server(
             controls.hook, host=settings.host, port=settings.port
@@ -60,7 +62,7 @@ async def main(settings: FleetSettings) -> None:
             try:
                 await run_bar_app(
                     name=NAME,
-                    client=client,
+                    client=screen.client,
                     render=lambda now: render(
                         now,
                         fleet.view(now),

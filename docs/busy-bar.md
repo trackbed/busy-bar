@@ -144,8 +144,10 @@ selector (BUSY, CUSTOM, OFF, APPS, SETTINGS) on its status WebSocket,
 - The TypeScript client's own `StateStream` runs in browsers only: it needs a
   Web Worker.
 - The stream is local: the cloud refuses it, so input needs USB or Wi-Fi.
-- Every listener gets every event, whichever app is on screen. The selector is
-  reported only when it moves.
+- Every listener gets every event, whichever app is on screen, so an app
+  that acts on the buttons checks first that its frames reach the screen
+  (`trackScreen` / `track_screen` in the kits). The selector is reported only
+  when it moves.
 
 ## Connecting
 

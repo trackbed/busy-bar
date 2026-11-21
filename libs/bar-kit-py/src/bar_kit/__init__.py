@@ -25,6 +25,7 @@ from bar_kit.run import (
     install_shutdown_handlers,
     run_bar_app,
 )
+from bar_kit.screen import TrackedScreen, track_screen
 from bar_kit.text import to_bar_text
 
 __all__ = [
@@ -45,6 +46,7 @@ __all__ = [
     "PreviewStep",
     "Render",
     "Snapshot",
+    "TrackedScreen",
     "create_busy_bar",
     "fit_text",
     "install_shutdown_handlers",
@@ -57,4 +59,5 @@ __all__ = [
     "run_bar_app",
     "text_width",
     "to_bar_text",
+    "track_screen",
 ]

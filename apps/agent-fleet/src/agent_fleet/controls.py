@@ -83,21 +83,35 @@ class Chime:
 class Controls:
     """Maps the bar's input and Claude Code's hooks to the board.
 
-    The wheel moves the highlight, OK marks the highlighted session as seen,
-    and BACK marks every session as seen. Moving the selector to a focus
-    position mutes the chime. A hook updates its session and chimes when the
-    session starts waiting on you.
+    While the board is on screen, the wheel moves the highlight, OK marks the
+    highlighted session as seen, and BACK marks every session as seen. The bar
+    reports input to every listener, so while another app or the BUSY timer
+    holds the screen the wheel and buttons belong to it and the board ignores
+    them. Moving the selector to a focus position mutes the chime. A hook
+    updates its session and chimes when the session starts waiting on you.
     """
 
     def __init__(
-        self, fleet: Fleet, chime: Chime, *, now: Callable[[], datetime] = _utc_now
+        self,
+        fleet: Fleet,
+        chime: Chime,
+        *,
+        on_screen: Callable[[], bool],
+        now: Callable[[], datetime] = _utc_now,
     ) -> None:
+        """Ask `on_screen`, such as bar_kit's `track_screen`, before any input."""
         self._fleet = fleet
         self._chime = chime
+        self._on_screen = on_screen
         self._now = now
 
     def handle(self, event: InputEvent) -> None:
         """React to one input event."""
+        if isinstance(event, SelectorEvent):
+            self._chime.focused = event.position in _FOCUS_POSITIONS
+            return
+        if not self._on_screen():
+            return
         match event:
             case EncoderEvent(delta=delta):
                 self._fleet.move_selection(delta, self._now())
@@ -105,8 +119,6 @@ class Controls:
                 self._fleet.acknowledge_selected(self._now())
             case ButtonEvent(button="back", action="press"):
                 self._fleet.acknowledge_all(self._now())
-            case SelectorEvent(position=position):
-                self._chime.focused = position in _FOCUS_POSITIONS
             case _:
                 pass
 

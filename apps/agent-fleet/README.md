@@ -75,10 +75,14 @@ disappear on `SessionEnd` or after eight hours without an event.
 - **BACK**: mark every session that waits on you as seen.
 - **Selector** on BUSY, CUSTOM, or OFF: mutes the chime.
 
-While the BUSY timer runs, rests, or is paused, the bar refuses every app's
-draws, so the board stays out of the way until you are done. The wheel and buttons need a direct USB or Wi-Fi connection: the cloud
-does not stream input. The bar reports input to every listener, so the wheel
-also moves the highlight while another app is on screen.
+The wheel, OK, and BACK act only while the board is on screen, that is,
+while its last frame drew within 2.5 seconds. The bar reports input to every
+listener, so while another app or the BUSY timer holds the screen they belong
+to it: pressing BACK to leave another app does not mark your sessions as
+seen. While the BUSY timer runs, rests, or is paused, the bar refuses every
+app's draws, so the board stays out of the way until you are done. The wheel
+and buttons need a direct USB or Wi-Fi connection: the cloud does not stream
+input.
 
 ## Run
 

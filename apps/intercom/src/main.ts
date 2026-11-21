@@ -7,6 +7,7 @@ import {
   loadBarConfig,
   runBarApp,
   shutdownSignal,
+  trackScreen,
 } from '@busy-bar-apps/bar-kit';
 
 import { createBoardFeed } from './board.ts';
@@ -16,7 +17,6 @@ import { api } from './convex/_generated/api.js';
 import { createFocusDriver } from './focus.ts';
 import { render } from './render.ts';
 import { createReporter, leaveTeam } from './reporter.ts';
-import { trackScreen } from './screen.ts';
 import { loadSettings } from './settings.ts';
 import { presenceAt } from './timer.ts';
 

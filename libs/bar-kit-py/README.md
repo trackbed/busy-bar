@@ -31,6 +31,10 @@ both read the same environment variables and behave the same way.
   status stream, hand each `InputEvent` to a handler, reopen the stream after
   it drops, and log a handler that raises, until `stop` is set. The cloud
   does not stream input, so with a cloud `config` it warns once and returns.
+  Every listener gets every event, whichever app is on screen, so
+  `track_screen` wraps the client `run_bar_app` draws with and reports
+  whether the app's frames reach the screen (`on_screen()`): true for 2.5
+  seconds after a frame draws, false as soon as the bar refuses one.
 - Text for the bitmap fonts: `to_bar_text` turns any text into printable ASCII
   the fonts draw (`Nørreport` becomes `Noerreport`, a backtick an
   apostrophe, any run of Unicode whitespace one space), `text_width` measures

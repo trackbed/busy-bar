@@ -30,7 +30,11 @@ variables and behave the same way.
 - The buttons, wheel, and mode selector (`listenForInput`): read the bar's
   status stream over Node's WebSocket, hand each `InputEvent` to a handler,
   reopen the stream after it drops, and log a handler that throws. The cloud
-  does not stream input, so there it warns once and returns.
+  does not stream input, so there it warns once and returns. Every listener
+  gets every event, whichever app is on screen, so `trackScreen` wraps the
+  client `runBarApp` draws with and reports whether the app's frames reach the
+  screen (`onScreen()`): true for 2.5 seconds after a frame draws, false as
+  soon as the bar refuses one.
 - Text for the bitmap fonts: `toBarText` turns any text into printable ASCII
   the fonts draw (`Nørreport` becomes `Noerreport`, a backtick an
   apostrophe, any run of Unicode whitespace one space), `textWidth` measures

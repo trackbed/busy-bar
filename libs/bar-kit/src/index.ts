@@ -40,3 +40,5 @@ export type {
   SignalSource,
 } from './run-bar-app.ts';
 export { DEFAULT_PRIORITY, runBarApp, shutdownSignal } from './run-bar-app.ts';
+export type { TrackedScreen } from './screen.ts';
+export { trackScreen } from './screen.ts';

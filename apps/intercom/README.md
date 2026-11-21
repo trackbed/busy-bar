@@ -27,8 +27,8 @@ so the whole team works, and stops, together.
   it.
 - Reporting on change, plus a heartbeat, and leaving the team as the app
   stops ([src/reporter.ts](src/reporter.ts)).
-- What the wheel and buttons do ([src/controls.ts](src/controls.ts)), when
-  the app counts as on screen ([src/screen.ts](src/screen.ts)), the sounds
+- What the wheel and buttons do ([src/controls.ts](src/controls.ts)), which
+  ignores them while the app is off screen (bar-kit's `trackScreen`), the sounds
   ([src/chime.ts](src/chime.ts)), and starting this bar's timer for a team
   focus ([src/focus.ts](src/focus.ts)).
 - Reading the board and keeping the latest one the subscription delivered

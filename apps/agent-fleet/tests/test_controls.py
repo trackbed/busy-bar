@@ -101,7 +101,12 @@ def seen(fleet: Fleet) -> list[str]:
 
 def test_the_wheel_moves_and_ok_acknowledges_the_highlight() -> None:
     fleet = fleet_of("a", "b", "c")
-    controls = Controls(fleet, Chime(Speaker().play, enabled=True), now=lambda: NOW)
+    controls = Controls(
+        fleet,
+        Chime(Speaker().play, enabled=True),
+        on_screen=lambda: True,
+        now=lambda: NOW,
+    )
 
     controls.handle(EncoderEvent(delta=1))
     controls.handle(ButtonEvent(button="ok", action="release"))
@@ -113,13 +118,87 @@ def test_the_wheel_moves_and_ok_acknowledges_the_highlight() -> None:
 
 def test_back_acknowledges_everything() -> None:
     fleet = fleet_of("a", "b")
-    controls = Controls(fleet, Chime(Speaker().play, enabled=True), now=lambda: NOW)
+    controls = Controls(
+        fleet,
+        Chime(Speaker().play, enabled=True),
+        on_screen=lambda: True,
+        now=lambda: NOW,
+    )
 
     controls.handle(ButtonEvent(button="start", action="press"))
     assert seen(fleet) == []
 
     controls.handle(ButtonEvent(button="back", action="press"))
     assert seen(fleet) == ["a", "b"]
+
+
+def working_fleet() -> Fleet:
+    """Sessions a and b wait on you, a highlighted; c is working."""
+    fleet = fleet_of("a", "b")
+    fleet.apply(HookEvent("prompt", "c", "/x/c"), NOW + timedelta(minutes=2))
+    return fleet
+
+
+def highlighted(fleet: Fleet) -> str:
+    return next(row.workspace for row in fleet.view(NOW).rows if row.selected)
+
+
+@pytest.mark.parametrize(
+    ("event", "on_screen", "highlight", "seen_after"),
+    [
+        (EncoderEvent(delta=1), True, "b", []),
+        (EncoderEvent(delta=1), False, "a", []),
+        (ButtonEvent(button="ok", action="press"), True, None, ["a"]),
+        (ButtonEvent(button="ok", action="press"), False, "a", []),
+        (ButtonEvent(button="back", action="press"), True, None, ["a", "b"]),
+        (ButtonEvent(button="back", action="press"), False, "a", []),
+    ],
+    ids=["wheel-on", "wheel-off", "ok-on", "ok-off", "back-on", "back-off"],
+)
+def test_acts_on_the_wheel_and_buttons_only_while_on_screen(
+    event: ButtonEvent | EncoderEvent,
+    *,
+    on_screen: bool,
+    highlight: str | None,
+    seen_after: list[str],
+) -> None:
+    fleet = working_fleet()
+    assert highlighted(fleet) == "a"
+    controls = Controls(
+        fleet,
+        Chime(Speaker().play, enabled=True),
+        on_screen=lambda: on_screen,
+        now=lambda: NOW,
+    )
+
+    controls.handle(event)
+
+    # None: an acknowledgement reorders the rows, which test_fleet covers.
+    if highlight is not None:
+        assert highlighted(fleet) == highlight
+    assert seen(fleet) == seen_after
+
+
+def test_back_while_another_app_is_on_screen_leaves_waiting_sessions_alone() -> None:
+    fleet = fleet_of("a", "b")
+    controls = Controls(
+        fleet, Chime(Speaker().play, enabled=True), on_screen=lambda: False
+    )
+
+    controls.handle(ButtonEvent(button="back", action="press"))
+
+    assert fleet.view(NOW).needs_you == 2
+
+
+def test_ok_during_the_busy_timer_leaves_the_highlighted_session_waiting() -> None:
+    fleet = fleet_of("a")
+    controls = Controls(
+        fleet, Chime(Speaker().play, enabled=True), on_screen=lambda: False
+    )
+
+    controls.handle(ButtonEvent(button="ok", action="press"))
+
+    assert fleet.view(NOW).needs_you == 1
 
 
 @pytest.mark.parametrize(
@@ -130,7 +209,7 @@ def test_the_selector_mutes_the_chime_during_focus(
     position: SelectorPosition, *, focused: bool
 ) -> None:
     chime = Chime(Speaker().play, enabled=True)
-    controls = Controls(Fleet(), chime)
+    controls = Controls(Fleet(), chime, on_screen=lambda: False)
 
     controls.handle(SelectorEvent(position=position))
 
@@ -146,7 +225,7 @@ async def test_a_hook_updates_its_session_and_chimes_when_it_waits_on_you() -> N
     clock = Clock()
     fleet = Fleet()
     chime = Chime(speaker.play, enabled=True, now=clock)
-    controls = Controls(fleet, chime, now=clock)
+    controls = Controls(fleet, chime, on_screen=lambda: True, now=clock)
 
     controls.hook(hook("UserPromptSubmit", prompt="fix the build"))
     controls.hook(hook("Stop"))
@@ -158,7 +237,9 @@ async def test_a_hook_updates_its_session_and_chimes_when_it_waits_on_you() -> N
 
 def test_ignores_a_payload_the_board_has_no_use_for() -> None:
     fleet = Fleet()
-    controls = Controls(fleet, Chime(Speaker().play, enabled=True))
+    controls = Controls(
+        fleet, Chime(Speaker().play, enabled=True), on_screen=lambda: True
+    )
 
     controls.hook({"hook_event_name": "Unknown", "session_id": "s1"})
     controls.hook(["not", "a", "hook"])
