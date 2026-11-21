@@ -5,14 +5,15 @@ from datetime import datetime, timedelta
 from bar_kit import (
     BACK_DISPLAY,
     FRONT_DISPLAY,
+    PALETTE,
     DisplayElement,
     DisplayName,
-    TextElement,
     rgba,
+    text_element,
 )
 from countdown.settings import CountdownSettings
 
-REMAINING_COLOR = rgba(255, 255, 255)
+REMAINING_COLOR = PALETTE.bright
 DONE_COLOR = rgba(255, 140, 0)
 
 _SECONDS_PER_DAY = 86_400
@@ -42,32 +43,34 @@ def render_countdown(
     """Draw the time left on the front display and its label on the back."""
     done = now >= settings.target
     return [
-        TextElement(
-            id="remaining",
-            display=DisplayName.FRONT,
+        text_element(
+            element_id="remaining",
             text=format_remaining(settings.target - now),
+            display=DisplayName.FRONT,
             font="large",
-            color=DONE_COLOR if done else REMAINING_COLOR,
-            align="center",
             x=FRONT_DISPLAY.width // 2,
             y=FRONT_DISPLAY.height // 2,
-        ),
-        TextElement(
-            id="label",
-            display=DisplayName.BACK,
-            text=settings.label,
-            font="large",
+            color=DONE_COLOR if done else REMAINING_COLOR,
             align="center",
+        ),
+        text_element(
+            element_id="label",
+            text=settings.label,
+            display=DisplayName.BACK,
+            font="large",
             x=BACK_DISPLAY.width // 2,
             y=BACK_DISPLAY.height // 3,
-        ),
-        TextElement(
-            id="target",
-            display=DisplayName.BACK,
-            text=settings.target.strftime("%a %d %b %H:%M"),
-            font="small",
+            color=PALETTE.bright,
             align="center",
+        ),
+        text_element(
+            element_id="target",
+            text=settings.target.strftime("%a %d %b %H:%M"),
+            display=DisplayName.BACK,
+            font="small",
             x=BACK_DISPLAY.width // 2,
             y=BACK_DISPLAY.height * 2 // 3,
+            color=PALETTE.bright,
+            align="center",
         ),
     ]

@@ -2,35 +2,33 @@
 
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Literal
 
 from bar_kit import (
     BACK_DISPLAY,
+    FOOTER_Y,
     FRONT_DISPLAY,
+    PALETTE,
+    SUMMARY_Y,
     DisplayElement,
-    DisplayFontName,
     DisplayName,
     PollFailure,
-    RectangleElement,
     Snapshot,
-    TextElement,
     fit_text,
     rgba,
+    solid_rectangle,
+    text_element,
     to_bar_text,
 )
 from claude_limits.board import AccountView, Board, Level, Usage, board_at
 from claude_limits.rotation import Rotation, RotationNotSetUpError
 
 LEVEL_COLORS: dict[Level, str] = {
-    "ok": rgba(0, 200, 90),
-    "high": rgba(255, 170, 0),
-    "limit": rgba(255, 60, 60),
-    "unknown": rgba(90, 90, 90),
+    "ok": PALETTE.good,
+    "high": PALETTE.warn,
+    "limit": PALETTE.bad,
+    "unknown": PALETTE.idle,
 }
 TRACK_COLOR = rgba(35, 35, 35)
-MARKER_COLOR = rgba(255, 255, 255)
-TEXT_COLOR = rgba(200, 200, 200)
-DIM_COLOR = rgba(110, 110, 110)
 
 FRONT = DisplayName.FRONT
 BACK = DisplayName.BACK
@@ -42,12 +40,10 @@ BARS_WIDTH = FRONT_DISPLAY.width - BARS_X
 ACCOUNT_PITCH = 4
 MAX_FRONT_ACCOUNTS = FRONT_DISPLAY.height // ACCOUNT_PITCH
 TEXT_WIDTH = BARS_X - 3
-SUMMARY_Y = 9
 
 # Back: a header, then one account per row, then a footer.
 FIRST_ROW_Y = 12
 ROW_PITCH = 11
-FOOTER_Y = BACK_DISPLAY.height - 7
 MAX_BACK_ACCOUNTS = (FOOTER_Y - FIRST_ROW_Y) // ROW_PITCH
 NAME_X = 6
 NAME_WIDTH = 38
@@ -57,8 +53,6 @@ SEVEN_DAY_RIGHT = 128
 
 STALE_AFTER = timedelta(minutes=5)
 """How long the files may stay unreadable before the board says so."""
-
-type Align = Literal["top_left", "top_right"]
 
 
 def format_duration(duration: timedelta) -> str:
@@ -108,11 +102,23 @@ def _front(board: Board) -> list[DisplayElement]:
         color = LEVEL_COLORS[usage.level]
         summary = _summary(board, usage)
     elements: list[DisplayElement] = [
-        _front_text(
-            "headline", fit_text(headline, "small", TEXT_WIDTH), "small", 0, color
+        text_element(
+            element_id="headline",
+            text=fit_text(headline, "small", TEXT_WIDTH),
+            display=FRONT,
+            font="small",
+            x=0,
+            y=0,
+            color=color,
         ),
-        _front_text(
-            "summary", fit_text(summary, "tiny", TEXT_WIDTH), "tiny", SUMMARY_Y, color
+        text_element(
+            element_id="summary",
+            text=fit_text(summary, "tiny", TEXT_WIDTH),
+            display=FRONT,
+            font="tiny",
+            x=0,
+            y=SUMMARY_Y,
+            color=color,
         ),
     ]
     for slot, account in enumerate(board.accounts[:MAX_FRONT_ACCOUNTS]):
@@ -133,8 +139,14 @@ def _bars(slot: int, account: AccountView) -> list[DisplayElement]:
     elements: list[DisplayElement] = []
     if account.active:
         elements.append(
-            _rectangle(
-                f"marker-{slot}", BARS_X - 2, y, width=1, height=3, color=MARKER_COLOR
+            solid_rectangle(
+                element_id=f"marker-{slot}",
+                display=FRONT,
+                x=BARS_X - 2,
+                y=y,
+                width=1,
+                height=3,
+                color=PALETTE.bright,
             )
         )
     for name, usage, offset, height in (
@@ -145,10 +157,11 @@ def _bars(slot: int, account: AccountView) -> list[DisplayElement]:
         if filled:
             color = LEVEL_COLORS["unknown" if usage.stale else usage.level]
             elements.append(
-                _rectangle(
-                    f"{name}-{slot}-used",
-                    BARS_X,
-                    y + offset,
+                solid_rectangle(
+                    element_id=f"{name}-{slot}-used",
+                    display=FRONT,
+                    x=BARS_X,
+                    y=y + offset,
                     width=filled,
                     height=height,
                     color=color,
@@ -156,10 +169,11 @@ def _bars(slot: int, account: AccountView) -> list[DisplayElement]:
             )
         if filled < BARS_WIDTH:
             elements.append(
-                _rectangle(
-                    f"{name}-{slot}-free",
-                    BARS_X + filled,
-                    y + offset,
+                solid_rectangle(
+                    element_id=f"{name}-{slot}-free",
+                    display=FRONT,
+                    x=BARS_X + filled,
+                    y=y + offset,
                     width=BARS_WIDTH - filled,
                     height=height,
                     color=TRACK_COLOR,
@@ -189,8 +203,23 @@ def _back(board: Board, *, stale: bool, updated: timedelta) -> list[DisplayEleme
     else:
         footer = f"updated {format_duration(updated)} ago"
     elements: list[DisplayElement] = [
-        _back_text("header", fit_text(header, "small", BACK_DISPLAY.width), "small", 0),
-        _back_text("footer", footer, "tiny", FOOTER_Y, DIM_COLOR),
+        text_element(
+            element_id="header",
+            text=fit_text(header, "small", BACK_DISPLAY.width),
+            display=BACK,
+            font="small",
+            x=0,
+            y=0,
+        ),
+        text_element(
+            element_id="footer",
+            text=footer,
+            display=BACK,
+            font="tiny",
+            x=0,
+            y=FOOTER_Y,
+            color=PALETTE.dim,
+        ),
     ]
     for slot, account in enumerate(board.accounts[:MAX_BACK_ACCOUNTS]):
         elements += _row(slot, account)
@@ -200,63 +229,78 @@ def _back(board: Board, *, stale: bool, updated: timedelta) -> list[DisplayEleme
 def _row(slot: int, account: AccountView) -> list[DisplayElement]:
     y = FIRST_ROW_Y + slot * ROW_PITCH
     if not account.eligible:
-        color = DIM_COLOR
+        color = PALETTE.dim
     elif account.active:
-        color = MARKER_COLOR
+        color = PALETTE.bright
     else:
-        color = TEXT_COLOR
+        color = PALETTE.text
     five_reset = account.five_hour.resets_in
     week_reset = account.seven_day.resets_in
     elements: list[DisplayElement] = [
-        _back_text(
-            f"row-{slot}-name",
-            fit_text(account.label, "small", NAME_WIDTH),
-            "small",
-            y,
-            color,
+        text_element(
+            element_id=f"row-{slot}-name",
+            text=fit_text(account.label, "small", NAME_WIDTH),
+            display=BACK,
+            font="small",
             x=NAME_X,
+            y=y,
+            color=color,
         ),
-        _back_text(
-            f"row-{slot}-five",
-            format_used(account.five_hour),
-            "small",
-            y,
-            color,
+        text_element(
+            element_id=f"row-{slot}-five",
+            text=format_used(account.five_hour),
+            display=BACK,
+            font="small",
             x=FIVE_HOUR_RIGHT,
+            y=y,
+            color=color,
             align="top_right",
         ),
-        _back_text(
-            f"row-{slot}-week",
-            format_used(account.seven_day),
-            "small",
-            y,
-            color,
+        text_element(
+            element_id=f"row-{slot}-week",
+            text=format_used(account.seven_day),
+            display=BACK,
+            font="small",
             x=SEVEN_DAY_RIGHT,
+            y=y,
+            color=color,
             align="top_right",
         ),
     ]
     if account.active:
-        elements.append(_back_text(f"row-{slot}-marker", ">", "small", y, color))
+        elements.append(
+            text_element(
+                element_id=f"row-{slot}-marker",
+                text=">",
+                display=BACK,
+                font="small",
+                x=0,
+                y=y,
+                color=color,
+            )
+        )
     if five_reset is not None:
         elements.append(
-            _back_text(
-                f"row-{slot}-five-reset",
-                format_duration(five_reset),
-                "small",
-                y,
-                DIM_COLOR,
+            text_element(
+                element_id=f"row-{slot}-five-reset",
+                text=format_duration(five_reset),
+                display=BACK,
+                font="small",
                 x=FIVE_HOUR_RESET_X,
+                y=y,
+                color=PALETTE.dim,
             )
         )
     if week_reset is not None:
         elements.append(
-            _back_text(
-                f"row-{slot}-week-reset",
-                format_duration(week_reset),
-                "small",
-                y,
-                DIM_COLOR,
+            text_element(
+                element_id=f"row-{slot}-week-reset",
+                text=format_duration(week_reset),
+                display=BACK,
+                font="small",
                 x=BACK_DISPLAY.width - 1,
+                y=y,
+                color=PALETTE.dim,
                 align="top_right",
             )
         )
@@ -281,61 +325,33 @@ def _unavailable(failure: PollFailure | None, root: Path) -> list[DisplayElement
         lines = ["Cannot read the rotation files:", str(failure.error)]
     color = LEVEL_COLORS["unknown"]
     return [
-        _front_text("headline", headline, "small", 0, color),
-        _front_text("summary", summary, "tiny", SUMMARY_Y, color),
+        text_element(
+            element_id="headline",
+            text=headline,
+            display=FRONT,
+            font="small",
+            x=0,
+            y=0,
+            color=color,
+        ),
+        text_element(
+            element_id="summary",
+            text=summary,
+            display=FRONT,
+            font="tiny",
+            x=0,
+            y=SUMMARY_Y,
+            color=color,
+        ),
         *(
-            _back_text(
-                f"line-{index}",
-                fit_text(to_bar_text(line), "small", BACK_DISPLAY.width),
-                "small",
-                index * ROW_PITCH,
+            text_element(
+                element_id=f"line-{index}",
+                text=fit_text(to_bar_text(line), "small", BACK_DISPLAY.width),
+                display=BACK,
+                font="small",
+                x=0,
+                y=index * ROW_PITCH,
             )
             for index, line in enumerate(lines)
         ),
     ]
-
-
-def _front_text(
-    element_id: str, text: str, font: DisplayFontName, y: int, color: str
-) -> TextElement:
-    return TextElement(
-        id=element_id, display=FRONT, text=text, font=font, color=color, x=0, y=y
-    )
-
-
-def _back_text(  # noqa: PLR0913 - keyword-only placement after the basics.
-    element_id: str,
-    text: str,
-    font: DisplayFontName,
-    y: int,
-    color: str = TEXT_COLOR,
-    *,
-    x: int = 0,
-    align: Align = "top_left",
-) -> TextElement:
-    return TextElement(
-        id=element_id,
-        display=BACK,
-        text=text,
-        font=font,
-        color=color,
-        align=align,
-        x=x,
-        y=y,
-    )
-
-
-def _rectangle(  # noqa: PLR0913 - keyword-only size and colour.
-    element_id: str, x: int, y: int, *, width: int, height: int, color: str
-) -> RectangleElement:
-    return RectangleElement(
-        id=element_id,
-        display=FRONT,
-        x=x,
-        y=y,
-        width=width,
-        height=height,
-        fill="solid",
-        fill_colors=[color],
-        border_width=0,
-    )

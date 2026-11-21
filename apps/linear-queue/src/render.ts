@@ -1,15 +1,18 @@
 import type {
   BarElements,
-  BarFont,
   PollFailure,
   Snapshot,
-  TextElement,
 } from '@busy-bar-apps/bar-kit';
 import {
   BACK_DISPLAY,
-  FRONT_DISPLAY,
   fitText,
+  FOOTER_Y,
+  FRONT_DISPLAY,
+  PALETTE,
   rgba,
+  solidRectangle,
+  SUMMARY_Y,
+  textElement,
   toBarText,
 } from '@busy-bar-apps/bar-kit';
 
@@ -17,26 +20,21 @@ import type { QueueCounts, QueueScope } from './linear.ts';
 import { LinearError } from './linear.ts';
 
 export const READY_COLORS = {
-  plenty: rgba(0, 200, 90),
-  low: rgba(255, 170, 0),
-  empty: rgba(255, 60, 60),
+  plenty: PALETTE.good,
+  low: PALETTE.warn,
+  empty: PALETTE.bad,
 } as const;
 export const STAGE_COLORS = {
-  ready: rgba(60, 130, 255),
-  inProgress: rgba(255, 170, 0),
+  ready: PALETTE.info,
+  inProgress: PALETTE.warn,
   inReview: rgba(200, 80, 255),
 } as const;
-const TEXT_COLOR = rgba(200, 200, 200);
-const DIM_COLOR = rgba(120, 120, 120);
-const IDLE_COLOR = rgba(110, 110, 110);
 
 /** How long Linear may stay unreachable before the gauge says so. */
 export const STALE_MS = 10 * 60_000;
 
-const SUMMARY_Y = 9;
 const FIRST_ROW_Y = 12;
 const ROW_PITCH = 11;
-const FOOTER_Y = BACK_DISPLAY.height - 7;
 
 export interface QueueView {
   readonly scope: QueueScope;
@@ -70,24 +68,24 @@ export function render(
   const summary = `${counts.inProgress}${more} wip, ${counts.inReview}${more} review`;
 
   const elements: BarElements = [
-    text(
-      'headline',
-      `${counts.ready}${more} READY`,
-      'front',
-      'small',
-      0,
-      0,
+    textElement({
+      id: 'headline',
+      text: `${counts.ready}${more} READY`,
+      display: 'front',
+      font: 'small',
+      x: 0,
+      y: 0,
       color,
-    ),
-    text(
-      'summary',
-      fitText(summary, 'tiny', FRONT_DISPLAY.width),
-      'front',
-      'tiny',
-      0,
-      SUMMARY_Y,
+    }),
+    textElement({
+      id: 'summary',
+      text: fitText(summary, 'tiny', FRONT_DISPLAY.width),
+      display: 'front',
+      font: 'tiny',
+      x: 0,
+      y: SUMMARY_Y,
       color,
-    ),
+    }),
     ...strip(counts),
   ];
 
@@ -109,32 +107,46 @@ export function render(
     ['Backlog', counts.backlog],
   ];
   elements.push(
-    text(
-      'header',
-      fitText(heading(view.scope), 'small', BACK_DISPLAY.width),
-      'back',
-      'small',
-      0,
-      0,
-    ),
+    textElement({
+      id: 'header',
+      text: fitText(heading(view.scope), 'small', BACK_DISPLAY.width),
+      display: 'back',
+      font: 'small',
+      x: 0,
+      y: 0,
+    }),
     ...rows.flatMap(([label, count], index) => {
       const y = FIRST_ROW_Y + index * ROW_PITCH;
       return [
-        text(`row-${index}-label`, label, 'back', 'small', 0, y, DIM_COLOR),
-        {
-          ...text(
-            `row-${index}-count`,
-            `${count}${more}`,
-            'back',
-            'small',
-            BACK_DISPLAY.width - 1,
-            y,
-          ),
-          align: 'top_right' as const,
-        },
+        textElement({
+          id: `row-${index}-label`,
+          text: label,
+          display: 'back',
+          font: 'small',
+          x: 0,
+          y,
+          color: PALETTE.dim,
+        }),
+        textElement({
+          id: `row-${index}-count`,
+          text: `${count}${more}`,
+          display: 'back',
+          font: 'small',
+          x: BACK_DISPLAY.width - 1,
+          y,
+          align: 'top_right',
+        }),
       ];
     }),
-    text('footer', footer, 'back', 'tiny', 0, FOOTER_Y, DIM_COLOR),
+    textElement({
+      id: 'footer',
+      text: footer,
+      display: 'back',
+      font: 'tiny',
+      x: 0,
+      y: FOOTER_Y,
+      color: PALETTE.dim,
+    }),
   );
   return elements;
 }
@@ -169,18 +181,17 @@ function strip(counts: QueueCounts): BarElements {
     counted += count;
     const end = Math.round((counted / total) * FRONT_DISPLAY.width);
     if (end > x) {
-      elements.push({
-        id: `strip-${stage}`,
-        type: 'rectangle',
-        display: 'front',
-        x,
-        y: FRONT_DISPLAY.height - 1,
-        width: end - x,
-        height: 1,
-        fill: 'solid',
-        fill_colors: [STAGE_COLORS[stage]],
-        border_width: 0,
-      });
+      elements.push(
+        solidRectangle({
+          id: `strip-${stage}`,
+          display: 'front',
+          x,
+          y: FRONT_DISPLAY.height - 1,
+          width: end - x,
+          height: 1,
+          color: STAGE_COLORS[stage],
+        }),
+      );
     }
     x = end;
   }
@@ -215,29 +226,33 @@ function unavailable(failure: PollFailure | undefined): BarElements {
     lines = ['Cannot reach Linear:', failure.error.message];
   }
   return [
-    text('headline', 'LINEAR', 'front', 'small', 0, 0, IDLE_COLOR),
-    text('summary', summary, 'front', 'tiny', 0, SUMMARY_Y, IDLE_COLOR),
+    textElement({
+      id: 'headline',
+      text: 'LINEAR',
+      display: 'front',
+      font: 'small',
+      x: 0,
+      y: 0,
+      color: PALETTE.idle,
+    }),
+    textElement({
+      id: 'summary',
+      text: summary,
+      display: 'front',
+      font: 'tiny',
+      x: 0,
+      y: SUMMARY_Y,
+      color: PALETTE.idle,
+    }),
     ...lines.map((line, index) =>
-      text(
-        `line-${index}`,
-        fitText(toBarText(line), 'small', BACK_DISPLAY.width),
-        'back',
-        'small',
-        0,
-        index * ROW_PITCH,
-      ),
+      textElement({
+        id: `line-${index}`,
+        text: fitText(toBarText(line), 'small', BACK_DISPLAY.width),
+        display: 'back',
+        font: 'small',
+        x: 0,
+        y: index * ROW_PITCH,
+      }),
     ),
   ];
-}
-
-function text(
-  id: string,
-  content: string,
-  display: 'front' | 'back',
-  font: BarFont,
-  x: number,
-  y: number,
-  color: string = TEXT_COLOR,
-): TextElement {
-  return { id, type: 'text', display, text: content, font, color, x, y };
 }
