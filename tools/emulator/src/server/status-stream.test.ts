@@ -2,7 +2,6 @@ import { once } from 'node:events';
 import type { Server } from 'node:http';
 import { createServer, request } from 'node:http';
 import { connect as connectTcp } from 'node:net';
-import { setTimeout as sleep } from 'node:timers/promises';
 import {
   afterAll,
   afterEach,
@@ -16,6 +15,7 @@ import {
 
 import type { AssetRoot } from '../__tests__/asset-root.ts';
 import { assetRoot } from '../__tests__/asset-root.ts';
+import { until } from '../__tests__/until.ts';
 import type { AssetLibrary } from '../assets/library.ts';
 import { Device } from '../device/device.ts';
 import { encodeRle } from '../formats/rle.ts';
@@ -104,17 +104,6 @@ afterEach(async () => {
   });
   vi.useRealTimers();
 });
-
-/** Wait, on real time, until `check` holds. */
-async function until(check: () => boolean, what: string): Promise<void> {
-  const deadline = Date.now() + 2000;
-  while (!check()) {
-    if (Date.now() > deadline) {
-      throw new Error(`Timed out waiting for ${what}.`);
-    }
-    await sleep(2);
-  }
-}
 
 async function connect(): Promise<Client> {
   const socket = new WebSocket(`ws://127.0.0.1:${port}/api/status/ws`);

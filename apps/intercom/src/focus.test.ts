@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import type { BusySnapshot } from '@busy-bar-apps/bar-kit';
 
+import { focusFrom } from './__tests__/fixtures.ts';
 import type { Board, Focus } from './board.ts';
 import type { FocusOptions } from './focus.ts';
 import { createFocusDriver, JOIN_WINDOW_MS } from './focus.ts';
@@ -17,14 +18,7 @@ const FREE: BusySnapshot = {
   snapshot: { type: 'NOT_STARTED', busy_bar_settings: SETTINGS },
   snapshot_timestamp_ms: NOW - 60 * MINUTE,
 };
-const FOCUS: Focus = {
-  id: 'f',
-  startedBy: 'Anna',
-  startsAt: NOW + 15_000,
-  endsAt: NOW + 15_000 + 25 * MINUTE,
-  cardId: 'c0ffee00-0000-4000-8000-00000000abcd',
-  skipped: [],
-};
+const FOCUS = focusFrom(NOW + 15_000);
 
 afterEach(() => {
   vi.useRealTimers();

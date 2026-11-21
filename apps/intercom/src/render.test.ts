@@ -3,10 +3,10 @@ import { describe, expect, it } from 'vitest';
 
 import type { BarElements } from '@busy-bar-apps/bar-kit';
 
+import { bar, focusFrom } from './__tests__/fixtures.ts';
 import type { Board, Focus, Knock, TeamBar } from './board.ts';
 import { FOCUS_ROW } from './board.ts';
 import { UNKNOWN_KEY } from './convex/presence.ts';
-import type { Presence } from './convex/presence.ts';
 import type { TeamView } from './render.ts';
 import {
   FOCUS_COLOR,
@@ -20,10 +20,6 @@ import {
 const NOW = new Date('2026-10-26T13:00:00Z');
 const MINUTE = 60_000;
 const at = (minutes: number): number => NOW.getTime() + minutes * MINUTE;
-
-function bar(name: string, presence: Presence, online = true): TeamBar {
-  return { id: name, name, online, presence };
-}
 
 const ME = bar('Me', { state: 'free' });
 
@@ -341,14 +337,7 @@ describe('render', () => {
 
   describe('team focus', () => {
     const team = [bar('Anna', { state: 'free' })];
-    const focus: Focus = {
-      id: 'f',
-      startedBy: 'Anna',
-      startsAt: at(0) + 9000,
-      endsAt: at(0) + 9000 + 25 * MINUTE,
-      cardId: '00000000-0000-4000-8000-000000000000',
-      skipped: [],
-    };
+    const focus = focusFrom(at(0) + 9000);
     const row = (shown: Record<string, string>) => [
       shown['row-1-name'],
       shown['row-1-status'],
