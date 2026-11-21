@@ -57,7 +57,8 @@ both read the same environment variables and behave the same way.
   `STOCK_SOUNDS`, re-exported) under the app's name. `play` returns at once
   and never raises, so a slow or absent bar never holds up a poll; a failed
   sound is logged, and a speaker made with `enabled=False` stays silent.
-  Sounds still playing are cancelled with the event loop at shutdown.
+  Setting its `stop` event cancels sounds still in flight before the app
+  closes its client, and silences later ones.
   `wait()` settles started sounds in tests. Each app keeps only its choice of
   which alert plays which sound.
 - The current time, time zone aware (`utc_now`): the default clock of the

@@ -25,7 +25,7 @@ async def main() -> None:
     stop = asyncio.Event()
     install_shutdown_handlers(stop)
     client = create_busy_bar(load_bar_config())
-    speaker = Speaker(client, name=NAME, enabled=settings.sound)
+    speaker = Speaker(client, name=NAME, enabled=settings.sound, stop=stop)
     watch = RotationWatch(settings.root, play=speaker.play)
     poller = Poller(name=NAME, fetch=watch.fetch, interval=REFRESH_SECONDS)
     # busylib types `__aenter__` as returning its base client, so keep this

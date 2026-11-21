@@ -39,7 +39,7 @@ async def main(settings: FleetSettings) -> None:
     # reference instead of binding the context manager's result.
     async with client:
         screen = track_screen(client)
-        speaker = Speaker(client, name=NAME, enabled=settings.sound)
+        speaker = Speaker(client, name=NAME, enabled=settings.sound, stop=stop)
         chime = Chime(speaker.play, on_screen=screen.on_screen)
         controls = Controls(fleet, chime, on_screen=screen.on_screen)
 

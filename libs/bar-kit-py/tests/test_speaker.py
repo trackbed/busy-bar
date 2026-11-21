@@ -15,12 +15,14 @@ class FakeBar:
         self.answer = asyncio.Event()
         self.answer.set()
         self.played: list[tuple[str | None, str | None]] = []
+        self.called = asyncio.Event()
         self.finished = 0
 
     async def audio_play(
         self, *, stock_path: str | None = None, application_name: str | None = None
     ) -> object:
         self.played.append((stock_path, application_name))
+        self.called.set()
         await self.answer.wait()
         if self.broken:
             message = "bar offline"
@@ -63,7 +65,7 @@ async def test_returns_before_the_bar_answers() -> None:
     speaker = Speaker(bar, name="test", enabled=True)
 
     speaker.play("event")
-    await asyncio.sleep(0)
+    await bar.called.wait()
 
     assert bar.played == [(STOCK_SOUNDS["event"], "test")]
     assert bar.finished == 0
@@ -84,3 +86,24 @@ async def test_logs_a_sound_that_fails_without_raising(
     assert [record.getMessage() for record in caplog.records] == [
         f"[test] Playing {STOCK_SOUNDS['reminder']} failed."
     ]
+
+
+async def test_cancels_a_sound_on_stop_quietly_and_plays_none_after_it(
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    bar = FakeBar()
+    bar.answer.clear()
+    stop = asyncio.Event()
+    speaker = Speaker(bar, name="test", enabled=True, stop=stop)
+
+    with caplog.at_level(logging.WARNING, logger="bar_kit.speaker"):
+        speaker.play("event")
+        await bar.called.wait()
+        stop.set()
+        await speaker.wait()
+        speaker.play("event")
+        await speaker.wait()
+
+    assert bar.played == [(STOCK_SOUNDS["event"], "test")]
+    assert bar.finished == 0
+    assert caplog.records == []
