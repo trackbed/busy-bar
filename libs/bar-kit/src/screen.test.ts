@@ -1,7 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import type { BarDisplayClient } from '@busy-bar-apps/bar-kit';
-
+import type { BarDisplayClient } from './run-bar-app.ts';
 import { ON_SCREEN_MS, trackScreen } from './screen.ts';
 
 function bar() {
@@ -17,7 +16,7 @@ function bar() {
   return { client, clock, screen: trackScreen(client, () => clock.now) };
 }
 
-const FRAME = { application_name: 'intercom', elements: [] };
+const FRAME = { application_name: 'demo', elements: [] };
 
 describe('trackScreen', () => {
   it('is on screen for a while after a frame draws', async () => {
@@ -48,11 +47,11 @@ describe('trackScreen', () => {
     const options = { signal: new AbortController().signal };
 
     await screen.client.DisplayDraw(FRAME, options);
-    await screen.client.DisplayClear({ application_name: 'intercom' }, options);
+    await screen.client.DisplayClear({ application_name: 'demo' }, options);
 
     expect(client.DisplayDraw).toHaveBeenCalledWith(FRAME, options);
     expect(client.DisplayClear).toHaveBeenCalledWith(
-      { application_name: 'intercom' },
+      { application_name: 'demo' },
       options,
     );
   });

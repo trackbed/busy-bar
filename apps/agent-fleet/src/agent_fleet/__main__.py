@@ -22,6 +22,7 @@ from bar_kit import (
     listen_for_input,
     load_bar_config,
     run_bar_app,
+    track_screen,
 )
 
 NAME = "agent-fleet"
@@ -31,29 +32,37 @@ async def main(settings: FleetSettings) -> None:
     stop = asyncio.Event()
     install_shutdown_handlers(stop)
     fleet = Fleet(quiet_after=settings.quiet_after)
-    client = create_busy_bar(load_bar_config())
+    config = load_bar_config()
+    client = create_busy_bar(config)
     # busylib types `__aenter__` as returning its base client, so keep this
     # reference instead of binding the context manager's result.
     async with client:
+        screen = track_screen(client)
 
         async def play(sound: str) -> object:
             return await client.audio_play(stock_path=sound, application_name=NAME)
 
-        chime = Chime(play, enabled=settings.sound)
-        controls = Controls(fleet, chime)
+        chime = Chime(play, enabled=settings.sound, on_screen=screen.on_screen)
+        controls = Controls(fleet, chime, on_screen=screen.on_screen)
 
         server = await start_hook_server(
             controls.hook, host=settings.host, port=settings.port
         )
         print(f"Listening for Claude Code hooks at {settings.url}")
         listening = asyncio.create_task(
-            listen_for_input(client.stream_status_ws, controls.handle)
+            listen_for_input(
+                name=NAME,
+                config=config,
+                stream=controls.input_stream(client.stream_status_ws),
+                handle=controls.handle,
+                stop=stop,
+            )
         )
         async with server:
             try:
                 await run_bar_app(
                     name=NAME,
-                    client=client,
+                    client=screen.client,
                     render=lambda now: render(
                         now,
                         fleet.view(now),
@@ -63,7 +72,8 @@ async def main(settings: FleetSettings) -> None:
                     stop=stop,
                 )
             finally:
-                listening.cancel()
+                stop.set()  # Also when render raised, so the listener ends too.
+                await listening
 
 
 if __name__ == "__main__":

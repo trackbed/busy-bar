@@ -12,13 +12,7 @@ export type {
 export { toBarText } from './bar-text.ts';
 export { createBusyBar } from './client.ts';
 export type { BarConfig } from './config.ts';
-export {
-  BarConfigError,
-  CLOUD_ADDRESS,
-  isCloudAddress,
-  loadBarConfig,
-  USB_ADDRESS,
-} from './config.ts';
+export { BarConfigError, loadBarConfig } from './config.ts';
 export type { DisplaySize } from './display.ts';
 export { BACK_DISPLAY, FRONT_DISPLAY, rgba } from './display.ts';
 export type { BarFont } from './fonts.ts';
@@ -40,3 +34,5 @@ export type {
   SignalSource,
 } from './run-bar-app.ts';
 export { DEFAULT_PRIORITY, runBarApp, shutdownSignal } from './run-bar-app.ts';
+export type { TrackedScreen } from './screen.ts';
+export { trackScreen } from './screen.ts';

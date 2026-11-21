@@ -8,32 +8,45 @@ variables and behave the same way.
 ## Owns
 
 - Connection settings from `BUSYBAR_ADDR` and `BUSYBAR_TOKEN`
-  (`loadBarConfig`) and the busy-lib client built from them (`createBusyBar`).
+  (`loadBarConfig`, which throws a `BarConfigError` for an address that is
+  not a host name, IP address, or URL, or for the cloud without a token) and
+  the busy-lib client built from them (`createBusyBar`).
 - Display sizes (`FRONT_DISPLAY`, and `BACK_DISPLAY`: the 148×80 of the
   back screen that the status bar leaves to apps) and colours (`rgba`).
 - The frame loop (`runBarApp`): draw every interval at a `priority`
   (default `DEFAULT_PRIORITY`, 50), delete the elements a frame stops drawing
   (the bar keeps them otherwise), log failed draws and keep going, clear the
-  display on shutdown (`shutdownSignal`). Failed element deletions are retried
+  display on shutdown. Stopping aborts a draw or deletion in flight without
+  logging it. `shutdownSignal` aborts on the first SIGINT or SIGTERM; a second
+  one ends the process at once, without clearing the display, for when the
+  bar does not answer. Failed element deletions are retried
   on later frames, including IDs drawn while an earlier cleanup was failing.
   When BACK, the mode switch, or the BUSY timer has closed the canvas, the
   bar refuses a deletion that names an element it no longer has, so the loop
   then deletes the IDs one at a time and forgets the ones that are gone.
 - Background data (`createPoller`): fetch a source every `intervalMs`, try
   again after `retryMs` when it fails, and keep the latest value (`latest()`)
-  and the last failure (`failure()`) for a pure render function.
+  and the last failure (`failure()`) for a pure render function. A failure's
+  `error` is always an `Error`: anything else a fetch throws arrives wrapped
+  in one, as its `cause`.
 - The buttons, wheel, and mode selector (`listenForInput`): read the bar's
   status stream over Node's WebSocket, hand each `InputEvent` to a handler,
   reopen the stream after it drops, and log a handler that throws. The cloud
-  does not stream input, so there it warns once and returns.
+  does not stream input, so there it warns once and returns. Every listener
+  gets every event, whichever app is on screen, so `trackScreen` wraps the
+  client `runBarApp` draws with and reports whether the app's frames reach the
+  screen (`onScreen()`): true for 2.5 seconds after a frame draws, false as
+  soon as the bar refuses one.
 - Text for the bitmap fonts: `toBarText` turns any text into printable ASCII
   the fonts draw (`Nørreport` becomes `Noerreport`, a backtick an
-  apostrophe), `textWidth` measures it in pixels from busy-lib's font maps,
-  `fitText` cuts it to a width with `..`, and `overflowingText` finds the
-  text elements that run past their display's edge, for layout tests. Both
-  kits test their widths against
-  [bar-kit-text-widths.json](../../bar-kit-text-widths.json), so they measure
-  alike.
+  apostrophe, any run of Unicode whitespace one space), `textWidth` measures
+  it in pixels from busy-lib's font maps and throws a `RangeError` on
+  anything else, `fitText` cuts it to a width with `ELLIPSIS` (`..`), and
+  `overflowingText` finds the text elements that run past their display's
+  edge, for layout tests. Both kits test their widths against
+  [bar-kit-text-widths.json](../../bar-kit-text-widths.json), and their text,
+  width-refusal, and address cases against
+  [bar-kit-contract.json](../../bar-kit-contract.json), so they agree.
 - The app catalogue's contract (`Preview`, `PreviewScene`, `PreviewStep`):
   what an app's `preview` target prints with `printPreview`, as one line of
   JSON ([tools/catalogue](../../tools/catalogue/README.md)).

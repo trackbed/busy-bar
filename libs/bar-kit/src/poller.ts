@@ -8,7 +8,11 @@ export interface Snapshot<T> {
 
 /** Why the most recent fetch of a {@link Poller} failed, and when. */
 export interface PollFailure {
-  readonly error: unknown;
+  /**
+   * What the fetch threw. A thrown value that is not an `Error` arrives
+   * wrapped in one, as its `cause`, so apps can show `error.message`.
+   */
+  readonly error: Error;
   readonly at: Date;
 }
 
@@ -76,7 +80,13 @@ export function createPoller<T>(options: PollerOptions<T>): Poller<T> {
           if (isAborted(signal)) {
             return;
           }
-          failure = { error, at: now() };
+          failure = {
+            error:
+              error instanceof Error
+                ? error
+                : new Error(String(error), { cause: error }),
+            at: now(),
+          };
           log.warn(`[${name}] Fetching failed:`, error);
         }
         await sleep(failure === undefined ? intervalMs : retryMs, signal);

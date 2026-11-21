@@ -36,16 +36,22 @@ _REPLACEMENTS = {
     "\N{BULLET}": "*",
 }
 
-_WHITESPACE = re.compile(r"\s+")
+# Unicode's White_Space property, spelled out so both kits match the same
+# characters: each language's `\s` differs from it, and from the other's.
+_WHITESPACE = re.compile(
+    r"[\t-\r \x85\xa0\u1680\u2000-\u200a\u2028\u2029\u202f\u205f\u3000]+"
+)
 _SPACES = re.compile(r" {2,}")
 
 
 def to_bar_text(text: str) -> str:
     """Turn any text into what the bar's bitmap fonts can draw.
 
-    The result is printable ASCII without the backtick. Known letters and punctuation are spelled out, accents are dropped, runs of
-    whitespace become one space, and anything else (emoji, CJK) disappears.
-    The TypeScript kit's `toBarText` gives the same result.
+    The result is printable ASCII without the backtick. Known letters and
+    punctuation are spelled out, accents are dropped, runs of whitespace become
+    one space, and anything else (emoji, CJK, control and format characters)
+    disappears. Both kits test their results against `bar-kit-contract.json`,
+    so the TypeScript kit's `toBarText` gives the same.
     """
     chars = list(unicodedata.normalize("NFC", text))
     spelled = "".join(

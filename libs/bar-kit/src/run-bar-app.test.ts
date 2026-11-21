@@ -8,6 +8,21 @@ const NOW = new Date('2026-10-19T12:00:00Z');
 const FRAME: BarElements = [
   { id: 'hello', type: 'text', text: 'HELLO', font: 'small' },
 ];
+const EXTRA: BarElements[number] = {
+  id: 'extra',
+  type: 'text',
+  text: 'X',
+  font: 'small',
+};
+
+/** A request that never answers, and rejects when `signal` aborts. */
+function untilAborted(signal: AbortSignal | undefined): Promise<never> {
+  return new Promise((_resolve, reject) => {
+    signal?.addEventListener('abort', () => {
+      reject(new DOMException('aborted', 'AbortError'));
+    });
+  });
+}
 
 /** A client that aborts the app after `frames` successful or failed draws. */
 function fakeClient(
@@ -396,6 +411,79 @@ describe('runBarApp', () => {
     );
   });
 
+  it('aborts a draw in flight on stop, clears once, and logs nothing', async () => {
+    const controller = new AbortController();
+    const log = { warn: vi.fn<(...data: unknown[]) => void>() };
+    const client = {
+      // A refused draw, which the bar holds for up to 1.5 seconds.
+      DisplayDraw: vi.fn<BarDisplayClient['DisplayDraw']>((_params, options) =>
+        untilAborted(options?.signal),
+      ),
+      DisplayClear: vi.fn<BarDisplayClient['DisplayClear']>(() =>
+        Promise.resolve({ result: 'OK' }),
+      ),
+    };
+    const running = runBarApp({
+      name: 'demo',
+      client,
+      render: () => FRAME,
+      intervalMs: 0,
+      signal: controller.signal,
+      log,
+    });
+
+    await vi.waitFor(() => {
+      expect(client.DisplayDraw).toHaveBeenCalledOnce();
+    });
+    controller.abort();
+    await running;
+
+    expect(client.DisplayDraw).toHaveBeenCalledOnce();
+    expect(client.DisplayClear).toHaveBeenCalledExactlyOnceWith({
+      application_name: 'demo',
+    });
+    expect(log.warn).not.toHaveBeenCalled();
+  });
+
+  it('aborts a deletion in flight on stop, clears once, and logs nothing', async () => {
+    const controller = new AbortController();
+    const log = { warn: vi.fn<(...data: unknown[]) => void>() };
+    const client = {
+      DisplayDraw: vi.fn<BarDisplayClient['DisplayDraw']>(() =>
+        Promise.resolve({ result: 'OK' }),
+      ),
+      DisplayClear: vi.fn<BarDisplayClient['DisplayClear']>((params, options) =>
+        params?.element_ids === undefined
+          ? Promise.resolve({ result: 'OK' })
+          : untilAborted(options?.signal),
+      ),
+    };
+    const frames = [[...FRAME, EXTRA], FRAME];
+    const running = runBarApp({
+      name: 'demo',
+      client,
+      render: () => frames.shift() ?? FRAME,
+      intervalMs: 0,
+      signal: controller.signal,
+      log,
+    });
+
+    await vi.waitFor(() => {
+      expect(client.DisplayClear).toHaveBeenCalledOnce();
+    });
+    controller.abort();
+    await running;
+
+    expect(client.DisplayDraw).toHaveBeenCalledTimes(2);
+    expect(
+      client.DisplayClear.mock.calls.map(([params]) => params),
+    ).toStrictEqual([
+      { application_name: 'demo', element_ids: ['extra'] },
+      { application_name: 'demo' },
+    ]);
+    expect(log.warn).not.toHaveBeenCalled();
+  });
+
   it('stops waiting for the next frame as soon as it is aborted', async () => {
     vi.useFakeTimers();
     try {
@@ -431,4 +519,19 @@ describe('shutdownSignal', () => {
     target.emit(event);
     expect(signal.aborted).toBe(true);
   });
+
+  it.each(['SIGINT', 'SIGTERM'])(
+    'leaves a second signal after %s to the process',
+    (event) => {
+      const target = new EventEmitter();
+
+      shutdownSignal(target);
+      expect(target.listenerCount('SIGINT')).toBe(1);
+      expect(target.listenerCount('SIGTERM')).toBe(1);
+
+      target.emit(event);
+      expect(target.listenerCount('SIGINT')).toBe(0);
+      expect(target.listenerCount('SIGTERM')).toBe(0);
+    },
+  );
 });

@@ -1237,6 +1237,7 @@ __metadata:
   resolution: "@busy-bar-apps/bar-kit@workspace:libs/bar-kit"
   dependencies:
     "@busy-app/busy-lib": "npm:0.21.1"
+    "@busy-bar-apps/json-values": "workspace:0.0.1"
   languageName: unknown
   linkType: soft
 

@@ -5,14 +5,7 @@ environment variables and expose the same frame loop.
 """
 
 from bar_kit.client import create_busy_bar
-from bar_kit.config import (
-    CLOUD_ADDRESS,
-    USB_ADDRESS,
-    BarConfig,
-    BarConfigError,
-    is_cloud_address,
-    load_bar_config,
-)
+from bar_kit.config import BarConfig, BarConfigError, load_bar_config
 from bar_kit.display import BACK_DISPLAY, FRONT_DISPLAY, DisplaySize, rgba
 from bar_kit.fonts import ELLIPSIS, fit_text, overflowing_text, text_width
 from bar_kit.input import listen_for_input
@@ -25,15 +18,14 @@ from bar_kit.run import (
     install_shutdown_handlers,
     run_bar_app,
 )
+from bar_kit.screen import TrackedScreen, track_screen
 from bar_kit.text import to_bar_text
 
 __all__ = [
     "BACK_DISPLAY",
-    "CLOUD_ADDRESS",
     "DEFAULT_PRIORITY",
     "ELLIPSIS",
     "FRONT_DISPLAY",
-    "USB_ADDRESS",
     "BarConfig",
     "BarConfigError",
     "DisplayClient",
@@ -45,10 +37,10 @@ __all__ = [
     "PreviewStep",
     "Render",
     "Snapshot",
+    "TrackedScreen",
     "create_busy_bar",
     "fit_text",
     "install_shutdown_handlers",
-    "is_cloud_address",
     "listen_for_input",
     "load_bar_config",
     "overflowing_text",
@@ -57,4 +49,5 @@ __all__ = [
     "run_bar_app",
     "text_width",
     "to_bar_text",
+    "track_screen",
 ]
