@@ -3,6 +3,7 @@
 // pixel, `#` colours with 1 to 4 hex digits per channel, a handful of colour
 // names, and a per-display preference between colour and grey keys.
 
+import type { DisplayName } from '../render/display.ts';
 import type { Bitmap } from './png.ts';
 
 /** Which rule a bitmap breaks, phrased to follow "must". */
@@ -30,7 +31,7 @@ const NAMES = new Map<string, Rgba>([
 ]);
 
 // The front prefers colour keys, the greyscale back prefers grey keys.
-const KEY_ORDER: Readonly<Record<'front' | 'back', readonly string[]>> = {
+const KEY_ORDER: Readonly<Record<DisplayName, readonly string[]>> = {
   front: ['c', 'g', 'g4', 'm'],
   back: ['g', 'g4', 'c', 'm'],
 };
@@ -41,7 +42,7 @@ const KEY_ORDER: Readonly<Record<'front' | 'back', readonly string[]>> = {
  */
 export function parseXpm(
   data: string,
-  display: 'front' | 'back',
+  display: DisplayName,
   limit: { readonly width: number; readonly height: number },
 ): Bitmap {
   const lines = data.split(/\r?\n/u);
@@ -95,7 +96,7 @@ export function parseXpm(
   return { width, height, rgba };
 }
 
-function pickColor(spec: string, display: 'front' | 'back'): Rgba | undefined {
+function pickColor(spec: string, display: DisplayName): Rgba | undefined {
   const tokens = spec.trim().split(/\s+/u);
   const byKey = new Map<string, string>();
   for (let i = 0; i + 1 < tokens.length; i += 2) {

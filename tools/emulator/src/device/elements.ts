@@ -10,7 +10,9 @@ import { isObject, stringAt } from '@busy-bar-apps/json-values';
 import type { Bitmap } from '../formats/png.ts';
 import { parseXpm, XpmError } from '../formats/xpm.ts';
 import type { Rgba } from '../render/canvas.ts';
-import { parseColor } from '../render/canvas.ts';
+import { parseColor, WHITE } from '../render/canvas.ts';
+import type { DisplayName } from '../render/display.ts';
+import { DISPLAY_SIZES, DISPLAYS } from '../render/display.ts';
 import { ApiError } from './api-error.ts';
 
 export const FONTS = [
@@ -47,14 +49,10 @@ const TYPES = [
   'countdown',
   'xpmbitmap',
 ] as const;
-const DISPLAYS = ['front', 'back'] as const;
 const FILLS = ['none', 'solid', 'gradient_h', 'gradient_v'] as const;
 const DIRECTIONS = ['time_left', 'time_since'] as const;
 const SHOW_HOURS = ['when_non_zero', 'always'] as const;
 
-type DisplayName = (typeof DISPLAYS)[number];
-
-export const WHITE: Rgba = { r: 255, g: 255, b: 255, a: 255 };
 const TRANSPARENT: Rgba = { r: 0, g: 0, b: 0, a: 0 };
 
 /** The most elements one request, or one app's screen, may hold. */
@@ -161,14 +159,6 @@ export interface ImageCheck {
     applicationName: string,
   ): { width: number; height: number } | undefined;
 }
-
-/** The display sizes the firmware checks images and bitmaps against. */
-const DISPLAY_SIZES: Readonly<
-  Record<DisplayName, { width: number; height: number }>
-> = {
-  front: { width: 72, height: 16 },
-  back: { width: 160, height: 80 },
-};
 
 /** The stock folder under /ext/apps_assets/shared for each kind of asset. */
 export type AssetFolder = 'images' | 'animations' | 'sounds';

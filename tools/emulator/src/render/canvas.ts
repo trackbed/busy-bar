@@ -25,6 +25,7 @@ export interface Box {
 export type ColorMode = 'rgb' | 'l8';
 
 export const BLACK: Rgba = { r: 0, g: 0, b: 0, a: 255 };
+export const WHITE: Rgba = { r: 255, g: 255, b: 255, a: 255 };
 
 /** Parse `#RRGGBBAA` or `#RRGGBB`; anything else is undefined. */
 export function parseColor(value: string): Rgba | undefined {

@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { Animation } from '../formats/animation.ts';
+import { WHITE } from '../render/canvas.ts';
 import { AnimationPlayer } from './animation-player.ts';
 import { ApiError } from './api-error.ts';
 import type {
@@ -10,7 +11,6 @@ import type {
   RectangleElement,
   TextElement,
 } from './elements.ts';
-import { WHITE } from './elements.ts';
 import type { AnimationResolver, DrawResult, PlacedElement } from './screen.ts';
 import { HOLD_MS, IDLE_PRIORITY, Screen, TIMER_PRIORITY } from './screen.ts';
 
