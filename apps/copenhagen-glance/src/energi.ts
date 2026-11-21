@@ -5,6 +5,8 @@ import {
   stringAt,
 } from '@busy-bar-apps/json-values';
 
+import { getJson } from './http.ts';
+
 /** The two Danish bidding zones: Jutland and Funen (DK1), Zealand (DK2). */
 export type PriceArea = 'DK1' | 'DK2';
 
@@ -55,7 +57,9 @@ export async function fetchPrices(
   signal: AbortSignal,
   fetchImpl: typeof fetch = fetch,
 ): Promise<PriceSlot[]> {
-  return parsePrices(await getJson(pricesUrl(area), signal, fetchImpl));
+  return parsePrices(
+    await getJson(pricesUrl(area), request(signal, fetchImpl)),
+  );
 }
 
 export async function fetchCo2(
@@ -63,7 +67,7 @@ export async function fetchCo2(
   signal: AbortSignal,
   fetchImpl: typeof fetch = fetch,
 ): Promise<Co2Reading> {
-  return parseCo2(await getJson(co2Url(area), signal, fetchImpl));
+  return parseCo2(await getJson(co2Url(area), request(signal, fetchImpl)));
 }
 
 /** Read `DayAheadPrices` records: `TimeUTC` and `DayAheadPriceDKK` per MWh. */
@@ -89,18 +93,13 @@ export function parseCo2(body: unknown): Co2Reading {
   throw new EnergiDataError('Energi Data Service sent no CO2 reading.');
 }
 
-async function getJson(
-  url: string,
-  signal: AbortSignal,
-  fetchImpl: typeof fetch,
-): Promise<unknown> {
-  const response = await fetchImpl(url, { signal });
-  if (!response.ok) {
-    throw new EnergiDataError(
-      `Energi Data Service answered ${response.status} ${response.statusText}`.trim(),
-    );
-  }
-  return response.json();
+function request(signal: AbortSignal, fetchImpl: typeof fetch) {
+  return {
+    service: 'Energi Data Service',
+    error: EnergiDataError,
+    signal,
+    fetch: fetchImpl,
+  };
 }
 
 function records(body: unknown): Readonly<Record<string, unknown>>[] {

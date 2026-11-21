@@ -89,6 +89,6 @@ describe('fetchRain', () => {
 
     await expect(
       fetchRain(1, 2, new AbortController().signal, fetch),
-    ).rejects.toThrow('DMI answered 429 Too Many Requests');
+    ).rejects.toStrictEqual(new DmiError('DMI answered 429 Too Many Requests'));
   });
 });

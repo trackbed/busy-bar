@@ -1,5 +1,7 @@
 import { arrayAt, isObject, objectAt } from '@busy-bar-apps/json-values';
 
+import { getJson } from './http.ts';
+
 /** Rain expected in one hour of DMI's forecast. */
 export interface RainHour {
   readonly start: Date;
@@ -32,13 +34,14 @@ export async function fetchRain(
   signal: AbortSignal,
   fetchImpl: typeof fetch = fetch,
 ): Promise<RainHour[]> {
-  const response = await fetchImpl(rainUrl(latitude, longitude), { signal });
-  if (!response.ok) {
-    throw new DmiError(
-      `DMI answered ${response.status} ${response.statusText}`.trim(),
-    );
-  }
-  return parseRain(await response.json());
+  return parseRain(
+    await getJson(rainUrl(latitude, longitude), {
+      service: 'DMI',
+      error: DmiError,
+      signal,
+      fetch: fetchImpl,
+    }),
+  );
 }
 
 /**
