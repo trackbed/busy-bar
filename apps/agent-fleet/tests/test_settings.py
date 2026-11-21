@@ -6,9 +6,9 @@ from agent_fleet.settings import (
     DEFAULT_HOST,
     DEFAULT_PORT,
     FleetSettings,
-    FleetSettingsError,
     load_settings,
 )
+from bar_kit import SettingsError
 
 
 def test_defaults_to_loopback_with_sound() -> None:
@@ -48,9 +48,10 @@ def test_reads_every_setting() -> None:
         ({"AGENT_FLEET_PORT": "0"}, "from 1 to 65535"),
         ({"AGENT_FLEET_PORT": "70000"}, "from 1 to 65535"),
         ({"AGENT_FLEET_QUIET_MINUTES": "-5"}, "of at least 1"),
+        ({"AGENT_FLEET_QUIET_MINUTES": "\u0661\u0665"}, "of at least 1"),
         ({"AGENT_FLEET_SOUND": "loud"}, "AGENT_FLEET_SOUND must be on or off"),
     ],
 )
 def test_rejects_settings_it_cannot_use(env: dict[str, str], error: str) -> None:
-    with pytest.raises(FleetSettingsError, match=error):
+    with pytest.raises(SettingsError, match=error):
         load_settings(env)
