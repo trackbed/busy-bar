@@ -15,6 +15,7 @@ from busylib.types import (
     TextElement,
 )
 
+from bar_kit._clock import utc_now
 from bar_kit.client import create_busy_bar
 from bar_kit.config import BarConfig, BarConfigError, load_bar_config
 from bar_kit.display import BACK_DISPLAY, FRONT_DISPLAY, DisplaySize, rgba
@@ -109,4 +110,5 @@ __all__ = [
     "text_width",
     "to_bar_text",
     "track_screen",
+    "utc_now",
 ]

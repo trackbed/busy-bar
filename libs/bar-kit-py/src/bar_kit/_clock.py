@@ -1,4 +1,5 @@
-"""Stop-aware waiting shared by the frame loop, the poller, and the listener."""
+"""Stop-aware waiting shared by the frame loop, the poller, and the listener;
+apps use `utc_now` as their clock."""
 
 import asyncio
 import contextlib

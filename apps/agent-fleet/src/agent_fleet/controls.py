@@ -2,7 +2,7 @@
 board uses them."""
 
 from collections.abc import AsyncIterator, Callable, Mapping
-from datetime import UTC, datetime, timedelta
+from datetime import datetime, timedelta
 
 from agent_fleet.fleet import Alert, Fleet
 from agent_fleet.hooks import parse_hook
@@ -13,6 +13,7 @@ from bar_kit import (
     SelectorEvent,
     SelectorPosition,
     StockSound,
+    utc_now,
 )
 
 SOUNDS: Mapping[Alert, StockSound] = {
@@ -27,10 +28,6 @@ SOUNDS: Mapping[Alert, StockSound] = {
 _FOCUS_POSITIONS: frozenset[SelectorPosition] = frozenset({"busy", "custom", "off"})
 
 DEFAULT_MIN_GAP = timedelta(seconds=5)
-
-
-def _utc_now() -> datetime:
-    return datetime.now(UTC)
 
 
 class Chime:
@@ -49,7 +46,7 @@ class Chime:
         *,
         on_screen: Callable[[], bool],
         min_gap: timedelta = DEFAULT_MIN_GAP,
-        now: Callable[[], datetime] = _utc_now,
+        now: Callable[[], datetime] = utc_now,
     ) -> None:
         self._play = play
         self._on_screen = on_screen
@@ -94,7 +91,7 @@ class Controls:
         chime: Chime,
         *,
         on_screen: Callable[[], bool],
-        now: Callable[[], datetime] = _utc_now,
+        now: Callable[[], datetime] = utc_now,
     ) -> None:
         """Ask `on_screen`, such as bar_kit's `track_screen`, before any input."""
         self._fleet = fleet

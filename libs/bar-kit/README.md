@@ -58,6 +58,8 @@ variables and behave the same way.
   with `enabled: false` stays silent, and a `signal` cancels sounds still in
   flight at shutdown. `wait()` settles started sounds in tests. Each app keeps
   only its choice of which alert plays which sound.
+- No clock helper: apps default their clock to `() => new Date()`, where
+  Python apps use the Python kit's `utc_now`.
 - Text for the bitmap fonts: `toBarText` turns any text into printable ASCII
   the fonts draw (`Nørreport` becomes `Noerreport`, a backtick an
   apostrophe, any run of Unicode whitespace one space), `textWidth` measures

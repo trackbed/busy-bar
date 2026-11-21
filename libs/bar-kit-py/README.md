@@ -60,6 +60,8 @@ both read the same environment variables and behave the same way.
   Sounds still playing are cancelled with the event loop at shutdown.
   `wait()` settles started sounds in tests. Each app keeps only its choice of
   which alert plays which sound.
+- The current time, time zone aware (`utc_now`): the default clock of the
+  frame loop, the poller, and apps. TypeScript apps use `() => new Date()`.
 - Text for the bitmap fonts: `to_bar_text` turns any text into printable ASCII
   the fonts draw (`Nørreport` becomes `Noerreport`, a backtick an
   apostrophe, any run of Unicode whitespace one space), `text_width` measures

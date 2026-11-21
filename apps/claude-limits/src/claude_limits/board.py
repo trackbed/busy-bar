@@ -3,11 +3,11 @@
 import asyncio
 from collections.abc import Callable, Mapping
 from dataclasses import dataclass
-from datetime import UTC, datetime, timedelta
+from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Literal
 
-from bar_kit import StockSound, to_bar_text
+from bar_kit import StockSound, to_bar_text, utc_now
 from claude_limits.rotation import Account, Rotation, Window, read_rotation
 
 type Level = Literal["ok", "high", "limit", "unknown"]
@@ -108,10 +108,6 @@ def alert_for(
     return None
 
 
-def _utc_now() -> datetime:
-    return datetime.now(UTC)
-
-
 class RotationWatch:
     """Reads the rotation every poll and sounds a change worth a sound.
 
@@ -125,7 +121,7 @@ class RotationWatch:
         *,
         play: Callable[[StockSound], None],
         read: Callable[[Path], Rotation] = read_rotation,
-        now: Callable[[], datetime] = _utc_now,
+        now: Callable[[], datetime] = utc_now,
     ) -> None:
         self._root = root
         self._play = play
