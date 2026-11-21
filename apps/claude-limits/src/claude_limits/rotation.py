@@ -18,14 +18,12 @@ from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
+from bar_kit import SetupError
+
 DEFAULT_ROOT = Path("~/.local/share/conductor-claude-rotation")
 
 _DEFAULT_THRESHOLD = 100.0
 _DEFAULT_MAX_USAGE_AGE = timedelta(seconds=600)
-
-
-class RotationNotSetUpError(FileNotFoundError):
-    """The rotation tool has no configuration in the directory."""
 
 
 @dataclass(frozen=True, slots=True)
@@ -74,13 +72,22 @@ class Rotation:
 def read_rotation(root: Path) -> Rotation:
     """Read the tool's files under `root`.
 
-    Raises `RotationNotSetUpError` when `root` has no `config.json`, and
-    `ValueError` when a file is not the JSON the tool writes.
+    Raises `SetupError` naming the directory when `root` has no
+    `config.json`, and `ValueError` when a file is not the JSON the tool
+    writes.
     """
     config_path = root / "config.json"
     if not config_path.is_file():
-        message = f"No conductor-claude-rotation config at {config_path}."
-        raise RotationNotSetUpError(message)
+        # The folder rarely fits on one line, so its name gets its own.
+        raise SetupError(
+            "not set up",
+            [
+                "conductor-claude-rotation has no",
+                "config.json in",
+                f"{root.parent}/",
+                root.name,
+            ],
+        )
     config = _read_object(config_path)
 
     state_directory = config_path.parent / _text(config, "state_directory", "state")

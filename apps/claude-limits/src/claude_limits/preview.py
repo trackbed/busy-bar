@@ -11,7 +11,7 @@ from bar_kit import (
     print_preview,
 )
 from claude_limits.render import render
-from claude_limits.rotation import DEFAULT_ROOT, Account, Rotation, Window
+from claude_limits.rotation import Account, Rotation, Window
 
 NOW = datetime(2026, 10, 21, 12, 0, tzinfo=UTC)
 
@@ -42,7 +42,7 @@ def _draw(*accounts: Account) -> list[DisplayElement]:
         max_usage_age=timedelta(minutes=10),
     )
     latest = Snapshot(value=rotation, at=NOW - timedelta(seconds=10))
-    return render(NOW, latest, None, root=DEFAULT_ROOT)
+    return render(NOW, latest, None)
 
 
 def preview() -> Preview:
