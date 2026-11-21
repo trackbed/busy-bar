@@ -2,22 +2,28 @@
 
 from datetime import datetime
 
-from busylib import types
+from bar_kit import (
+    FRONT_DISPLAY,
+    PALETTE,
+    DisplayElement,
+    DisplayName,
+    fit_text,
+    text_element,
+)
 
-from bar_kit import FRONT_DISPLAY, fit_text
 
-
-def render(_now: datetime) -> list[types.DisplayElement]:
+def render(_now: datetime) -> list[DisplayElement]:
     """Draw the app's title on the front display. Replace this with the app."""
     return [
-        types.TextElement(
-            id="title",
-            display=types.DisplayName.FRONT,
+        text_element(
+            element_id="title",
             # A long name is cut short with `..` to fit the display.
             text=fit_text("<%= title %>", "normal", FRONT_DISPLAY.width),
+            display=DisplayName.FRONT,
             font="normal",
-            align="center",
             x=FRONT_DISPLAY.width // 2,
             y=FRONT_DISPLAY.height // 2,
+            color=PALETTE.bright,
+            align="center",
         )
     ]

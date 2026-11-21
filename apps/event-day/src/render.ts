@@ -1,15 +1,17 @@
 import type {
   BarElements,
-  BarFont,
   PollFailure,
   Snapshot,
-  TextElement,
 } from '@busy-bar-apps/bar-kit';
 import {
   BACK_DISPLAY,
-  FRONT_DISPLAY,
   fitText,
-  rgba,
+  FOOTER_Y,
+  FRONT_DISPLAY,
+  PALETTE,
+  statusCells,
+  SUMMARY_Y,
+  textElement,
   toBarText,
 } from '@busy-bar-apps/bar-kit';
 
@@ -20,25 +22,21 @@ import type { BoothStatus } from './photocraft.ts';
 import { GALLERY_LIMIT } from './photocraft.ts';
 
 export const VIEW_COLORS: Readonly<Record<BoothView, string>> = {
-  live: rgba(0, 200, 90),
-  quiet: rgba(255, 170, 0),
-  off: rgba(110, 110, 110),
-  missing: rgba(255, 60, 60),
-  error: rgba(255, 60, 60),
+  live: PALETTE.good,
+  quiet: PALETTE.warn,
+  off: PALETTE.idle,
+  missing: PALETTE.bad,
+  error: PALETTE.bad,
 };
-const TEXT_COLOR = rgba(200, 200, 200);
-const DIM_COLOR = rgba(120, 120, 120);
 
 /** How long each booth stays on the front's second line. */
 export const ROTATE_MS = 4000;
 /** How long PhotoCraft may stay unreachable before the board says so. */
 export const STALE_MS = 2 * 60_000;
 
-const SUMMARY_Y = 9;
 const CELL_PITCH = 4;
 const ROW_PITCH = 10;
 const FIRST_ROW_Y = 12;
-const FOOTER_Y = BACK_DISPLAY.height - 7;
 const MAX_BOOTH_ROWS = 4;
 const STATUS_X = 62;
 const PHOTOS_RIGHT = 124;
@@ -80,108 +78,145 @@ export function render(
   if (latest === undefined) {
     return unavailable(failure);
   }
-  const { booths, challenge, challengeProblem } = latest.value;
-  const views = booths.map((status) => boothView(status, now, view.quietMs));
+  const event = latest.value;
+  const views = event.booths.map((status) =>
+    boothView(status, now, view.quietMs),
+  );
+  const stale =
+    failure !== undefined && now.getTime() - latest.at.getTime() > STALE_MS;
+  const footer = stale
+    ? 'Event Studio unreachable, showing old data'
+    : updated(now, latest.at);
+  return [...front(event, views, now), ...back(event, views, now, footer)];
+}
+
+/**
+ * The front's second line at `now`: each booth in turn, then the challenge,
+ * for {@link ROTATE_MS} each.
+ */
+export function rotatingLine(
+  { booths, challenge }: EventSnapshot,
+  views: readonly BoothView[],
+  now: Date,
+): string {
   const lines = [
     ...booths.map((status, index) =>
       boothLine(status, views[index] ?? status.state, now),
     ),
     ...(challenge === undefined ? [] : [challengeShort(challenge)]),
   ];
-  const rotating =
+  return (
     lines[Math.floor(now.getTime() / ROTATE_MS) % Math.max(1, lines.length)] ??
-    '';
+    ''
+  );
+}
 
+/**
+ * The challenge's line behind: its leaderboard, or why it cannot be read.
+ * Undefined when the event has no challenge.
+ */
+export function challengeText({
+  challenge,
+  challengeProblem,
+}: EventSnapshot): string | undefined {
+  if (challenge !== undefined) {
+    return `Challenge: ${challengeLine(challenge)}`;
+  }
+  return challengeProblem === undefined
+    ? undefined
+    : `Challenge: ${toBarText(challengeProblem)}`;
+}
+
+function front(
+  event: EventSnapshot,
+  views: readonly BoothView[],
+  now: Date,
+): BarElements {
   const [headline, color] =
-    booths.length > 0
-      ? boothHeadline(booths, views, now)
-      : challengeHeadline(challenge, challengeProblem);
-  const elements: BarElements = [
-    text(
-      'headline',
-      fitText(headline, 'small', FRONT_DISPLAY.width),
-      'front',
-      'small',
-      0,
-      0,
+    event.booths.length > 0
+      ? boothHeadline(event.booths, views, now)
+      : challengeHeadline(event.challenge, event.challengeProblem);
+  return [
+    textElement({
+      id: 'headline',
+      text: fitText(headline, 'small', FRONT_DISPLAY.width),
+      display: 'front',
+      font: 'small',
+      x: 0,
+      y: 0,
       color,
-    ),
-    text(
-      'summary',
-      fitText(rotating, 'tiny', FRONT_DISPLAY.width),
-      'front',
-      'tiny',
-      0,
-      SUMMARY_Y,
+    }),
+    textElement({
+      id: 'summary',
+      text: fitText(
+        rotatingLine(event, views, now),
+        'tiny',
+        FRONT_DISPLAY.width,
+      ),
+      display: 'front',
+      font: 'tiny',
+      x: 0,
+      y: SUMMARY_Y,
       color,
+    }),
+    ...statusCells(
+      views
+        .slice(0, FRONT_DISPLAY.width / CELL_PITCH)
+        .map((boothState) => VIEW_COLORS[boothState]),
+      { pitch: CELL_PITCH, width: CELL_PITCH - 1 },
     ),
-    ...views
-      .slice(0, FRONT_DISPLAY.width / CELL_PITCH)
-      .map((boothState, index) => ({
-        id: `cell-${index}`,
-        type: 'rectangle' as const,
-        display: 'front' as const,
-        x: index * CELL_PITCH,
-        y: FRONT_DISPLAY.height - 1,
-        width: CELL_PITCH - 1,
-        height: 1,
-        fill: 'solid' as const,
-        fill_colors: [VIEW_COLORS[boothState]],
-        border_width: 0,
-      })),
   ];
+}
 
+function back(
+  event: EventSnapshot,
+  views: readonly BoothView[],
+  now: Date,
+  footer: string,
+): BarElements {
+  const { booths } = event;
   const header =
     booths[0] === undefined
       ? 'ChallengeCraft'
       : `PhotoCraft: ${booths[0].booth.eventSlug}`;
-  elements.push(
-    text(
-      'header',
-      fitText(header, 'small', BACK_DISPLAY.width),
-      'back',
-      'small',
-      0,
-      0,
-    ),
+  const elements: BarElements = [
+    textElement({
+      id: 'header',
+      text: fitText(header, 'small', BACK_DISPLAY.width),
+      display: 'back',
+      font: 'small',
+      x: 0,
+      y: 0,
+    }),
     ...booths
       .slice(0, MAX_BOOTH_ROWS)
       .flatMap((status, index) =>
         boothRow(index, status, views[index] ?? status.state, now),
       ),
-  );
-  const challengeY =
-    FIRST_ROW_Y + Math.min(booths.length, MAX_BOOTH_ROWS) * ROW_PITCH;
-  if (challenge !== undefined || challengeProblem !== undefined) {
-    const challengeText =
-      challenge === undefined
-        ? `Challenge: ${toBarText(challengeProblem ?? '')}`
-        : `Challenge: ${challengeLine(challenge)}`;
+  ];
+  const challenge = challengeText(event);
+  if (challenge !== undefined) {
     elements.push(
-      text(
-        'challenge',
-        fitText(challengeText, 'small', BACK_DISPLAY.width),
-        'back',
-        'small',
-        0,
-        challengeY,
-      ),
+      textElement({
+        id: 'challenge',
+        text: fitText(challenge, 'small', BACK_DISPLAY.width),
+        display: 'back',
+        font: 'small',
+        x: 0,
+        y: FIRST_ROW_Y + Math.min(booths.length, MAX_BOOTH_ROWS) * ROW_PITCH,
+      }),
     );
   }
-  const stale =
-    failure !== undefined && now.getTime() - latest.at.getTime() > STALE_MS;
   elements.push(
-    text(
-      'footer',
-      stale
-        ? 'Event Studio unreachable, showing old data'
-        : updated(now, latest.at),
-      'back',
-      'tiny',
-      0,
-      FOOTER_Y,
-      DIM_COLOR,
-    ),
+    textElement({
+      id: 'footer',
+      text: footer,
+      display: 'back',
+      font: 'tiny',
+      x: 0,
+      y: FOOTER_Y,
+      color: PALETTE.dim,
+    }),
   );
   return elements;
 }
@@ -284,52 +319,48 @@ function boothRow(
   now: Date,
 ): BarElements {
   const y = FIRST_ROW_Y + index * ROW_PITCH;
-  const color = boothState === 'live' ? TEXT_COLOR : DIM_COLOR;
+  const color = boothState === 'live' ? PALETTE.text : PALETTE.dim;
   const last =
     status.latestPhotoAt === undefined ? '' : age(now, status.latestPhotoAt);
   return [
-    text(
-      `row-${index}-name`,
-      fitText(status.booth.boothSlug, 'small', STATUS_X - 4),
-      'back',
-      'small',
-      0,
+    textElement({
+      id: `row-${index}-name`,
+      text: fitText(status.booth.boothSlug, 'small', STATUS_X - 4),
+      display: 'back',
+      font: 'small',
+      x: 0,
       y,
       color,
-    ),
-    text(
-      `row-${index}-status`,
-      WORDS[boothState],
-      'back',
-      'small',
-      STATUS_X,
+    }),
+    textElement({
+      id: `row-${index}-status`,
+      text: WORDS[boothState],
+      display: 'back',
+      font: 'small',
+      x: STATUS_X,
       y,
       color,
-    ),
-    {
-      ...text(
-        `row-${index}-photos`,
-        status.photos === undefined ? '' : photos(status),
-        'back',
-        'small',
-        PHOTOS_RIGHT,
-        y,
-        color,
-      ),
-      align: 'top_right' as const,
-    },
-    {
-      ...text(
-        `row-${index}-last`,
-        last,
-        'back',
-        'small',
-        BACK_DISPLAY.width - 1,
-        y,
-        color,
-      ),
-      align: 'top_right' as const,
-    },
+    }),
+    textElement({
+      id: `row-${index}-photos`,
+      text: status.photos === undefined ? '' : photos(status),
+      display: 'back',
+      font: 'small',
+      x: PHOTOS_RIGHT,
+      y,
+      color,
+      align: 'top_right',
+    }),
+    textElement({
+      id: `row-${index}-last`,
+      text: last,
+      display: 'back',
+      font: 'small',
+      x: BACK_DISPLAY.width - 1,
+      y,
+      color,
+      align: 'top_right',
+    }),
   ];
 }
 
@@ -342,35 +373,31 @@ function photos(status: BoothStatus): string {
 function unavailable(failure: PollFailure | undefined): BarElements {
   const reason = failure === undefined ? 'loading' : failure.error.message;
   return [
-    text('headline', 'EVENT', 'front', 'small', 0, 0, VIEW_COLORS.off),
-    text(
-      'summary',
-      failure === undefined ? 'loading' : 'unreachable',
-      'front',
-      'tiny',
-      0,
-      SUMMARY_Y,
-      VIEW_COLORS.off,
-    ),
-    text(
-      'header',
-      fitText(toBarText(reason), 'small', BACK_DISPLAY.width),
-      'back',
-      'small',
-      0,
-      0,
-    ),
+    textElement({
+      id: 'headline',
+      text: 'EVENT',
+      display: 'front',
+      font: 'small',
+      x: 0,
+      y: 0,
+      color: VIEW_COLORS.off,
+    }),
+    textElement({
+      id: 'summary',
+      text: failure === undefined ? 'loading' : 'unreachable',
+      display: 'front',
+      font: 'tiny',
+      x: 0,
+      y: SUMMARY_Y,
+      color: VIEW_COLORS.off,
+    }),
+    textElement({
+      id: 'header',
+      text: fitText(toBarText(reason), 'small', BACK_DISPLAY.width),
+      display: 'back',
+      font: 'small',
+      x: 0,
+      y: 0,
+    }),
   ];
-}
-
-function text(
-  id: string,
-  content: string,
-  display: 'front' | 'back',
-  font: BarFont,
-  x: number,
-  y: number,
-  color: string = TEXT_COLOR,
-): TextElement {
-  return { id, type: 'text', display, text: content, font, color, x, y };
 }

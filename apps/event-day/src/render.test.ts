@@ -3,15 +3,26 @@ import { describe, expect, it } from 'vitest';
 import type { BarElements, PollFailure } from '@busy-bar-apps/bar-kit';
 import {
   BACK_DISPLAY,
+  colorOf,
+  elementsById,
   FRONT_DISPLAY,
   overflowingText,
+  textOf,
 } from '@busy-bar-apps/bar-kit';
 
 import type { ChallengeStatus } from './challenge.ts';
 import type { EventSnapshot } from './event.ts';
 import type { BoothState, BoothStatus } from './photocraft.ts';
 import { GALLERY_LIMIT } from './photocraft.ts';
-import { age, render, ROTATE_MS, STALE_MS, VIEW_COLORS } from './render.ts';
+import {
+  age,
+  challengeText,
+  render,
+  ROTATE_MS,
+  rotatingLine,
+  STALE_MS,
+  VIEW_COLORS,
+} from './render.ts';
 
 // A multiple of ROTATE_MS, so the second line starts with the first booth.
 const NOW = new Date(
@@ -54,12 +65,7 @@ function draw(
   }: { at?: Date; failure?: PollFailure; now?: Date } = {},
 ): Map<string, BarElements[number]> {
   const latest = value === undefined ? undefined : { value, at };
-  return new Map(
-    render(now, latest, failure, { quietMs: QUIET_MS }).map((element) => [
-      element.id,
-      element,
-    ]),
-  );
+  return elementsById(render(now, latest, failure, { quietMs: QUIET_MS }));
 }
 
 function event(
@@ -68,24 +74,6 @@ function event(
   challengeProblem?: string,
 ): EventSnapshot {
   return { booths, challenge, challengeProblem };
-}
-
-function textOf(
-  elements: Map<string, BarElements[number]>,
-  id: string,
-): string | undefined {
-  const element = elements.get(id);
-  return element !== undefined && 'text' in element ? element.text : undefined;
-}
-
-function colorOf(
-  elements: Map<string, BarElements[number]>,
-  id: string,
-): string | undefined {
-  const element = elements.get(id);
-  return element !== undefined && 'color' in element
-    ? element.color
-    : undefined;
 }
 
 describe('render', () => {
@@ -275,6 +263,32 @@ describe('render', () => {
       expect(textOf(elements, 'header')).toBe(header);
     },
   );
+});
+
+describe('rotatingLine', () => {
+  it('is empty without booths or a challenge', () => {
+    expect(rotatingLine(event([]), [], NOW)).toBe('');
+  });
+
+  it('turns to the challenge after the booths', () => {
+    const snapshot = event([booth('main', 'live')], CHALLENGE);
+    const later = new Date(NOW.getTime() + ROTATE_MS);
+
+    expect(rotatingLine(snapshot, ['live'], NOW)).toBe('main last 2m');
+    expect(rotatingLine(snapshot, ['live'], later)).toBe('#1 Anna 980');
+  });
+});
+
+describe('challengeText', () => {
+  it('names the leaderboard, why it is unreadable, or nothing', () => {
+    expect(challengeText(event([], CHALLENGE))).toBe(
+      'Challenge: live, 37 entries, top Anna 980',
+    );
+    expect(challengeText(event([], undefined, 'Leaderboard not found'))).toBe(
+      'Challenge: Leaderboard not found',
+    );
+    expect(challengeText(event([]))).toBeUndefined();
+  });
 });
 
 describe('age', () => {

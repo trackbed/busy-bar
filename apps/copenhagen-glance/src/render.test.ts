@@ -1,10 +1,12 @@
 import { describe, expect, it } from 'vitest';
 
-import type { BarElements } from '@busy-bar-apps/bar-kit';
 import {
   BACK_DISPLAY,
+  colorOf,
+  elementsById,
   FRONT_DISPLAY,
   overflowingText,
+  textOf,
 } from '@busy-bar-apps/bar-kit';
 
 import type { RainHour } from './dmi.ts';
@@ -13,6 +15,7 @@ import type { GlanceData } from './render.ts';
 import {
   BAR_HOURS,
   CO2_MAX_AGE_MS,
+  glanceAt,
   kroner,
   LEVEL_COLORS,
   RAIN_COLOR,
@@ -62,31 +65,9 @@ function rain(...millimetres: number[]): GlanceData['rain'] {
   return { value: hours, at: NOW };
 }
 
-function byId(elements: BarElements): Map<string, BarElements[number]> {
-  return new Map(elements.map((element) => [element.id, element]));
-}
-
-function textOf(
-  elements: Map<string, BarElements[number]>,
-  id: string,
-): string | undefined {
-  const element = elements.get(id);
-  return element !== undefined && 'text' in element ? element.text : undefined;
-}
-
-function colorOf(
-  elements: Map<string, BarElements[number]>,
-  id: string,
-): string | undefined {
-  const element = elements.get(id);
-  return element !== undefined && 'color' in element
-    ? element.color
-    : undefined;
-}
-
 describe('render', () => {
   it('shows the price now beside the grid’s CO2', () => {
-    const elements = byId(render(NOW, data()));
+    const elements = elementsById(render(NOW, data()));
 
     expect(textOf(elements, 'price')).toBe('1,10 kr');
     expect(colorOf(elements, 'price')).toBe(LEVEL_COLORS.mid);
@@ -126,7 +107,7 @@ describe('render', () => {
   });
 
   it('lists the details behind', () => {
-    const elements = byId(render(NOW, data({ rain: rain(0, 0.1, 0) })));
+    const elements = elementsById(render(NOW, data({ rain: rain(0, 0.1, 0) })));
 
     expect(
       [0, 1, 2, 3, 4].map((index) => textOf(elements, `line-${index}`)),
@@ -148,7 +129,7 @@ describe('render', () => {
       kronerPerKwh: index < 4 ? 0.1 : slot.kronerPerKwh,
     }));
 
-    const elements = byId(
+    const elements = elementsById(
       render(NOW, data({ prices: { value: cheapNow, at: NOW } })),
     );
 
@@ -156,7 +137,9 @@ describe('render', () => {
   });
 
   it('warns of rain in the coming hour instead of showing CO2', () => {
-    const elements = byId(render(NOW, data({ rain: rain(0.6, 1.25, 0) })));
+    const elements = elementsById(
+      render(NOW, data({ rain: rain(0.6, 1.25, 0) })),
+    );
 
     expect(textOf(elements, 'side')).toBe('RAIN');
     expect(colorOf(elements, 'side')).toBe(RAIN_COLOR);
@@ -171,7 +154,7 @@ describe('render', () => {
 
     expect(
       colorOf(
-        byId(render(NOW, data({ co2: { value: co2, at: NOW } }))),
+        elementsById(render(NOW, data({ co2: { value: co2, at: NOW } }))),
         'side',
       ),
     ).toBe(color);
@@ -183,7 +166,7 @@ describe('render', () => {
       gramsPerKwh: 50,
     };
 
-    const elements = byId(
+    const elements = elementsById(
       render(
         NOW,
         data({
@@ -205,7 +188,7 @@ describe('render', () => {
       'CO2: no reading',
       'Rain: off',
     ]);
-    expect(textOf(byId(render(NOW, data())), 'line-4')).toBe(
+    expect(textOf(elementsById(render(NOW, data())), 'line-4')).toBe(
       'Rain: no forecast',
     );
   });
@@ -223,6 +206,31 @@ describe('render', () => {
         (element.display === 'back' ? BACK_DISPLAY.width : FRONT_DISPLAY.width),
     );
     expect(outside.map((element) => element.id)).toStrictEqual([]);
+  });
+});
+
+describe('glanceAt', () => {
+  it('keeps a CO2 reading until it is too old to show', () => {
+    const reading = (ageMs: number): GlanceData['co2'] => ({
+      value: { at: new Date(NOW.getTime() - ageMs), gramsPerKwh: 83 },
+      at: NOW,
+    });
+
+    expect(glanceAt(data({ co2: reading(CO2_MAX_AGE_MS) }), NOW).co2).toEqual(
+      reading(CO2_MAX_AGE_MS)?.value,
+    );
+    expect(
+      glanceAt(data({ co2: reading(CO2_MAX_AGE_MS + 1) }), NOW).co2,
+    ).toBeUndefined();
+  });
+
+  it('calls it raining from the threshold in the coming hour', () => {
+    expect(glanceAt(data({ rain: rain(0.2, 0) }), NOW).raining).toBe(true);
+    expect(glanceAt(data({ rain: rain(0.1, 5) }), NOW).raining).toBe(false);
+    expect(glanceAt(data(), NOW)).toMatchObject({
+      rain: undefined,
+      raining: false,
+    });
   });
 });
 

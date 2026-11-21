@@ -3,8 +3,11 @@ import { describe, expect, it } from 'vitest';
 import type { BarElements, PollFailure } from '@busy-bar-apps/bar-kit';
 import {
   BACK_DISPLAY,
+  colorOf,
+  elementsById,
   FRONT_DISPLAY,
   overflowingText,
+  textOf,
 } from '@busy-bar-apps/bar-kit';
 
 import type { OpenPullRequest, PullRequests } from './github.ts';
@@ -12,6 +15,7 @@ import { GitHubError } from './github.ts';
 import {
   CELEBRATION_MS,
   CHECK_COLORS,
+  focusOf,
   MAX_CELLS,
   MERGED_COLOR,
   QUEUED_COLOR,
@@ -56,27 +60,7 @@ function draw(
   { at = NOW, failure }: { at?: Date; failure?: PollFailure } = {},
 ): Map<string, BarElements[number]> {
   const latest = value === undefined ? undefined : { value, at };
-  return new Map(
-    render(NOW, latest, failure).map((element) => [element.id, element]),
-  );
-}
-
-function textOf(
-  elements: Map<string, BarElements[number]>,
-  id: string,
-): string | undefined {
-  const element = elements.get(id);
-  return element !== undefined && 'text' in element ? element.text : undefined;
-}
-
-function colorOf(
-  elements: Map<string, BarElements[number]>,
-  id: string,
-): string | undefined {
-  const element = elements.get(id);
-  return element !== undefined && 'color' in element
-    ? element.color
-    : undefined;
+  return elementsById(render(NOW, latest, failure));
 }
 
 describe('render', () => {
@@ -249,6 +233,45 @@ describe('render', () => {
     expect(textOf(elements, 'headline')).toBe('GITHUB');
     expect(textOf(elements, 'summary')).toBe(summary);
     expect(textOf(elements, 'line-0')).toBe(line);
+  });
+});
+
+describe('focusOf', () => {
+  const failing = pull({ number: 1, checks: 'failing', autoMerge: true });
+  const queued = pull({ number: 2, autoMerge: true });
+  const open = pull({ number: 3 });
+
+  it('ranks a celebration, failing checks, the queue, then the rest', () => {
+    const celebration: Celebration = {
+      merge: {
+        repo: 'Abildtoft/discera',
+        number: 9,
+        title: 'Ship it',
+        mergedAt: NOW,
+      },
+      noticedAt: NOW,
+    };
+    const { pulls } = state([open, queued, failing]);
+    expect(focusOf(pulls, celebration)).toMatchObject({
+      headline: 'MERGED!',
+      pull: celebration.merge,
+    });
+    expect(focusOf(pulls, undefined)).toMatchObject({
+      headline: '1 FAILING',
+      pull: failing,
+    });
+    expect(focusOf(state([open, queued]).pulls, undefined)).toMatchObject({
+      headline: '1 QUEUED',
+      pull: queued,
+    });
+    expect(focusOf(state([open]).pulls, undefined)).toMatchObject({
+      headline: '1 OPEN',
+      pull: open,
+    });
+    expect(focusOf(state([]).pulls, undefined)).toMatchObject({
+      headline: 'NONE OPEN',
+      pull: undefined,
+    });
   });
 });
 

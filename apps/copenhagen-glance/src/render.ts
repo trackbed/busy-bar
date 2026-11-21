@@ -1,30 +1,25 @@
-import type {
-  BarElements,
-  BarFont,
-  Snapshot,
-  TextElement,
-} from '@busy-bar-apps/bar-kit';
+import type { BarElements, Snapshot } from '@busy-bar-apps/bar-kit';
 import {
   BACK_DISPLAY,
-  FRONT_DISPLAY,
   fitText,
-  rgba,
+  FOOTER_Y,
+  FRONT_DISPLAY,
+  PALETTE,
+  solidRectangle,
+  textElement,
 } from '@busy-bar-apps/bar-kit';
 
 import type { RainHour } from './dmi.ts';
 import type { Co2Reading, PriceArea, PriceSlot } from './energi.ts';
-import type { PriceLevel, PriceWindow } from './outlook.ts';
+import type { PriceLevel, PriceOutlook, PriceWindow } from './outlook.ts';
 import { priceOutlook, RAIN_THRESHOLD_MM, rainAhead } from './outlook.ts';
 
 export const LEVEL_COLORS: Readonly<Record<PriceLevel, string>> = {
-  low: rgba(0, 200, 90),
-  mid: rgba(255, 170, 0),
-  high: rgba(255, 60, 60),
+  low: PALETTE.good,
+  mid: PALETTE.warn,
+  high: PALETTE.bad,
 };
-export const RAIN_COLOR = rgba(60, 130, 255);
-const IDLE_COLOR = rgba(110, 110, 110);
-const TEXT_COLOR = rgba(200, 200, 200);
-const DIM_COLOR = rgba(120, 120, 120);
+export const RAIN_COLOR = PALETTE.info;
 
 const CO2_GOOD = 100;
 const CO2_FAIR = 200;
@@ -38,7 +33,6 @@ export const BAR_HOURS = FRONT_DISPLAY.width / BAR_PITCH;
 const BAR_MAX_HEIGHT = 7;
 
 const ROW_PITCH = 11;
-const FOOTER_Y = BACK_DISPLAY.height - 7;
 const RAIN_HOURS = 3;
 const TIME_ZONE = 'Europe/Copenhagen';
 
@@ -56,6 +50,24 @@ export interface GlanceData {
  * CO2, or rain when it is coming. The details are listed behind.
  */
 export function render(now: Date, data: GlanceData): BarElements {
+  const glance = glanceAt(data, now);
+  return [...front(glance), ...back(glance, data, now)];
+}
+
+/** What the glance shows at a moment: the readings still worth drawing. */
+export interface Glance {
+  /** Undefined until Energi Data Service publishes prices for now. */
+  readonly outlook: PriceOutlook | undefined;
+  /** Undefined without a reading, or with one too old to show. */
+  readonly co2: Co2Reading | undefined;
+  /** Millimetres per hour for the next hours; undefined without a forecast. */
+  readonly rain: readonly number[] | undefined;
+  /** Whether the coming hour brings enough rain to say so in front. */
+  readonly raining: boolean;
+}
+
+/** Pick out of `data` what the glance shows at `now`. */
+export function glanceAt(data: GlanceData, now: Date): Glance {
   const outlook =
     data.prices === undefined
       ? undefined
@@ -70,53 +82,89 @@ export function render(now: Date, data: GlanceData): BarElements {
       ? undefined
       : rainAhead(data.rain.value, now, RAIN_HOURS);
   const raining = rain !== undefined && (rain[0] ?? 0) >= RAIN_THRESHOLD_MM;
+  return { outlook, co2, rain, raining };
+}
 
+function front({ outlook, co2, raining }: Glance): BarElements {
   const elements: BarElements = [
     outlook === undefined
-      ? text('price', 'NO PRICE', 'front', 'small', 0, 0, IDLE_COLOR)
-      : text(
-          'price',
-          `${kroner(outlook.current.kronerPerKwh)} kr`,
-          'front',
-          'small',
-          0,
-          0,
-          LEVEL_COLORS[outlook.level],
-        ),
+      ? textElement({
+          id: 'price',
+          text: 'NO PRICE',
+          display: 'front',
+          font: 'small',
+          x: 0,
+          y: 0,
+          color: PALETTE.idle,
+        })
+      : textElement({
+          id: 'price',
+          text: `${kroner(outlook.current.kronerPerKwh)} kr`,
+          display: 'front',
+          font: 'small',
+          x: 0,
+          y: 0,
+          color: LEVEL_COLORS[outlook.level],
+        }),
   ];
   if (raining) {
-    elements.push(rightText('side', 'RAIN', RAIN_COLOR));
+    elements.push(
+      textElement({
+        id: 'side',
+        text: 'RAIN',
+        display: 'front',
+        font: 'small',
+        x: FRONT_DISPLAY.width - 1,
+        y: 0,
+        color: RAIN_COLOR,
+        align: 'top_right',
+      }),
+    );
   } else if (co2 !== undefined) {
     elements.push(
-      rightText(
-        'side',
-        `${Math.round(co2.gramsPerKwh)}g`,
-        co2Color(co2.gramsPerKwh),
-      ),
+      textElement({
+        id: 'side',
+        text: `${Math.round(co2.gramsPerKwh)}g`,
+        display: 'front',
+        font: 'small',
+        x: FRONT_DISPLAY.width - 1,
+        y: 0,
+        color: co2Color(co2.gramsPerKwh),
+        align: 'top_right',
+      }),
     );
   }
   if (outlook !== undefined) {
-    const prices = outlook.hours.map((hour) => hour.kronerPerKwh);
-    const low = Math.min(...prices);
-    const high = Math.max(...prices);
-    outlook.hours.forEach((hour, index) => {
-      const share = high > low ? (hour.kronerPerKwh - low) / (high - low) : 0.5;
-      const height = 1 + Math.round(share * (BAR_MAX_HEIGHT - 1));
-      elements.push({
-        id: `bar-${index}`,
-        type: 'rectangle',
-        display: 'front',
-        x: index * BAR_PITCH,
-        y: FRONT_DISPLAY.height - height,
-        width: BAR_PITCH - 1,
-        height,
-        fill: 'solid',
-        fill_colors: [LEVEL_COLORS[hour.level]],
-        border_width: 0,
-      });
-    });
+    elements.push(...priceBars(outlook));
   }
+  return elements;
+}
 
+/** One bar per hour, as tall as its price within the outlook's range. */
+function priceBars(outlook: PriceOutlook): BarElements {
+  const prices = outlook.hours.map((hour) => hour.kronerPerKwh);
+  const low = Math.min(...prices);
+  const high = Math.max(...prices);
+  return outlook.hours.map((hour, index) => {
+    const share = high > low ? (hour.kronerPerKwh - low) / (high - low) : 0.5;
+    const height = 1 + Math.round(share * (BAR_MAX_HEIGHT - 1));
+    return solidRectangle({
+      id: `bar-${index}`,
+      display: 'front',
+      x: index * BAR_PITCH,
+      y: FRONT_DISPLAY.height - height,
+      width: BAR_PITCH - 1,
+      height,
+      color: LEVEL_COLORS[hour.level],
+    });
+  });
+}
+
+function back(
+  { outlook, co2, rain }: Glance,
+  data: GlanceData,
+  now: Date,
+): BarElements {
   const lines = [
     outlook === undefined
       ? `Spot price ${data.area}: not published yet`
@@ -128,28 +176,27 @@ export function render(now: Date, data: GlanceData): BarElements {
       : `CO2: ${Math.round(co2.gramsPerKwh)} g/kWh`,
     rainLine(data.rainEnabled, rain),
   ];
-  elements.push(
+  return [
     ...lines.map((line, index) =>
-      text(
-        `line-${index}`,
-        fitText(line, 'small', BACK_DISPLAY.width),
-        'back',
-        'small',
-        0,
-        index * ROW_PITCH,
-      ),
+      textElement({
+        id: `line-${index}`,
+        text: fitText(line, 'small', BACK_DISPLAY.width),
+        display: 'back',
+        font: 'small',
+        x: 0,
+        y: index * ROW_PITCH,
+      }),
     ),
-    text(
-      'footer',
-      'Spot price before tariffs, tax, VAT',
-      'back',
-      'tiny',
-      0,
-      FOOTER_Y,
-      DIM_COLOR,
-    ),
-  );
-  return elements;
+    textElement({
+      id: 'footer',
+      text: 'Spot price before tariffs, tax, VAT',
+      display: 'back',
+      font: 'tiny',
+      x: 0,
+      y: FOOTER_Y,
+      color: PALETTE.dim,
+    }),
+  ];
 }
 
 /** Kroner with a Danish decimal comma: `1,11`. */
@@ -200,23 +247,4 @@ function clock(time: Date): string {
     hourCycle: 'h23',
     timeZone: TIME_ZONE,
   }).format(time);
-}
-
-function rightText(id: string, content: string, color: string): TextElement {
-  return {
-    ...text(id, content, 'front', 'small', FRONT_DISPLAY.width - 1, 0, color),
-    align: 'top_right',
-  };
-}
-
-function text(
-  id: string,
-  content: string,
-  display: 'front' | 'back',
-  font: BarFont,
-  x: number,
-  y: number,
-  color: string = TEXT_COLOR,
-): TextElement {
-  return { id, type: 'text', display, text: content, font, color, x, y };
 }

@@ -1,16 +1,16 @@
 import { ConvexError } from 'convex/values';
 
-import type {
-  BarElements,
-  BarFont,
-  RectangleElement,
-  TextElement,
-} from '@busy-bar-apps/bar-kit';
+import type { BarElements } from '@busy-bar-apps/bar-kit';
 import {
   BACK_DISPLAY,
-  FRONT_DISPLAY,
   fitText,
+  FOOTER_Y,
+  FRONT_DISPLAY,
+  PALETTE,
   rgba,
+  statusCells,
+  SUMMARY_Y,
+  textElement,
   textWidth,
   toBarText,
 } from '@busy-bar-apps/bar-kit';
@@ -44,14 +44,14 @@ export interface TeamView {
 }
 
 export const STATUS_COLORS: Readonly<Record<Status, string>> = {
-  free: rgba(0, 200, 90),
-  busy: rgba(255, 60, 60),
-  resting: rgba(60, 130, 255),
-  paused: rgba(255, 170, 0),
+  free: PALETTE.good,
+  busy: PALETTE.bad,
+  resting: PALETTE.info,
+  paused: PALETTE.warn,
   offline: rgba(80, 80, 80),
 };
-export const KNOCK_COLOR = rgba(255, 170, 0);
-export const FOCUS_COLOR = rgba(60, 130, 255);
+export const KNOCK_COLOR = PALETTE.warn;
+export const FOCUS_COLOR = PALETTE.info;
 const LABELS: Readonly<Record<Status, string>> = {
   free: 'FREE',
   busy: 'BUSY',
@@ -59,14 +59,9 @@ const LABELS: Readonly<Record<Status, string>> = {
   paused: 'PAUSED',
   offline: 'OFFLINE',
 };
-const BRIGHT_COLOR = rgba(255, 255, 255);
-const TEXT_COLOR = rgba(200, 200, 200);
-const DIM_COLOR = rgba(120, 120, 120);
-const IDLE_COLOR = rgba(110, 110, 110);
 
 // Front: a headline in `small` (rows 0-8), a summary in `tiny` (rows 9-14),
 // and one cell per teammate on the bottom row, as agent-fleet draws them.
-const SUMMARY_Y = 9;
 const CELL_WIDTH = 3;
 const CELL_PITCH = 4;
 const MAX_CELLS = Math.floor(FRONT_DISPLAY.width / CELL_PITCH);
@@ -85,7 +80,6 @@ const TITLE_Y = 14;
 const DETAIL_Y = 28;
 const BUTTON_Y = 36;
 const MEANING_X = 40;
-const FOOTER_Y = BACK_DISPLAY.height - 7;
 
 /** A teammate, with the status that colours the front and names their row. */
 interface Teammate extends BarStatus {
@@ -170,7 +164,7 @@ function front(team: readonly Teammate[]): BarElements {
   let summary: string;
   if (team.length === 0) {
     headline = 'NO TEAM';
-    color = IDLE_COLOR;
+    color = PALETTE.idle;
     summary = 'run bars:add';
   } else if (free.length > 0) {
     headline = `${free.length} FREE`;
@@ -178,7 +172,7 @@ function front(team: readonly Teammate[]): BarElements {
     summary = free.map((teammate) => teammate.name).join(', ');
   } else if (team.every((teammate) => teammate.status === 'offline')) {
     headline = 'ALL OFFLINE';
-    color = IDLE_COLOR;
+    color = PALETTE.idle;
     summary = 'nobody is reporting';
   } else {
     headline = 'NONE FREE';
@@ -186,28 +180,30 @@ function front(team: readonly Teammate[]): BarElements {
     summary = nextFree(team) ?? 'nobody says when';
   }
   return [
-    text('headline', headline, 'front', 'small', 0, 0, color),
-    text(
-      'summary',
-      fitText(summary, 'tiny', FRONT_DISPLAY.width),
-      'front',
-      'tiny',
-      0,
-      SUMMARY_Y,
-      color,
-    ),
-    ...team.slice(0, MAX_CELLS).map((teammate, index): RectangleElement => ({
-      id: `cell-${index}`,
-      type: 'rectangle',
+    textElement({
+      id: 'headline',
+      text: headline,
       display: 'front',
-      x: index * CELL_PITCH,
-      y: FRONT_DISPLAY.height - 1,
-      width: CELL_WIDTH,
-      height: 1,
-      fill: 'solid',
-      fill_colors: [STATUS_COLORS[teammate.status]],
-      border_width: 0,
-    })),
+      font: 'small',
+      x: 0,
+      y: 0,
+      color,
+    }),
+    textElement({
+      id: 'summary',
+      text: fitText(summary, 'tiny', FRONT_DISPLAY.width),
+      display: 'front',
+      font: 'tiny',
+      x: 0,
+      y: SUMMARY_Y,
+      color,
+    }),
+    ...statusCells(
+      team
+        .slice(0, MAX_CELLS)
+        .map((teammate) => STATUS_COLORS[teammate.status]),
+      { pitch: CELL_PITCH, width: CELL_WIDTH },
+    ),
   ];
 }
 
@@ -303,60 +299,74 @@ function back(
   note: string | undefined,
 ): BarElements {
   const elements: BarElements = [
-    text('header', 'Team', 'back', 'tiny', 0, 0, DIM_COLOR),
+    textElement({
+      id: 'header',
+      text: 'Team',
+      display: 'back',
+      font: 'tiny',
+      x: 0,
+      y: 0,
+      color: PALETTE.dim,
+    }),
   ];
   if (note !== undefined) {
-    elements.push({
-      ...text(
-        'hint',
-        fitText(note, 'tiny', BACK_DISPLAY.width - 30),
-        'back',
-        'tiny',
-        BACK_DISPLAY.width - 1,
-        0,
-        DIM_COLOR,
-      ),
-      align: 'top_right',
-    });
+    elements.push(
+      textElement({
+        id: 'hint',
+        text: fitText(note, 'tiny', BACK_DISPLAY.width - 30),
+        display: 'back',
+        font: 'tiny',
+        x: BACK_DISPLAY.width - 1,
+        y: 0,
+        color: PALETTE.dim,
+        align: 'top_right',
+      }),
+    );
   }
   window(rows, selected).forEach((row, slot) => {
     const y = FIRST_ROW_Y + slot * ROW_PITCH;
     const highlighted = row.id === selected;
-    let color = TEXT_COLOR;
+    let color = PALETTE.text;
     if (highlighted) {
-      color = BRIGHT_COLOR;
+      color = PALETTE.bright;
     } else if (row.dim) {
-      color = DIM_COLOR;
+      color = PALETTE.dim;
     }
     const nameWidth =
       BACK_DISPLAY.width - NAME_X - textWidth(row.label, 'small') - COLUMN_GAP;
     if (highlighted) {
       elements.push(
-        text(`row-${slot}-marker`, '>', 'back', 'small', 0, y, color),
+        textElement({
+          id: `row-${slot}-marker`,
+          text: '>',
+          display: 'back',
+          font: 'small',
+          x: 0,
+          y,
+          color,
+        }),
       );
     }
     elements.push(
-      text(
-        `row-${slot}-name`,
-        fitText(row.name, 'small', nameWidth),
-        'back',
-        'small',
-        NAME_X,
+      textElement({
+        id: `row-${slot}-name`,
+        text: fitText(row.name, 'small', nameWidth),
+        display: 'back',
+        font: 'small',
+        x: NAME_X,
         y,
         color,
-      ),
-      {
-        ...text(
-          `row-${slot}-status`,
-          row.label,
-          'back',
-          'small',
-          BACK_DISPLAY.width - 1,
-          y,
-          color,
-        ),
+      }),
+      textElement({
+        id: `row-${slot}-status`,
+        text: row.label,
+        display: 'back',
+        font: 'small',
+        x: BACK_DISPLAY.width - 1,
+        y,
+        color,
         align: 'top_right',
-      },
+      }),
     );
   });
   return elements;
@@ -384,59 +394,81 @@ function countdown(board: Board, focus: Focus, at: number): BarElements {
   const length = duration(Math.round((focus.endsAt - focus.startsAt) / 60_000));
   const mine = focus.startedBy === board.me;
   return [
-    text(
-      'headline',
-      `FOCUS IN ${seconds}s`,
-      'front',
-      'small',
-      0,
-      0,
-      FOCUS_COLOR,
-    ),
-    text(
-      'summary',
-      fitText(`${length} with the team`, 'tiny', FRONT_DISPLAY.width),
-      'front',
-      'tiny',
-      0,
-      SUMMARY_Y,
-      FOCUS_COLOR,
-    ),
-    text('header', 'Team focus', 'back', 'tiny', 0, 0, DIM_COLOR),
-    text(
-      'title',
-      `${length} with the team`,
-      'back',
-      'normal',
-      0,
-      TITLE_Y,
-      BRIGHT_COLOR,
-    ),
-    text('detail', `starts in ${seconds}s`, 'back', 'small', 0, DETAIL_Y),
-    text('button-back', 'BACK', 'back', 'small', 0, BUTTON_Y + ROW_PITCH + 2),
-    text(
-      'reply-back',
-      mine ? 'call it off' : 'skip it',
-      'back',
-      'small',
-      MEANING_X,
-      BUTTON_Y + ROW_PITCH + 2,
-    ),
-    text(
-      'footer',
-      fitText(
+    textElement({
+      id: 'headline',
+      text: `FOCUS IN ${seconds}s`,
+      display: 'front',
+      font: 'small',
+      x: 0,
+      y: 0,
+      color: FOCUS_COLOR,
+    }),
+    textElement({
+      id: 'summary',
+      text: fitText(`${length} with the team`, 'tiny', FRONT_DISPLAY.width),
+      display: 'front',
+      font: 'tiny',
+      x: 0,
+      y: SUMMARY_Y,
+      color: FOCUS_COLOR,
+    }),
+    textElement({
+      id: 'header',
+      text: 'Team focus',
+      display: 'back',
+      font: 'tiny',
+      x: 0,
+      y: 0,
+      color: PALETTE.dim,
+    }),
+    textElement({
+      id: 'title',
+      text: `${length} with the team`,
+      display: 'back',
+      font: 'normal',
+      x: 0,
+      y: TITLE_Y,
+      color: PALETTE.bright,
+    }),
+    textElement({
+      id: 'detail',
+      text: `starts in ${seconds}s`,
+      display: 'back',
+      font: 'small',
+      x: 0,
+      y: DETAIL_Y,
+    }),
+    textElement({
+      id: 'button-back',
+      text: 'BACK',
+      display: 'back',
+      font: 'small',
+      x: 0,
+      y: BUTTON_Y + ROW_PITCH + 2,
+    }),
+    textElement({
+      id: 'reply-back',
+      text: mine ? 'call it off' : 'skip it',
+      display: 'back',
+      font: 'small',
+      x: MEANING_X,
+      y: BUTTON_Y + ROW_PITCH + 2,
+    }),
+    textElement({
+      id: 'footer',
+      text: fitText(
         mine
           ? 'you started it'
           : `${nameOf(board, focus.startedBy)} started it`,
         'tiny',
         BACK_DISPLAY.width,
       ),
-      'back',
-      'tiny',
-      0,
-      FOOTER_Y,
-      DIM_COLOR,
-    ),
+      display: 'back',
+      font: 'tiny',
+      x: 0,
+      y: FOOTER_Y,
+      color: PALETTE.dim,
+    }),
   ];
 }
 
@@ -448,49 +480,87 @@ function knocking(board: Board, knock: Knock): BarElements {
       other !== knock && other.to === board.me && other.status === 'waiting',
   ).length;
   const elements: BarElements = [
-    text('headline', 'KNOCK KNOCK', 'front', 'small', 0, 0, KNOCK_COLOR),
-    text(
-      'summary',
-      fitText(knocker, 'tiny', FRONT_DISPLAY.width),
-      'front',
-      'tiny',
-      0,
-      SUMMARY_Y,
-      KNOCK_COLOR,
-    ),
-    text('header', 'Knock knock', 'back', 'tiny', 0, 0, DIM_COLOR),
-    text(
-      'knocker',
-      fitText(`${knocker} is knocking`, 'normal', BACK_DISPLAY.width),
-      'back',
-      'normal',
-      0,
-      TITLE_Y,
-      BRIGHT_COLOR,
-    ),
-    text('button-ok', 'OK', 'back', 'small', 0, BUTTON_Y, BRIGHT_COLOR),
-    text('reply-ok', 'coming', 'back', 'small', MEANING_X, BUTTON_Y),
-    text('button-back', 'BACK', 'back', 'small', 0, BUTTON_Y + ROW_PITCH + 2),
-    text(
-      'reply-back',
-      'later',
-      'back',
-      'small',
-      MEANING_X,
-      BUTTON_Y + ROW_PITCH + 2,
-    ),
+    textElement({
+      id: 'headline',
+      text: 'KNOCK KNOCK',
+      display: 'front',
+      font: 'small',
+      x: 0,
+      y: 0,
+      color: KNOCK_COLOR,
+    }),
+    textElement({
+      id: 'summary',
+      text: fitText(knocker, 'tiny', FRONT_DISPLAY.width),
+      display: 'front',
+      font: 'tiny',
+      x: 0,
+      y: SUMMARY_Y,
+      color: KNOCK_COLOR,
+    }),
+    textElement({
+      id: 'header',
+      text: 'Knock knock',
+      display: 'back',
+      font: 'tiny',
+      x: 0,
+      y: 0,
+      color: PALETTE.dim,
+    }),
+    textElement({
+      id: 'knocker',
+      text: fitText(`${knocker} is knocking`, 'normal', BACK_DISPLAY.width),
+      display: 'back',
+      font: 'normal',
+      x: 0,
+      y: TITLE_Y,
+      color: PALETTE.bright,
+    }),
+    textElement({
+      id: 'button-ok',
+      text: 'OK',
+      display: 'back',
+      font: 'small',
+      x: 0,
+      y: BUTTON_Y,
+      color: PALETTE.bright,
+    }),
+    textElement({
+      id: 'reply-ok',
+      text: 'coming',
+      display: 'back',
+      font: 'small',
+      x: MEANING_X,
+      y: BUTTON_Y,
+    }),
+    textElement({
+      id: 'button-back',
+      text: 'BACK',
+      display: 'back',
+      font: 'small',
+      x: 0,
+      y: BUTTON_Y + ROW_PITCH + 2,
+    }),
+    textElement({
+      id: 'reply-back',
+      text: 'later',
+      display: 'back',
+      font: 'small',
+      x: MEANING_X,
+      y: BUTTON_Y + ROW_PITCH + 2,
+    }),
   ];
   if (others > 0) {
     elements.push(
-      text(
-        'more',
-        `+${others} more knocking`,
-        'back',
-        'tiny',
-        0,
-        FOOTER_Y,
-        DIM_COLOR,
-      ),
+      textElement({
+        id: 'more',
+        text: `+${others} more knocking`,
+        display: 'back',
+        font: 'tiny',
+        x: 0,
+        y: FOOTER_Y,
+        color: PALETTE.dim,
+      }),
     );
   }
   return elements;
@@ -514,17 +584,33 @@ function unavailable(failure: Error | undefined): BarElements {
     lines = ['Cannot load the team:', failure.message];
   }
   return [
-    text('headline', 'INTERCOM', 'front', 'small', 0, 0, IDLE_COLOR),
-    text('summary', summary, 'front', 'tiny', 0, SUMMARY_Y, IDLE_COLOR),
+    textElement({
+      id: 'headline',
+      text: 'INTERCOM',
+      display: 'front',
+      font: 'small',
+      x: 0,
+      y: 0,
+      color: PALETTE.idle,
+    }),
+    textElement({
+      id: 'summary',
+      text: summary,
+      display: 'front',
+      font: 'tiny',
+      x: 0,
+      y: SUMMARY_Y,
+      color: PALETTE.idle,
+    }),
     ...lines.map((line, index) =>
-      text(
-        `line-${index}`,
-        fitText(toBarText(line), 'small', BACK_DISPLAY.width),
-        'back',
-        'small',
-        0,
-        index * ROW_PITCH,
-      ),
+      textElement({
+        id: `line-${index}`,
+        text: fitText(toBarText(line), 'small', BACK_DISPLAY.width),
+        display: 'back',
+        font: 'small',
+        x: 0,
+        y: index * ROW_PITCH,
+      }),
     ),
   ];
 }
@@ -537,16 +623,4 @@ function duration(minutes: number): string {
   return minutes < 60
     ? `${minutes}m`
     : `${Math.floor(minutes / 60)}h${String(minutes % 60).padStart(2, '0')}`;
-}
-
-function text(
-  id: string,
-  content: string,
-  display: 'front' | 'back',
-  font: BarFont,
-  x: number,
-  y: number,
-  color: string = TEXT_COLOR,
-): TextElement {
-  return { id, type: 'text', display, text: content, font, color, x, y };
 }

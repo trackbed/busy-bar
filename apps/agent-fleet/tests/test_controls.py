@@ -3,12 +3,11 @@ from collections.abc import AsyncIterator
 from datetime import UTC, datetime, timedelta
 
 import pytest
-from busylib.features import ButtonEvent, EncoderEvent, SelectorEvent
-from busylib.features.input_events import SelectorPosition
 
 from agent_fleet.controls import SOUNDS, Chime, Controls
 from agent_fleet.fleet import Fleet
 from agent_fleet.hooks import HookEvent
+from bar_kit import ButtonEvent, EncoderEvent, SelectorEvent, SelectorPosition
 
 NOW = datetime(2026, 10, 20, 9, 0, tzinfo=UTC)
 

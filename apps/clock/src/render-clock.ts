@@ -1,7 +1,13 @@
 import type { BarElements } from '@busy-bar-apps/bar-kit';
-import { BACK_DISPLAY, FRONT_DISPLAY, rgba } from '@busy-bar-apps/bar-kit';
+import {
+  BACK_DISPLAY,
+  FRONT_DISPLAY,
+  PALETTE,
+  rgba,
+  solidRectangle,
+  textElement,
+} from '@busy-bar-apps/bar-kit';
 
-const TIME_COLOR = rgba(255, 255, 255);
 const SECONDS_COLOR = rgba(255, 140, 0);
 
 interface ClockParts {
@@ -18,39 +24,35 @@ interface ClockParts {
 export function renderClock(now: Date, timeZone?: string): BarElements {
   const { time, second, date } = clockParts(now, timeZone);
   return [
-    {
+    textElement({
       id: 'time',
-      type: 'text',
-      display: 'front',
       text: time,
+      display: 'front',
       font: 'extra_large',
-      color: TIME_COLOR,
-      align: 'top_mid',
       x: FRONT_DISPLAY.width / 2,
       y: 1,
-    },
-    {
+      color: PALETTE.bright,
+      align: 'top_mid',
+    }),
+    solidRectangle({
       id: 'seconds',
-      type: 'rectangle',
       display: 'front',
       x: 0,
       y: FRONT_DISPLAY.height - 1,
       width: secondsBarWidth(second),
       height: 1,
-      fill: 'solid',
-      fill_colors: [SECONDS_COLOR],
-      border_width: 0,
-    },
-    {
+      color: SECONDS_COLOR,
+    }),
+    textElement({
       id: 'date',
-      type: 'text',
-      display: 'back',
       text: date,
+      display: 'back',
       font: 'large',
-      align: 'center',
       x: BACK_DISPLAY.width / 2,
       y: BACK_DISPLAY.height / 2,
-    },
+      color: PALETTE.bright,
+      align: 'center',
+    }),
   ];
 }
 

@@ -3,45 +3,44 @@ import type {
   BarFont,
   PollFailure,
   Snapshot,
-  TextElement,
 } from '@busy-bar-apps/bar-kit';
 import {
   BACK_DISPLAY,
-  FRONT_DISPLAY,
   fitText,
+  FOOTER_Y,
+  FRONT_DISPLAY,
+  PALETTE,
   rgba,
+  statusCells,
+  SUMMARY_Y,
+  textElement,
   textWidth,
   toBarText,
 } from '@busy-bar-apps/bar-kit';
 
-import type { Checks, OpenPullRequest } from './github.ts';
+import type { Checks, OpenPullRequest, PullRequests } from './github.ts';
 import { GitHubError } from './github.ts';
-import type { TickerState } from './watch.ts';
+import type { Celebration, TickerState } from './watch.ts';
 
-export const MERGED_COLOR = rgba(0, 210, 90);
+export const MERGED_COLOR = PALETTE.good;
 export const CHECK_COLORS: Readonly<Record<Checks, string>> = {
-  passing: rgba(0, 210, 90),
-  failing: rgba(255, 60, 60),
-  pending: rgba(255, 170, 0),
-  none: rgba(110, 110, 110),
+  passing: PALETTE.good,
+  failing: PALETTE.bad,
+  pending: PALETTE.warn,
+  none: PALETTE.idle,
 };
-export const QUEUED_COLOR = rgba(60, 130, 255);
+export const QUEUED_COLOR = PALETTE.info;
 const DRAFT_COLOR = rgba(50, 50, 50);
-const IDLE_COLOR = rgba(110, 110, 110);
-const TEXT_COLOR = rgba(200, 200, 200);
-const DIM_COLOR = rgba(120, 120, 120);
 
 /** How long a newly noticed merge takes over the display. */
 export const CELEBRATION_MS = 15_000;
 /** How long GitHub may stay unreachable before the board says so. */
 export const STALE_MS = 5 * 60_000;
 
-const SUMMARY_Y = 9;
 const CELL_PITCH = 4;
 export const MAX_CELLS = FRONT_DISPLAY.width / CELL_PITCH;
 const FIRST_ROW_Y = 12;
 const ROW_PITCH = 10;
-const FOOTER_Y = BACK_DISPLAY.height - 7;
 const MAX_ROWS = Math.floor((FOOTER_Y - FIRST_ROW_Y) / ROW_PITCH);
 const REF_X = 24;
 const TITLE_X = 82;
@@ -62,93 +61,144 @@ export function render(
   const { pulls, celebration } = latest.value;
   const celebrating =
     celebration !== undefined &&
-    now.getTime() - celebration.noticedAt.getTime() < CELEBRATION_MS;
-  const failing = pulls.open.filter((pull) => pull.checks === 'failing');
-  const queued = pulls.open.filter(
-    (pull) => pull.autoMerge && pull.checks !== 'failing',
-  );
-
-  const count = String(pulls.mergedToday);
-  const textX = textWidth(count, 'large') + 3;
-  const width = FRONT_DISPLAY.width - textX;
-  let headline: string;
-  let color: string;
-  let focus: string;
-  if (celebrating) {
-    headline = 'MERGED!';
-    color = MERGED_COLOR;
-    focus = fitReference(celebration.merge, 'tiny', width);
-  } else if (failing[0] !== undefined) {
-    headline = `${failing.length} FAILING`;
-    color = CHECK_COLORS.failing;
-    focus = fitReference(failing[0], 'tiny', width);
-  } else if (queued[0] !== undefined) {
-    headline = `${queued.length} QUEUED`;
-    color = QUEUED_COLOR;
-    focus = fitReference(queued[0], 'tiny', width);
-  } else if (pulls.open[0] !== undefined) {
-    headline = `${pulls.openCount} OPEN`;
-    color = TEXT_COLOR;
-    focus = fitReference(pulls.open[0], 'tiny', width);
-  } else {
-    headline = 'NONE OPEN';
-    color = IDLE_COLOR;
-    focus = 'merged today';
-  }
-
-  const elements: BarElements = [
-    text('count', count, 'front', 'large', 0, 0, {
-      color: pulls.mergedToday > 0 ? MERGED_COLOR : IDLE_COLOR,
-    }),
-    text(
-      'headline',
-      fitText(headline, 'small', width),
-      'front',
-      'small',
-      textX,
-      0,
-      {
-        color,
-      },
-    ),
-    text('focus', focus, 'front', 'tiny', textX, SUMMARY_Y, {
-      color,
-    }),
-    ...pulls.open.slice(0, MAX_CELLS).map((pull, index) => ({
-      id: `cell-${index}`,
-      type: 'rectangle' as const,
-      display: 'front' as const,
-      x: index * CELL_PITCH,
-      y: FRONT_DISPLAY.height - 1,
-      width: CELL_PITCH - 1,
-      height: 1,
-      fill: 'solid' as const,
-      fill_colors: [pull.draft ? DRAFT_COLOR : CHECK_COLORS[pull.checks]],
-      border_width: 0,
-    })),
-  ];
-
-  const header = celebrating
-    ? `Merged ${reference(celebration.merge)}!`
-    : `${pulls.mergedToday} merged today, ${pulls.openCount} open`;
+    now.getTime() - celebration.noticedAt.getTime() < CELEBRATION_MS
+      ? celebration
+      : undefined;
   const stale =
     failure !== undefined && now.getTime() - latest.at.getTime() > STALE_MS;
   const footer = stale
     ? 'GitHub unreachable, showing old data'
     : `updated ${minutesAgo(now, latest.at)}`;
-  elements.push(
-    text(
-      'header',
-      fitText(header, 'small', BACK_DISPLAY.width),
-      'back',
-      'small',
-      0,
-      0,
-    ),
-    ...pulls.open.slice(0, MAX_ROWS).flatMap((pull, index) => row(index, pull)),
-    text('footer', footer, 'back', 'tiny', 0, FOOTER_Y, { color: DIM_COLOR }),
+  return [
+    ...front(pulls, focusOf(pulls, celebrating)),
+    ...back(pulls, celebrating, footer),
+  ];
+}
+
+/** What the front's headline says, and the pull request it names below. */
+export interface Focus {
+  readonly headline: string;
+  readonly color: string;
+  /** Undefined when nothing is open. */
+  readonly pull: { readonly repo: string; readonly number: number } | undefined;
+}
+
+/**
+ * What most needs you: a merge being celebrated, then failing checks, then
+ * the auto-merge queue, then everything open.
+ */
+export function focusOf(
+  pulls: PullRequests,
+  celebrating: Celebration | undefined,
+): Focus {
+  const failing = pulls.open.filter((pull) => pull.checks === 'failing');
+  const queued = pulls.open.filter(
+    (pull) => pull.autoMerge && pull.checks !== 'failing',
   );
-  return elements;
+  if (celebrating !== undefined) {
+    return {
+      headline: 'MERGED!',
+      color: MERGED_COLOR,
+      pull: celebrating.merge,
+    };
+  }
+  if (failing[0] !== undefined) {
+    return {
+      headline: `${failing.length} FAILING`,
+      color: CHECK_COLORS.failing,
+      pull: failing[0],
+    };
+  }
+  if (queued[0] !== undefined) {
+    return {
+      headline: `${queued.length} QUEUED`,
+      color: QUEUED_COLOR,
+      pull: queued[0],
+    };
+  }
+  if (pulls.open[0] !== undefined) {
+    return {
+      headline: `${pulls.openCount} OPEN`,
+      color: PALETTE.text,
+      pull: pulls.open[0],
+    };
+  }
+  return { headline: 'NONE OPEN', color: PALETTE.idle, pull: undefined };
+}
+
+function front(pulls: PullRequests, focus: Focus): BarElements {
+  const count = String(pulls.mergedToday);
+  const textX = textWidth(count, 'large') + 3;
+  const width = FRONT_DISPLAY.width - textX;
+  return [
+    textElement({
+      id: 'count',
+      text: count,
+      display: 'front',
+      font: 'large',
+      x: 0,
+      y: 0,
+      color: pulls.mergedToday > 0 ? MERGED_COLOR : PALETTE.idle,
+    }),
+    textElement({
+      id: 'headline',
+      text: fitText(focus.headline, 'small', width),
+      display: 'front',
+      font: 'small',
+      x: textX,
+      y: 0,
+      color: focus.color,
+    }),
+    textElement({
+      id: 'focus',
+      text:
+        focus.pull === undefined
+          ? 'merged today'
+          : fitReference(focus.pull, 'tiny', width),
+      display: 'front',
+      font: 'tiny',
+      x: textX,
+      y: SUMMARY_Y,
+      color: focus.color,
+    }),
+    ...statusCells(
+      pulls.open
+        .slice(0, MAX_CELLS)
+        .map((pull) => (pull.draft ? DRAFT_COLOR : CHECK_COLORS[pull.checks])),
+      { pitch: CELL_PITCH, width: CELL_PITCH - 1 },
+    ),
+  ];
+}
+
+function back(
+  pulls: PullRequests,
+  celebrating: Celebration | undefined,
+  footer: string,
+): BarElements {
+  const header =
+    celebrating === undefined
+      ? `${pulls.mergedToday} merged today, ${pulls.openCount} open`
+      : `Merged ${reference(celebrating.merge)}!`;
+  return [
+    textElement({
+      id: 'header',
+      text: fitText(header, 'small', BACK_DISPLAY.width),
+      display: 'back',
+      font: 'small',
+      x: 0,
+      y: 0,
+    }),
+    ...pulls.open.slice(0, MAX_ROWS).flatMap((pull, index) => row(index, pull)),
+    textElement({
+      id: 'footer',
+      text: footer,
+      display: 'back',
+      font: 'tiny',
+      x: 0,
+      y: FOOTER_Y,
+      color: PALETTE.dim,
+    }),
+  ];
 }
 
 /** `name#123`: the repository without its owner, and the number. */
@@ -180,29 +230,35 @@ function fitReference(
 
 function row(index: number, pull: OpenPullRequest): BarElements {
   const y = FIRST_ROW_Y + index * ROW_PITCH;
-  const color = pull.checks === 'failing' ? TEXT_COLOR : DIM_COLOR;
+  const color = pull.checks === 'failing' ? PALETTE.text : PALETTE.dim;
   return [
-    text(`row-${index}-tag`, tag(pull), 'back', 'small', 0, y, {
+    textElement({
+      id: `row-${index}-tag`,
+      text: tag(pull),
+      display: 'back',
+      font: 'small',
+      x: 0,
+      y,
       color: pull.autoMerge && pull.checks !== 'failing' ? QUEUED_COLOR : color,
     }),
-    text(
-      `row-${index}-ref`,
-      fitReference(pull, 'small', TITLE_X - REF_X - 4),
-      'back',
-      'small',
-      REF_X,
+    textElement({
+      id: `row-${index}-ref`,
+      text: fitReference(pull, 'small', TITLE_X - REF_X - 4),
+      display: 'back',
+      font: 'small',
+      x: REF_X,
       y,
-      { color },
-    ),
-    text(
-      `row-${index}-title`,
-      fitText(pull.title, 'small', BACK_DISPLAY.width - TITLE_X),
-      'back',
-      'small',
-      TITLE_X,
+      color,
+    }),
+    textElement({
+      id: `row-${index}-title`,
+      text: fitText(pull.title, 'small', BACK_DISPLAY.width - TITLE_X),
+      display: 'back',
+      font: 'small',
+      x: TITLE_X,
       y,
-      { color },
-    ),
+      color,
+    }),
   ];
 }
 
@@ -247,31 +303,33 @@ function unavailable(failure: PollFailure | undefined): BarElements {
     lines = ['Cannot reach GitHub:', failure.error.message];
   }
   return [
-    text('headline', 'GITHUB', 'front', 'small', 0, 0, { color: IDLE_COLOR }),
-    text('summary', summary, 'front', 'tiny', 0, SUMMARY_Y, {
-      color: IDLE_COLOR,
+    textElement({
+      id: 'headline',
+      text: 'GITHUB',
+      display: 'front',
+      font: 'small',
+      x: 0,
+      y: 0,
+      color: PALETTE.idle,
+    }),
+    textElement({
+      id: 'summary',
+      text: summary,
+      display: 'front',
+      font: 'tiny',
+      x: 0,
+      y: SUMMARY_Y,
+      color: PALETTE.idle,
     }),
     ...lines.map((line, index) =>
-      text(
-        `line-${index}`,
-        fitText(toBarText(line), 'small', BACK_DISPLAY.width),
-        'back',
-        'small',
-        0,
-        index * ROW_PITCH,
-      ),
+      textElement({
+        id: `line-${index}`,
+        text: fitText(toBarText(line), 'small', BACK_DISPLAY.width),
+        display: 'back',
+        font: 'small',
+        x: 0,
+        y: index * ROW_PITCH,
+      }),
     ),
   ];
-}
-
-function text(
-  id: string,
-  content: string,
-  display: 'front' | 'back',
-  font: BarFont,
-  x: number,
-  y: number,
-  { color = TEXT_COLOR }: { readonly color?: string } = {},
-): TextElement {
-  return { id, type: 'text', display, text: content, font, color, x, y };
 }

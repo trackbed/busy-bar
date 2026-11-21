@@ -2,13 +2,11 @@
 
 from datetime import UTC, datetime, timedelta
 
-from busylib import types
-
 from agent_fleet.fleet import Fleet
 from agent_fleet.hooks import EventKind, HookEvent
 from agent_fleet.render import render
 from agent_fleet.settings import DEFAULT_HOST, DEFAULT_PORT
-from bar_kit import Preview, PreviewScene, PreviewStep, print_preview
+from bar_kit import DisplayElement, Preview, PreviewScene, PreviewStep, print_preview
 
 START = datetime(2026, 10, 21, 9, 0, tzinfo=UTC)
 NOW = START + timedelta(minutes=30)
@@ -41,7 +39,7 @@ def _fleet(events: list[tuple[float, HookEvent]]) -> Fleet:
     return fleet
 
 
-def _draw(fleet: Fleet) -> list[types.DisplayElement]:
+def _draw(fleet: Fleet) -> list[DisplayElement]:
     return render(NOW, fleet.view(NOW), listening=f"{DEFAULT_HOST}:{DEFAULT_PORT}")
 
 
