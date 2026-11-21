@@ -125,7 +125,7 @@ function checkVersion(request: IncomingMessage, url: URL): void {
   }
 }
 
-function status(context: ApiContext): Record<string, unknown> {
+function status(context: ApiContext) {
   const now = Date.now();
   const seconds = Math.floor((now - context.startedAt) / 1000);
   const pad = (value: number): string => String(value).padStart(2, '0');
@@ -162,7 +162,7 @@ function status(context: ApiContext): Record<string, unknown> {
   };
 }
 
-function statusPart(part: string): Handler {
+function statusPart(part: keyof ReturnType<typeof status>): Handler {
   return (_request, _url, context, response) => {
     sendJson(response, 200, status(context)[part]);
   };
