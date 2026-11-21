@@ -1,19 +1,24 @@
 import type { BarElements } from '@busy-bar-apps/bar-kit';
-import { fitText, FRONT_DISPLAY } from '@busy-bar-apps/bar-kit';
+import {
+  fitText,
+  FRONT_DISPLAY,
+  PALETTE,
+  textElement,
+} from '@busy-bar-apps/bar-kit';
 
 /** Draw the app's title on the front display. Replace this with the app. */
 export function render(_now: Date): BarElements {
   return [
-    {
+    textElement({
       id: 'title',
-      type: 'text',
-      display: 'front',
       // A long name is cut short with `..` to fit the display.
       text: fitText('<%= title %>', 'normal', FRONT_DISPLAY.width),
+      display: 'front',
       font: 'normal',
-      align: 'center',
       x: FRONT_DISPLAY.width / 2,
       y: FRONT_DISPLAY.height / 2,
-    },
+      color: PALETTE.bright,
+      align: 'center',
+    }),
   ];
 }
