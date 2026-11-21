@@ -31,12 +31,18 @@ const REPLACEMENTS: ReadonlyMap<string, string> = new Map([
   ['•', '*'],
 ]);
 
+// Unicode's White_Space property, spelled out so both kits match the same
+// characters: each language's `\s` differs from it, and from the other's.
+const WHITESPACE =
+  /[\t-\r \u0085\u00a0\u1680\u2000-\u200a\u2028\u2029\u202f\u205f\u3000]+/gu;
+
 /**
  * Turn any text into what the bar's bitmap fonts can draw: printable ASCII
  * without the backtick.
  * Known letters and punctuation are spelled out, accents are dropped, runs of
- * whitespace become one space, and anything else (emoji, CJK) disappears.
- * The Python kit's `to_bar_text` gives the same result.
+ * whitespace become one space, and anything else (emoji, CJK, control and
+ * format characters) disappears. Both kits test their results against
+ * `bar-kit-contract.json`, so the Python kit's `to_bar_text` gives the same.
  */
 export function toBarText(text: string): string {
   const chars = Array.from(text.normalize('NFC'));
@@ -46,7 +52,7 @@ export function toBarText(text: string): string {
   return spelled
     .normalize('NFKD')
     .replaceAll(/\p{M}/gu, '')
-    .replaceAll(/\s+/gu, ' ')
+    .replaceAll(WHITESPACE, ' ')
     .replaceAll(/[^\x20-\x7E]/gu, '')
     .replaceAll(/ {2,}/gu, ' ')
     .trim();

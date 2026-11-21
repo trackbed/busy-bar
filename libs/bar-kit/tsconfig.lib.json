@@ -8,5 +8,9 @@
   },
   "include": ["src/**/*.ts"],
   "exclude": ["src/**/*.test.ts", "src/**/__tests__/**"],
-  "references": []
+  "references": [
+    {
+      "path": "../json-values/tsconfig.lib.json"
+    }
+  ]
 }

@@ -1,6 +1,7 @@
 """Connection settings for a BUSY Bar, read from the environment."""
 
 import os
+import re
 from collections.abc import Mapping
 from dataclasses import dataclass
 from urllib.parse import urlsplit
@@ -12,6 +13,13 @@ CLOUD_ADDRESS = "https://api.busy.app"
 """The BUSY cloud proxy, which reaches a bar from anywhere with an API token."""
 
 _CLOUD_HOST = "api.busy.app"
+
+_SCHEME = re.compile(r"[a-z][a-z\d+.-]*://", re.IGNORECASE)
+
+# What a URL's host name cannot hold (the WHATWG URL standard's forbidden domain
+# code points, less those `urlsplit` already splits the address on), so a host
+# Node's `URL` refuses, such as `my bar`, is refused here too.
+_FORBIDDEN_IN_HOST = re.compile(r"[\x00-\x20%<>\\^|\x7f]")
 
 
 class BarConfigError(ValueError):
@@ -58,9 +66,19 @@ def load_bar_config(env: Mapping[str, str] | None = None) -> BarConfig:
 
 
 def is_cloud_address(addr: str) -> bool:
-    """Whether an address, with or without a protocol, is the BUSY cloud proxy."""
-    host = urlsplit(addr if "://" in addr else f"http://{addr}").hostname
-    if not host:
+    """Whether an address, with or without a protocol, is the BUSY cloud proxy.
+
+    Raises `BarConfigError` for an address that is not a host name, IP address,
+    or URL, as the TypeScript kit does.
+    """
+    try:
+        url = urlsplit(addr if _SCHEME.match(addr) else f"http://{addr}")
+        host = url.hostname
+        _ = url.port  # Raises on a port that is not a number from 0 to 65535.
+    except ValueError:
+        host = None
+    # A host with a colon is an IPv6 address, which `urlsplit` has checked.
+    if not host or (":" not in host and _FORBIDDEN_IN_HOST.search(host)):
         message = (
             f"BUSYBAR_ADDR must be an IP address, host name, or URL; got {addr!r}."
         )

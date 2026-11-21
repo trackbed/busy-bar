@@ -2,6 +2,7 @@ import { readFileSync } from 'node:fs';
 import type { TextElement } from '@busy-app/busy-lib';
 import { describe, expect, it } from 'vitest';
 
+import { UNMEASURABLE } from './__tests__/contract.ts';
 import type { BarFont } from './fonts.ts';
 import { ELLIPSIS, fitText, overflowingText, textWidth } from './fonts.ts';
 
@@ -93,6 +94,13 @@ describe('textWidth', () => {
 
   it.each(samples)('measures %j in %s as %d px', (text, font, width) => {
     expect(textWidth(text, font)).toBe(width);
+  });
+
+  it.each(UNMEASURABLE)('refuses %j, which the fonts cannot draw', (text) => {
+    expect(() => textWidth(text, 'small')).toThrow(RangeError);
+    expect(() => textWidth(text, 'small')).toThrow(
+      'is not printable ASCII; use toBarText first.',
+    );
   });
 });
 

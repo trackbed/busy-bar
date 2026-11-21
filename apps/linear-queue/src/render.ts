@@ -212,12 +212,7 @@ function unavailable(failure: PollFailure | undefined): BarElements {
     ];
   } else {
     summary = 'unreachable';
-    lines = [
-      'Cannot reach Linear:',
-      failure.error instanceof Error
-        ? failure.error.message
-        : String(failure.error),
-    ];
+    lines = ['Cannot reach Linear:', failure.error.message];
   }
   return [
     text('headline', 'LINEAR', 'front', 'small', 0, 0, IDLE_COLOR),

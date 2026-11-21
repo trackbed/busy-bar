@@ -244,12 +244,7 @@ function unavailable(failure: PollFailure | undefined): BarElements {
     ];
   } else {
     summary = 'unreachable';
-    lines = [
-      'Cannot reach GitHub:',
-      failure.error instanceof Error
-        ? failure.error.message
-        : String(failure.error),
-    ];
+    lines = ['Cannot reach GitHub:', failure.error.message];
   }
   return [
     text('headline', 'GITHUB', 'front', 'small', 0, 0, { color: IDLE_COLOR }),

@@ -1,6 +1,7 @@
 """The frame loop every app runs."""
 
 import asyncio
+import contextlib
 import logging
 import signal
 from collections.abc import Callable, Sequence
@@ -11,7 +12,7 @@ from typing import Protocol
 from busylib import types
 from busylib.exceptions import BusyBarAPIError
 
-from bar_kit._clock import utc_now, wait_for_stop
+from bar_kit._clock import Stopped, until_stopped, utc_now, wait_for_stop
 
 logger = logging.getLogger(__name__)
 
@@ -60,8 +61,10 @@ async def run_bar_app(  # noqa: PLR0913 - keyword-only settings, one per concern
     The bar merges each draw into what the app already shows, by element id,
     so elements the last frame drew and this one does not are deleted after
     the draw. Failed draws and deletions are logged and retried on later
-    frames, so an app survives the bar dropping off Wi-Fi. An exception raised by
-    `render` is a bug: it clears the display and propagates.
+    frames, so an app survives the bar dropping off Wi-Fi. Setting `stop`
+    cancels a draw or deletion in flight, which a refused draw would otherwise
+    hold for up to 1.5 seconds. An exception raised by `render` is a bug: it
+    clears the display and propagates.
     """
     if not _MIN_PRIORITY <= priority <= _MAX_PRIORITY:
         message = f"Draw priority must be an integer from 1 to 100; got {priority}."
@@ -76,14 +79,16 @@ async def run_bar_app(  # noqa: PLR0913 - keyword-only settings, one per concern
             )
             operation = "Drawing on"
             try:
-                await client.display_draw(frame)
+                await until_stopped(client.display_draw(frame), stop)
                 drawn = [element.id for element in frame.elements]
                 stale = [element_id for element_id in shown if element_id not in drawn]
                 shown = list(dict.fromkeys([*shown, *drawn]))
                 if stale:
                     operation = "Deleting stale elements from"
-                    await _delete_elements(client, name, stale)
+                    await until_stopped(_delete_elements(client, name, stale), stop)
                 shown = drawn
+            except Stopped:  # The shutdown, not a failure worth logging.
+                break
             except Exception:  # A dropped draw must not end the app.
                 logger.warning(
                     "[%s] %s the BUSY Bar failed.", name, operation, exc_info=True
@@ -125,14 +130,26 @@ async def _delete_elements(
 
 
 def install_shutdown_handlers(stop: asyncio.Event) -> None:
-    """Set `stop` on SIGINT or SIGTERM.
+    """Set `stop` on SIGINT or SIGTERM, and let a second signal end the process.
 
-    Both Ctrl+C and a process manager stopping the app then end `run_bar_app`
-    cleanly. Call it from inside the running event loop.
+    The first Ctrl+C, or a process manager stopping the app, then ends
+    `run_bar_app` cleanly. A second one ends the process at once, without
+    clearing the display, for when the bar does not answer. The TypeScript
+    kit's `shutdownSignal` behaves the same way. Call it from inside the
+    running event loop.
     """
     loop = asyncio.get_running_loop()
-    for signum in (signal.SIGINT, signal.SIGTERM):
+    signals = (signal.SIGINT, signal.SIGTERM)
+
+    def first_signal() -> None:
+        stop.set()
+        for signum in signals:
+            with contextlib.suppress(NotImplementedError):
+                loop.remove_signal_handler(signum)
+            signal.signal(signum, signal.SIG_DFL)
+
+    for signum in signals:
         try:
-            loop.add_signal_handler(signum, stop.set)
+            loop.add_signal_handler(signum, first_signal)
         except NotImplementedError:  # pragma: no cover - Windows event loops.
-            signal.signal(signum, lambda *_: loop.call_soon_threadsafe(stop.set))
+            signal.signal(signum, lambda *_: loop.call_soon_threadsafe(first_signal))

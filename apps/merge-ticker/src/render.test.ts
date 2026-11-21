@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import type { BarElements } from '@busy-bar-apps/bar-kit';
+import type { BarElements, PollFailure } from '@busy-bar-apps/bar-kit';
 import {
   BACK_DISPLAY,
   FRONT_DISPLAY,
@@ -53,10 +53,7 @@ function state(
 
 function draw(
   value: TickerState | undefined,
-  {
-    at = NOW,
-    failure,
-  }: { at?: Date; failure?: { error: unknown; at: Date } } = {},
+  { at = NOW, failure }: { at?: Date; failure?: PollFailure } = {},
 ): Map<string, BarElements[number]> {
   const latest = value === undefined ? undefined : { value, at };
   return new Map(
@@ -246,7 +243,6 @@ describe('render', () => {
       'unreachable',
       'Cannot reach GitHub:',
     ],
-    [{ error: 'odd', at: NOW }, 'unreachable', 'Cannot reach GitHub:'],
   ])('explains why there is nothing to show (%#)', (failure, summary, line) => {
     const elements = draw(undefined, failure ? { failure } : {});
 

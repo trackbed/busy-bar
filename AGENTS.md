@@ -89,7 +89,8 @@ These apply to every task. Break one only when the user names a concrete reason.
   fonts (`toBarText` / `to_bar_text`, `textWidth` / `text_width`,
   `fitText` / `fit_text`, and `overflowingText` / `overflowing_text` for
   layout tests). The two kits share one contract; change both together.
-  Both test their text widths against `bar-kit-text-widths.json`.
+  Both test their text widths against `bar-kit-text-widths.json`, and their
+  text, width-refusal, and address rules against `bar-kit-contract.json`.
 - `libs/json-values/` (TypeScript): narrowing untrusted JSON, such as an API
   response, without casts (`isObject`, `objectAt`, `arrayAt`, `stringAt`,
   `numberAt`). Use it instead of writing another type guard.
@@ -104,8 +105,9 @@ These apply to every task. Break one only when the user names a concrete reason.
   (`src/plugins/python.ts`) and the project generator (`src/generators/project/`).
 - Root: `nx.json`, `project-boundaries.mjs`, `eslint.factory.mjs`,
   `vitest.factory.mjs`, `pyproject.toml` (uv workspace plus Ruff, mypy,
-  and pytest config), and `bar-kit-text-widths.json` (the glyph widths both
-  kits must give).
+  and pytest config), `bar-kit-text-widths.json` (the glyph widths both
+  kits must give), and `bar-kit-contract.json` (the other cases both kits
+  must agree on).
 
 Full layout, naming, and tags → [docs/project-structure.md](docs/project-structure.md).
 

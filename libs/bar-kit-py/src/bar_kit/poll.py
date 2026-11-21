@@ -1,13 +1,12 @@
 """Background refresh for the data an app draws."""
 
 import asyncio
-import contextlib
 import logging
 from collections.abc import Awaitable, Callable
 from dataclasses import dataclass
 from datetime import datetime
 
-from bar_kit._clock import utc_now, wait_for_stop
+from bar_kit._clock import Stopped, until_stopped, utc_now, wait_for_stop
 
 logger = logging.getLogger(__name__)
 
@@ -82,21 +81,10 @@ class Poller[T]:
             await wait_for_stop(pause, stop)
 
     async def _refresh(self, stop: asyncio.Event) -> None:
-        fetching = asyncio.ensure_future(self._fetch())
-        stopping = asyncio.ensure_future(stop.wait())
         try:
-            await asyncio.wait(
-                {fetching, stopping}, return_when=asyncio.FIRST_COMPLETED
-            )
-        finally:
-            stopping.cancel()
-        if not fetching.done():
-            fetching.cancel()
-            with contextlib.suppress(asyncio.CancelledError):
-                await fetching
+            value = await until_stopped(self._fetch(), stop)
+        except Stopped:
             return
-        try:
-            value = fetching.result()
         except Exception as error:  # A failed fetch must not end the app.
             self._failure = PollFailure(error=error, at=self._now())
             logger.warning("[%s] Fetching failed.", self._name, exc_info=True)

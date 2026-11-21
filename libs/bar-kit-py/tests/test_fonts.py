@@ -4,6 +4,7 @@ from typing import Literal, get_args
 
 import pytest
 from busylib import types
+from contract import unmeasurable
 
 from bar_kit import ELLIPSIS, fit_text, overflowing_text, text_width
 
@@ -74,9 +75,12 @@ def test_measures_text(text: str, font: types.DisplayFontName, width: int) -> No
     assert text_width(text, font) == width
 
 
-def test_refuses_characters_the_fonts_cannot_draw() -> None:
-    with pytest.raises(ValueError, match="use to_bar_text first"):
-        text_width("Nørreport", "small")
+@pytest.mark.parametrize("text", unmeasurable())
+def test_refuses_characters_the_fonts_cannot_draw(text: str) -> None:
+    with pytest.raises(
+        ValueError, match="is not printable ASCII; use to_bar_text first"
+    ):
+        text_width(text, "small")
 
 
 def test_keeps_text_that_fits() -> None:

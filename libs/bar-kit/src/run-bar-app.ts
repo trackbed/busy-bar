@@ -43,7 +43,10 @@ export interface RunBarAppOptions {
    * runs or is paused the bar refuses every draw.
    */
   readonly priority?: number;
-  /** Ends the loop; see {@link shutdownSignal}. */
+  /**
+   * Ends the loop, and aborts a draw or deletion in flight; see
+   * {@link shutdownSignal}.
+   */
   readonly signal: AbortSignal;
   readonly now?: () => Date;
   readonly log?: Pick<Console, 'warn'>;
@@ -158,19 +161,25 @@ function isGone(error: unknown): boolean {
 
 /** Anything that reports process signals, such as `process`. */
 export interface SignalSource {
-  once(event: 'SIGINT' | 'SIGTERM', listener: () => void): unknown;
+  on(event: 'SIGINT' | 'SIGTERM', listener: () => void): unknown;
+  off(event: 'SIGINT' | 'SIGTERM', listener: () => void): unknown;
 }
 
 /**
  * A signal that aborts on SIGINT or SIGTERM, so both Ctrl+C and a process
- * manager stopping the app end {@link runBarApp} cleanly.
+ * manager stopping the app end {@link runBarApp} cleanly. The first signal
+ * also hands both back to Node, so a second one ends the process at once,
+ * without clearing the display, for when the bar does not answer. The Python
+ * kit's `install_shutdown_handlers` behaves the same way.
  */
 export function shutdownSignal(target: SignalSource = process): AbortSignal {
   const controller = new AbortController();
   const abort = (): void => {
+    target.off('SIGINT', abort);
+    target.off('SIGTERM', abort);
     controller.abort();
   };
-  target.once('SIGINT', abort);
-  target.once('SIGTERM', abort);
+  target.on('SIGINT', abort);
+  target.on('SIGTERM', abort);
   return controller.signal;
 }

@@ -340,12 +340,7 @@ function photos(status: BoothStatus): string {
 }
 
 function unavailable(failure: PollFailure | undefined): BarElements {
-  const reason =
-    failure === undefined
-      ? 'loading'
-      : failure.error instanceof Error
-        ? failure.error.message
-        : String(failure.error);
+  const reason = failure === undefined ? 'loading' : failure.error.message;
   return [
     text('headline', 'EVENT', 'front', 'small', 0, 0, VIEW_COLORS.off),
     text(

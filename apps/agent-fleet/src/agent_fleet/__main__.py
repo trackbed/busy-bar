@@ -31,7 +31,8 @@ async def main(settings: FleetSettings) -> None:
     stop = asyncio.Event()
     install_shutdown_handlers(stop)
     fleet = Fleet(quiet_after=settings.quiet_after)
-    client = create_busy_bar(load_bar_config())
+    config = load_bar_config()
+    client = create_busy_bar(config)
     # busylib types `__aenter__` as returning its base client, so keep this
     # reference instead of binding the context manager's result.
     async with client:
@@ -47,7 +48,13 @@ async def main(settings: FleetSettings) -> None:
         )
         print(f"Listening for Claude Code hooks at {settings.url}")
         listening = asyncio.create_task(
-            listen_for_input(client.stream_status_ws, controls.handle)
+            listen_for_input(
+                name=NAME,
+                config=config,
+                stream=client.stream_status_ws,
+                handle=controls.handle,
+                stop=stop,
+            )
         )
         async with server:
             try:
@@ -63,7 +70,8 @@ async def main(settings: FleetSettings) -> None:
                     stop=stop,
                 )
             finally:
-                listening.cancel()
+                stop.set()  # Also when render raised, so the listener ends too.
+                await listening
 
 
 if __name__ == "__main__":

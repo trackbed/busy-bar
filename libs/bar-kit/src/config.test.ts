@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
+import { ADDRESSES } from './__tests__/contract.ts';
 import {
   BarConfigError,
   CLOUD_ADDRESS,
@@ -44,19 +45,24 @@ describe('loadBarConfig', () => {
   });
 });
 
+const accepted = ADDRESSES.flatMap(([addr, cloud]) =>
+  cloud === undefined ? [] : [[addr, cloud] as const],
+);
+const refused = ADDRESSES.flatMap(([addr, cloud]) =>
+  cloud === undefined ? [addr] : [],
+);
+
 describe('isCloudAddress', () => {
-  it.each([
-    ['https://api.busy.app', true],
-    ['api.busy.app', true],
-    ['HTTPS://API.BUSY.APP/', true],
-    ['10.0.4.20', false],
-    ['http://192.168.1.20', false],
-    ['busybar.local', false],
-  ])('classifies %s as cloud: %s', (addr, expected) => {
-    expect(isCloudAddress(addr)).toBe(expected);
+  it('has the shared cases to check', () => {
+    expect(accepted.length).toBeGreaterThan(0);
+    expect(refused.length).toBeGreaterThan(0);
   });
 
-  it('rejects addresses that are not host names or URLs', () => {
-    expect(() => isCloudAddress('http://')).toThrow(BarConfigError);
+  it.each(accepted)('classifies %j as cloud: %s', (addr, cloud) => {
+    expect(isCloudAddress(addr)).toBe(cloud);
+  });
+
+  it.each(refused)('refuses %j', (addr) => {
+    expect(() => isCloudAddress(addr)).toThrow(BarConfigError);
   });
 });

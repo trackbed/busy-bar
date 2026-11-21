@@ -1,4 +1,5 @@
 import pytest
+from contract import addresses
 
 from bar_kit import (
     CLOUD_ADDRESS,
@@ -50,21 +51,17 @@ def test_rejects_the_cloud_proxy_without_a_token() -> None:
         load_bar_config({"BUSYBAR_ADDR": CLOUD_ADDRESS})
 
 
-@pytest.mark.parametrize(
-    ("addr", "expected"),
-    [
-        ("https://api.busy.app", True),
-        ("api.busy.app", True),
-        ("HTTPS://API.BUSY.APP/", True),
-        ("10.0.4.20", False),
-        ("http://192.168.1.20", False),
-        ("busybar.local", False),
-    ],
-)
-def test_classifies_cloud_addresses(addr: str, *, expected: bool) -> None:
-    assert is_cloud_address(addr) is expected
+ADDRESSES = addresses()
 
 
-def test_rejects_addresses_that_are_not_host_names_or_urls() -> None:
-    with pytest.raises(BarConfigError, match="must be an IP address"):
-        is_cloud_address("http://")
+def test_has_the_shared_cases_to_check() -> None:
+    assert ADDRESSES
+
+
+@pytest.mark.parametrize(("addr", "cloud"), ADDRESSES)
+def test_classifies_addresses(addr: str, *, cloud: bool | None) -> None:
+    if cloud is None:
+        with pytest.raises(BarConfigError, match="must be an IP address"):
+            is_cloud_address(addr)
+    else:
+        assert is_cloud_address(addr) is cloud

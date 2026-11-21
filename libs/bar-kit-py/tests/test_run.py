@@ -329,6 +329,63 @@ async def test_stops_waiting_for_the_next_frame_as_soon_as_it_is_stopped() -> No
     assert client.cleared == ["demo"]
 
 
+class HangingClient:
+    """A bar that never answers a draw, or a deletion, as when it refuses one.
+
+    A refused draw holds the request for up to 1.5 seconds before its 409.
+    """
+
+    def __init__(self, *, hang_draws: bool) -> None:
+        self.hang_draws = hang_draws
+        self.drawn = 0
+        self.requests: list[Sequence[str] | None] = []
+        self.started = asyncio.Event()
+
+    async def display_draw(self, display_data: types.DisplayElements, /) -> object:
+        del display_data
+        self.drawn += 1
+        if self.hang_draws:
+            self.started.set()
+            await asyncio.Event().wait()
+        return None
+
+    async def display_clear(
+        self, *, application_name: str, element_ids: Sequence[str] | None = None
+    ) -> object:
+        del application_name
+        self.requests.append(element_ids)
+        if element_ids is not None:
+            self.started.set()
+            await asyncio.Event().wait()
+        return None
+
+
+@pytest.mark.parametrize("hang_draws", [True, False], ids=["draw", "deletion"])
+async def test_stopping_cancels_a_request_in_flight_and_clears(
+    caplog: pytest.LogCaptureFixture, *, hang_draws: bool
+) -> None:
+    stop = asyncio.Event()
+    client = HangingClient(hang_draws=hang_draws)
+    frames = iter([[*FRAME, EXTRA], FRAME])
+    with caplog.at_level(logging.WARNING, logger="bar_kit.run"):
+        running = asyncio.create_task(
+            run_bar_app(
+                name="demo",
+                client=client,
+                render=lambda _now: next(frames, FRAME),
+                interval=0,
+                stop=stop,
+            )
+        )
+        await asyncio.wait_for(client.started.wait(), timeout=1)
+        stop.set()
+        await asyncio.wait_for(running, timeout=1)
+
+    assert client.drawn == (1 if hang_draws else 2)
+    assert client.requests == ([None] if hang_draws else [["extra"], None])
+    assert caplog.records == []
+
+
 @pytest.mark.parametrize("signum", [signal.SIGINT, signal.SIGTERM])
 async def test_shutdown_handlers_set_stop_on(signum: signal.Signals) -> None:
     stop = asyncio.Event()
@@ -342,3 +399,21 @@ async def test_shutdown_handlers_set_stop_on(signum: signal.Signals) -> None:
         loop.remove_signal_handler(signal.SIGTERM)
 
     assert stop.is_set()
+
+
+@pytest.mark.parametrize("signum", [signal.SIGINT, signal.SIGTERM])
+async def test_leaves_a_second_signal_to_the_process(signum: signal.Signals) -> None:
+    stop = asyncio.Event()
+    previous = {
+        other: signal.getsignal(other) for other in (signal.SIGINT, signal.SIGTERM)
+    }
+    install_shutdown_handlers(stop)
+    try:
+        os.kill(os.getpid(), signum)
+        await asyncio.wait_for(stop.wait(), timeout=1)
+
+        assert signal.getsignal(signal.SIGINT) is signal.SIG_DFL
+        assert signal.getsignal(signal.SIGTERM) is signal.SIG_DFL
+    finally:
+        for other, handler in previous.items():
+            signal.signal(other, handler)

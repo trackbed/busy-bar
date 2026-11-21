@@ -15,12 +15,21 @@ export const ELLIPSIS = '..';
 
 let registered = false;
 
+const NOT_PRINTABLE = /[^\x20-\x7E]/u;
+
 /**
  * How many pixels wide `text` is in `font`, from the font maps busy-lib
- * ships. Pass text through `toBarText` first: the fonts draw printable ASCII
- * only. The Python kit's `text_width` gives the same widths.
+ * ships. Pass text through `toBarText` first: a character outside printable
+ * ASCII is not drawn, so it throws a `RangeError`. The Python kit's
+ * `text_width` gives the same widths and refuses the same text.
  */
 export function textWidth(text: string, font: BarFont): number {
+  const unprintable = NOT_PRINTABLE.exec(text)?.[0];
+  if (unprintable !== undefined) {
+    throw new RangeError(
+      `${JSON.stringify(unprintable)} is not printable ASCII; use toBarText first.`,
+    );
+  }
   if (!registered) {
     for (const map of Object.values(fontMaps)) {
       registerFontMaps(map);

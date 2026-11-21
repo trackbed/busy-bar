@@ -1,0 +1,74 @@
+{
+  "description": "The rules both kits must follow beyond glyph widths: libs/bar-kit and libs/bar-kit-py test against this file, so changing one kit fails the other kit's tests until both agree. `toBarText` maps text to what toBarText and to_bar_text return. `unmeasurable` is text that textWidth and text_width refuse, because the fonts draw printable ASCII only. `addresses` classifies BUSYBAR_ADDR values: `cloud` is whether the address is the BUSY cloud proxy, or null when loadBarConfig and load_bar_config refuse it.",
+  "toBarText": [
+    {
+      "text": "Plain ASCII stays as it is",
+      "expected": "Plain ASCII stays as it is"
+    },
+    { "text": "Nørreport", "expected": "Noerreport" },
+    { "text": "Århus Æblegård", "expected": "Aarhus Aeblegaard" },
+    { "text": "ÅRHUS ØSTERBRO", "expected": "AARHUS OESTERBRO" },
+    { "text": "Straße", "expected": "Strasse" },
+    { "text": "Café crème", "expected": "Cafe creme" },
+    { "text": "Łódź", "expected": "Lodz" },
+    {
+      "text": "“Quoted” – it’s done…",
+      "expected": "\"Quoted\" - it's done..."
+    },
+    { "text": "Fix `toBarText`", "expected": "Fix 'toBarText'" },
+    {
+      "text": "\ud83d\ude80 Launch day \ud83c\udf89",
+      "expected": "Launch day"
+    },
+    { "text": "  tabs\tand\nnewlines  ", "expected": "tabs and newlines" },
+    { "text": "non\u00a0breaking", "expected": "non breaking" },
+    { "text": "東京 Tokyo", "expected": "Tokyo" },
+    { "text": "", "expected": "" },
+    { "text": "a\u030abo", "expected": "aabo" },
+    {
+      "text": "` æ Æ ø Ø å Å ß œ Œ đ Đ ł Ł ‘ ’ “ ” „ « » ‐ – — − … •",
+      "expected": "' ae AE oe OE aa AA ss oe OE d D l L ' ' \" \" \" \" \" - - - - ... *"
+    },
+    { "text": "line\u2028break", "expected": "line break" },
+    { "text": "next\u0085line", "expected": "next line" },
+    { "text": "thin\u2009space", "expected": "thin space" },
+    { "text": "ideographic\u3000space", "expected": "ideographic space" },
+    { "text": "ogham\u1680mark", "expected": "ogham mark" },
+    { "text": "file\u001cseparator", "expected": "fileseparator" },
+    { "text": "zero\ufeffwidth", "expected": "zerowidth" },
+    { "text": "zero\u200bspace", "expected": "zerospace" },
+    { "text": "bell\u0007", "expected": "bell" },
+    { "text": "tab\u000bvertical", "expected": "tab vertical" },
+    { "text": "Ærø Ål ÆBLE", "expected": "Aeroe Aal AEBLE" },
+    { "text": "ﬁne ①", "expected": "fine 1" }
+  ],
+  "unmeasurable": [
+    "Nørreport",
+    "tab\tstop",
+    "new\nline",
+    "\u0000",
+    "\u007f",
+    "é",
+    "\u00a0"
+  ],
+  "addresses": [
+    { "addr": "https://api.busy.app", "cloud": true },
+    { "addr": "api.busy.app", "cloud": true },
+    { "addr": "HTTPS://API.BUSY.APP/", "cloud": true },
+    { "addr": "api.busy.app:443", "cloud": true },
+    { "addr": "10.0.4.20", "cloud": false },
+    { "addr": "http://192.168.1.20", "cloud": false },
+    { "addr": "busybar.local", "cloud": false },
+    { "addr": "10.0.4.20:8080", "cloud": false },
+    { "addr": "http://[::1]:8080", "cloud": false },
+    { "addr": "ws://10.0.4.20", "cloud": false },
+    { "addr": "http://", "cloud": null },
+    { "addr": "my bar", "cloud": null },
+    { "addr": "http://my bar", "cloud": null },
+    { "addr": "10.0.4.20:abc", "cloud": null },
+    { "addr": "10.0.4.20:99999", "cloud": null },
+    { "addr": "a|b", "cloud": null },
+    { "addr": "a<b", "cloud": null },
+    { "addr": "http://[abc", "cloud": null }
+  ]
+}

@@ -13,5 +13,8 @@
   },
   "dependencies": {
     "@busy-app/busy-lib": "0.21.1"
+  },
+  "devDependencies": {
+    "@busy-bar-apps/json-values": "workspace:0.0.1"
   }
 }

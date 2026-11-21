@@ -6,7 +6,7 @@
   "tags": ["type:lib", "lang:ts"],
   "targets": {
     "test": {
-      "inputs": ["...", "barKitTextWidths"]
+      "inputs": ["...", "barKitContract"]
     }
   }
 }

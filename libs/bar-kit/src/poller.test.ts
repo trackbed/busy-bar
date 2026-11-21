@@ -123,6 +123,37 @@ describe('createPoller', () => {
     expect(poller.failure()).toBeUndefined();
   });
 
+  it('wraps a thrown value that is not an Error in one', async () => {
+    const controller = new AbortController();
+    const log = { warn: vi.fn<(...data: unknown[]) => void>() };
+    const poller = createPoller<string>({
+      name: 'demo',
+      fetch: () => {
+        // eslint-disable-next-line @typescript-eslint/prefer-promise-reject-errors -- the case under test: a source that rejects with a non-Error.
+        return Promise.reject('offline');
+      },
+      intervalMs: 60_000,
+      now: () => FIRST,
+      log,
+    });
+
+    const running = poller.run(controller.signal);
+    await vi.waitFor(() => {
+      expect(poller.failure()).toBeDefined();
+    });
+    controller.abort();
+    await running;
+
+    const error = poller.failure()?.error;
+    expect(error).toBeInstanceOf(Error);
+    expect(error?.message).toBe('offline');
+    expect(error?.cause).toBe('offline');
+    expect(log.warn).toHaveBeenCalledExactlyOnceWith(
+      '[demo] Fetching failed:',
+      'offline',
+    );
+  });
+
   it('waits the interval between fetches and stops at once when aborted', async () => {
     vi.useFakeTimers();
     try {
