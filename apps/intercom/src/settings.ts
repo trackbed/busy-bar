@@ -1,3 +1,10 @@
+import {
+  envHttpUrl,
+  envSwitch,
+  envWholeNumber,
+  SettingsError,
+} from '@busy-bar-apps/bar-kit';
+
 import { FOCUS_MINUTES } from './convex/presence.ts';
 
 /** What the intercom needs from the environment. */
@@ -15,7 +22,7 @@ export interface IntercomSettings {
 export const DEFAULT_FOCUS_MINUTES = 25;
 
 /** The environment does not describe an intercom that can run. */
-export class IntercomSettingsError extends Error {
+export class IntercomSettingsError extends SettingsError {
   override readonly name = 'IntercomSettingsError';
 }
 
@@ -27,12 +34,10 @@ export class IntercomSettingsError extends Error {
 export function loadSettings(
   env: Readonly<Record<string, string | undefined>>,
 ): IntercomSettings {
-  const convexUrl = env['INTERCOM_CONVEX_URL']?.trim() ?? '';
-  if (!/^https?:\/\/[^/\s]+/u.test(convexUrl)) {
+  const convexUrl = envHttpUrl(env, 'INTERCOM_CONVEX_URL');
+  if (convexUrl === undefined) {
     throw new IntercomSettingsError(
-      convexUrl === ''
-        ? 'Set INTERCOM_CONVEX_URL to the team deployment, such as https://<name>.convex.cloud.'
-        : `INTERCOM_CONVEX_URL must be an http or https URL; got ${JSON.stringify(convexUrl)}.`,
+      'Set INTERCOM_CONVEX_URL to the team deployment, such as https://<name>.convex.cloud.',
     );
   }
   const key = env['INTERCOM_KEY']?.trim() ?? '';
@@ -41,23 +46,14 @@ export function loadSettings(
       'Set INTERCOM_KEY to the key the deployment owner got from bars:add for this bar.',
     );
   }
-  const sound = env['INTERCOM_SOUND']?.trim().toLowerCase() || 'on';
-  if (sound !== 'on' && sound !== 'off') {
-    throw new IntercomSettingsError(
-      `INTERCOM_SOUND must be on or off; got ${JSON.stringify(sound)}.`,
-    );
-  }
-  const rawMinutes = env['INTERCOM_FOCUS_MINUTES']?.trim() ?? '';
-  const focusMinutes =
-    rawMinutes === '' ? DEFAULT_FOCUS_MINUTES : Number(rawMinutes);
-  if (
-    !Number.isInteger(focusMinutes) ||
-    focusMinutes < FOCUS_MINUTES.min ||
-    focusMinutes > FOCUS_MINUTES.max
-  ) {
-    throw new IntercomSettingsError(
-      `INTERCOM_FOCUS_MINUTES must be a whole number from ${FOCUS_MINUTES.min} to ${FOCUS_MINUTES.max}; got ${JSON.stringify(rawMinutes)}.`,
-    );
-  }
-  return { convexUrl, key, sound: sound === 'on', focusMinutes };
+  return {
+    convexUrl,
+    key,
+    sound: envSwitch(env, 'INTERCOM_SOUND'),
+    focusMinutes: envWholeNumber(env, 'INTERCOM_FOCUS_MINUTES', {
+      fallback: DEFAULT_FOCUS_MINUTES,
+      min: FOCUS_MINUTES.min,
+      max: FOCUS_MINUTES.max,
+    }),
+  };
 }

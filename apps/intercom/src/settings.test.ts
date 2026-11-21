@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
+import { SettingsError } from '@busy-bar-apps/bar-kit';
+
 import { IntercomSettingsError, loadSettings } from './settings.ts';
 
 const URL = 'https://happy-otter-123.convex.cloud';
@@ -36,18 +38,21 @@ describe('loadSettings', () => {
     );
   });
 
-  it('refuses a deployment URL that is not http or https', () => {
-    expect(() =>
-      loadSettings({
-        INTERCOM_CONVEX_URL: 'happy-otter-123',
-        INTERCOM_KEY: 'abc123',
-      }),
-    ).toThrow(
-      new IntercomSettingsError(
-        'INTERCOM_CONVEX_URL must be an http or https URL; got "happy-otter-123".',
-      ),
-    );
-  });
+  it.each(['happy-otter-123', 'https://happy otter.convex.cloud'])(
+    'refuses a deployment URL %j',
+    (convexUrl) => {
+      expect(() =>
+        loadSettings({
+          INTERCOM_CONVEX_URL: convexUrl,
+          INTERCOM_KEY: 'abc123',
+        }),
+      ).toThrow(
+        new SettingsError(
+          `INTERCOM_CONVEX_URL must be an http(s) URL; got ${JSON.stringify(convexUrl)}.`,
+        ),
+      );
+    },
+  );
 
   it('asks for the key', () => {
     expect(() =>
@@ -73,9 +78,7 @@ describe('loadSettings', () => {
         INTERCOM_SOUND: 'loud',
       }),
     ).toThrow(
-      new IntercomSettingsError(
-        'INTERCOM_SOUND must be on or off; got "loud".',
-      ),
+      new SettingsError('INTERCOM_SOUND must be on or off; got "loud".'),
     );
   });
 
@@ -89,7 +92,7 @@ describe('loadSettings', () => {
     ).toBe(50);
   });
 
-  it.each(['4', '1441', '25.5', 'half an hour'])(
+  it.each(['4', '1441', '25.5', '1e2', 'half an hour'])(
     'refuses a team focus of %j minutes',
     (minutes) => {
       expect(() =>
@@ -99,7 +102,7 @@ describe('loadSettings', () => {
           INTERCOM_FOCUS_MINUTES: minutes,
         }),
       ).toThrow(
-        new IntercomSettingsError(
+        new SettingsError(
           `INTERCOM_FOCUS_MINUTES must be a whole number from 5 to 1440; got ${JSON.stringify(minutes)}.`,
         ),
       );
