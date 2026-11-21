@@ -1,3 +1,5 @@
+import { envWholeNumber, SettingsError } from '@busy-bar-apps/bar-kit';
+
 import type { QueueScope } from './linear.ts';
 
 /** What the queue gauge needs from the environment. */
@@ -9,7 +11,7 @@ export interface QueueSettings {
 }
 
 /** The environment does not describe a gauge that can run. */
-export class QueueSettingsError extends Error {
+class QueueSettingsError extends SettingsError {
   override readonly name = 'QueueSettingsError';
 }
 
@@ -35,13 +37,6 @@ export function loadSettings(
       `LINEAR_QUEUE_ASSIGNEE can only be "me"; got ${JSON.stringify(assignee)}.`,
     );
   }
-  const rawLow = env['LINEAR_QUEUE_LOW']?.trim() ?? '';
-  const low = rawLow === '' ? DEFAULT_LOW : Number(rawLow);
-  if (!Number.isInteger(low) || low < 0) {
-    throw new QueueSettingsError(
-      `LINEAR_QUEUE_LOW must be a whole number; got ${JSON.stringify(rawLow)}.`,
-    );
-  }
   return {
     apiKey,
     scope: {
@@ -49,6 +44,9 @@ export function loadSettings(
       label: env['LINEAR_QUEUE_LABEL']?.trim() || undefined,
       mine: assignee === 'me',
     },
-    low,
+    low: envWholeNumber(env, 'LINEAR_QUEUE_LOW', {
+      fallback: DEFAULT_LOW,
+      min: 0,
+    }),
   };
 }

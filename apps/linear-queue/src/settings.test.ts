@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 
-import { DEFAULT_LOW, loadSettings, QueueSettingsError } from './settings.ts';
+import { SettingsError } from '@busy-bar-apps/bar-kit';
+
+import { DEFAULT_LOW, loadSettings } from './settings.ts';
 
 describe('loadSettings', () => {
   it('needs only an API key and counts the DISC team by default', () => {
@@ -35,8 +37,9 @@ describe('loadSettings', () => {
     ],
     [{ LINEAR_API_KEY: 'k', LINEAR_QUEUE_LOW: 'few' }, 'whole number'],
     [{ LINEAR_API_KEY: 'k', LINEAR_QUEUE_LOW: '-1' }, 'whole number'],
+    [{ LINEAR_API_KEY: 'k', LINEAR_QUEUE_LOW: '2.0' }, 'whole number'],
   ])('rejects %j', (env, message) => {
-    expect(() => loadSettings(env)).toThrow(QueueSettingsError);
+    expect(() => loadSettings(env)).toThrow(SettingsError);
     expect(() => loadSettings(env)).toThrow(message);
   });
 });
