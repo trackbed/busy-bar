@@ -3,7 +3,7 @@ import { convexTest } from 'convex-test';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { api, internal } from './_generated/api.js';
-import { UNKNOWN_KEY } from './keys.ts';
+import { UNKNOWN_KEY } from './presence.ts';
 import type { Presence } from './presence.ts';
 import { HEARTBEAT_MS, OFFLINE_AFTER_MS } from './presence.ts';
 import schema from './schema.ts';

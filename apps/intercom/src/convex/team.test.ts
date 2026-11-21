@@ -3,7 +3,7 @@ import { convexTest } from 'convex-test';
 import { describe, expect, it } from 'vitest';
 
 import { api, internal } from './_generated/api.js';
-import { UNKNOWN_KEY } from './keys.ts';
+import { UNKNOWN_KEY } from './presence.ts';
 import schema from './schema.ts';
 
 // The files Convex itself loads: modules whose names have one dot, which

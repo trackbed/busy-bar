@@ -1,13 +1,8 @@
 import { describe, expect, it, vi } from 'vitest';
 
+import { bodyOf } from './__tests__/fixtures.ts';
 import type { BoothRef } from './photocraft.ts';
 import { GALLERY_LIMIT, PhotoCraft } from './photocraft.ts';
-
-/** The JSON body a fake fetch received. */
-function bodyOf(init: RequestInit | undefined): unknown {
-  const body = init?.body;
-  return JSON.parse(typeof body === 'string' ? body : 'null');
-}
 
 const APP = 'https://photos.example.com/';
 const BOOTH: BoothRef = { eventSlug: 'summit-2026', boothSlug: 'main-booth' };

@@ -25,9 +25,10 @@ export interface ChimeOptions {
 export interface Chime {
   /**
    * Look at a new board and play one sound for what it shows first and was
-   * not heard before: a team focus, a knock, then an answer.
+   * not heard before: a team focus, a knock, then an answer. A lost board
+   * (`undefined`) plays nothing.
    */
-  readonly observe: (board: Board) => void;
+  readonly observe: (board: Board | undefined) => void;
 }
 
 export function createChime(options: ChimeOptions): Chime {
@@ -36,6 +37,9 @@ export function createChime(options: ChimeOptions): Chime {
 
   return {
     observe: (board) => {
+      if (board === undefined) {
+        return;
+      }
       const incoming = incomingKnock(board);
       const outgoing = outgoingKnock(board);
       const answered =

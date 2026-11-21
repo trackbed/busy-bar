@@ -18,17 +18,16 @@ import {
 import type { BarStatus, Board, Focus, Knock, Status } from './board.ts';
 import {
   FOCUS_ROW,
-  incomingKnock,
   minutesLeft,
   nameOf,
   outgoingKnock,
   runningFocus,
+  screenOf,
   selectionOf,
-  startingFocus,
   statusAt,
   teammates,
 } from './board.ts';
-import { UNKNOWN_KEY } from './convex/keys.ts';
+import { UNKNOWN_KEY } from './convex/presence.ts';
 
 /** What the bar knows about its team at the moment of a frame. */
 export interface TeamView {
@@ -114,14 +113,19 @@ export function render(now: Date, view: TeamView): BarElements {
     return unavailable(view.failure);
   }
   const at = now.getTime();
-  const starting = startingFocus(board, at);
-  if (starting !== undefined) {
-    return countdown(board, starting, at);
+  const screen = screenOf(board, at);
+  switch (screen.kind) {
+    case 'countdown':
+      return countdown(board, screen.focus, at);
+    case 'knock':
+      return knocking(board, screen.knock);
+    case 'team':
+      return teamBoard(board, at, view);
   }
-  const waiting = incomingKnock(board);
-  if (waiting !== undefined) {
-    return knocking(board, waiting);
-  }
+}
+
+/** The teammates in front and behind, with the team-focus row. */
+function teamBoard(board: Board, at: number, view: TeamView): BarElements {
   const team: Teammate[] = teammates(board).map((bar) => ({
     id: bar.id,
     name: toBarText(bar.name),

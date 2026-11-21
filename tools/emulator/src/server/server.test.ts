@@ -1,5 +1,4 @@
 import { request } from 'node:http';
-import { setTimeout as sleep } from 'node:timers/promises';
 import {
   afterAll,
   afterEach,
@@ -13,6 +12,7 @@ import {
 
 import type { AssetRoot } from '../__tests__/asset-root.ts';
 import { assetRoot } from '../__tests__/asset-root.ts';
+import { until } from '../__tests__/until.ts';
 import type { AssetLibrary } from '../assets/library.ts';
 import { Device } from '../device/device.ts';
 import { decodePng } from '../formats/png.ts';
@@ -111,17 +111,6 @@ async function serve(served: Emulator): Promise<string> {
     throw new Error('The server has no port.');
   }
   return `http://127.0.0.1:${address.port}`;
-}
-
-/** Wait, on real time, until `check` holds. */
-async function until(check: () => boolean, what: string): Promise<void> {
-  const deadline = Date.now() + 2000;
-  while (!check()) {
-    if (Date.now() > deadline) {
-      throw new Error(`Timed out waiting for ${what}.`);
-    }
-    await sleep(2);
-  }
 }
 
 interface LiveEvent {

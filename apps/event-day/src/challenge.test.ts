@@ -1,17 +1,12 @@
 import { describe, expect, it, vi } from 'vitest';
 
+import { bodyOf } from './__tests__/fixtures.ts';
 import {
   ChallengeError,
   fetchChallenge,
   LEADERBOARD_QUERY,
   parseLeaderboard,
 } from './challenge.ts';
-
-/** The JSON body a fake fetch received. */
-function bodyOf(init: RequestInit | undefined): unknown {
-  const body = init?.body;
-  return JSON.parse(typeof body === 'string' ? body : 'null');
-}
 
 const LEADERBOARD = {
   status: 'success',

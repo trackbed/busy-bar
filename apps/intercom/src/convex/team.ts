@@ -5,8 +5,7 @@ import { v } from 'convex/values';
 import { query } from './_generated/server.js';
 import { requireBar } from './keys.ts';
 import { knocksFrom, knocksTo } from './knocks.ts';
-import { presenceValidator } from './presence.ts';
-import { knockStatusValidator } from './schema.ts';
+import { knockStatusValidator, presenceValidator } from './presence.ts';
 
 /** The most bars a team holds; the board shows them all at once. */
 export const MAX_BARS = 20;

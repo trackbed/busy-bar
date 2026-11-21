@@ -3,9 +3,8 @@
 
 import { toBarText } from '@busy-bar-apps/bar-kit';
 
-import type { Presence } from './convex/presence.ts';
+import type { KnockStatus, Presence } from './convex/presence.ts';
 import { freeAt } from './convex/presence.ts';
-import type { KnockStatus } from './convex/schema.ts';
 
 /** One bar on the team, as `team:board` answers it. */
 export interface TeamBar {
@@ -148,6 +147,28 @@ export function incomingKnock(board: Board): Knock | undefined {
   );
 }
 
+/**
+ * What takes over both displays at `now`: a team focus counting down, then
+ * a knock waiting on this bar, and otherwise the team's board.
+ */
+export type Screen =
+  | { readonly kind: 'countdown'; readonly focus: Focus }
+  | { readonly kind: 'knock'; readonly knock: Knock }
+  | { readonly kind: 'team' };
+
+/** The screen `board` shows at `now`; see {@link Screen}. */
+export function screenOf(board: Board, now: number): Screen {
+  const focus = startingFocus(board, now);
+  if (focus !== undefined) {
+    return { kind: 'countdown', focus };
+  }
+  const knock = incomingKnock(board);
+  if (knock !== undefined) {
+    return { kind: 'knock', knock };
+  }
+  return { kind: 'team' };
+}
+
 /** The knock this bar sent, while it waits and while its answer shows. */
 export function outgoingKnock(board: Board): Knock | undefined {
   return board.knocks.find((knock) => knock.from === board.me);
@@ -174,13 +195,17 @@ export interface BoardFeed {
   readonly update: (next: Board) => void;
   /**
    * Take a failed query, such as for a key the team no longer knows: drop the
-   * board, so the screen shows why rather than an old board.
+   * board, so the screen shows why rather than an old board, and tell every
+   * listener the board is gone.
    */
   readonly fail: (error: Error) => void;
 }
 
+/** Hears each new board, and `undefined` when the board is lost. */
+export type BoardListener = (board: Board | undefined) => void;
+
 export function createBoardFeed(
-  listeners: readonly ((board: Board) => void)[],
+  listeners: readonly BoardListener[],
 ): BoardFeed {
   let board: Board | undefined;
   let failure: Error | undefined;
@@ -197,6 +222,9 @@ export function createBoardFeed(
     fail: (error) => {
       board = undefined;
       failure = error;
+      for (const listen of listeners) {
+        listen(undefined);
+      }
     },
   };
 }

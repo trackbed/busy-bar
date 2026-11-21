@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import type { Board, Focus, Knock, TeamBar } from './board.ts';
+import { bar, focusFrom } from './__tests__/fixtures.ts';
+import type { Board, BoardListener, Focus, Knock } from './board.ts';
 import {
   createBoardFeed,
   FOCUS_ROW,
@@ -9,21 +10,17 @@ import {
   nameOf,
   outgoingKnock,
   runningFocus,
+  screenOf,
   selectable,
   selectionOf,
   startingFocus,
   statusAt,
   teammates,
 } from './board.ts';
-import type { Presence } from './convex/presence.ts';
 
 const NOW = Date.parse('2026-10-26T13:00:00Z');
 const MINUTE = 60_000;
 const at = (minutes: number): number => NOW + minutes * MINUTE;
-
-function bar(name: string, presence: Presence, online = true): TeamBar {
-  return { id: name, name, online, presence };
-}
 
 function board(
   knocks: readonly Knock[] = [],
@@ -139,14 +136,7 @@ describe('knocks', () => {
 });
 
 describe('team focus', () => {
-  const focus: Focus = {
-    id: 'f',
-    startedBy: 'Anna',
-    startsAt: at(1),
-    endsAt: at(26),
-    cardId: '00000000-0000-4000-8000-000000000000',
-    skipped: [],
-  };
+  const focus = focusFrom(at(1));
 
   it('counts down until the timers start, unless this bar skipped it', () => {
     expect(startingFocus(board([], focus), NOW)).toBe(focus);
@@ -165,10 +155,33 @@ describe('team focus', () => {
   });
 });
 
+describe('screenOf', () => {
+  const focus = focusFrom(at(1));
+  const waiting: Knock = { id: 'k', from: 'Anna', to: 'Me', status: 'waiting' };
+
+  it('shows a team focus counting down before a knock waiting on this bar', () => {
+    expect(screenOf(board([waiting], focus), NOW)).toStrictEqual({
+      kind: 'countdown',
+      focus,
+    });
+    expect(screenOf(board([waiting], focus), at(1))).toStrictEqual({
+      kind: 'knock',
+      knock: waiting,
+    });
+  });
+
+  it('shows the team once nothing takes over', () => {
+    expect(screenOf(board([], focus), at(1))).toStrictEqual({ kind: 'team' });
+    expect(
+      screenOf(board([], { ...focus, skipped: ['Me'] }), NOW),
+    ).toStrictEqual({ kind: 'team' });
+  });
+});
+
 describe('createBoardFeed', () => {
   it('keeps the latest board and hands it to every listener', () => {
-    const focus = vi.fn<(board: Board) => void>();
-    const chime = vi.fn<(board: Board) => void>();
+    const focus = vi.fn<BoardListener>();
+    const chime = vi.fn<BoardListener>();
     const feed = createBoardFeed([focus, chime]);
     const next = board();
 
@@ -179,6 +192,18 @@ describe('createBoardFeed', () => {
     expect(feed.failure()).toBeUndefined();
     expect(focus.mock.calls).toStrictEqual([[ALONE], [next]]);
     expect(chime.mock.calls).toStrictEqual([[ALONE], [next]]);
+  });
+
+  it('tells every listener when the query fails', () => {
+    const focus = vi.fn<BoardListener>();
+    const chime = vi.fn<BoardListener>();
+    const feed = createBoardFeed([focus, chime]);
+
+    feed.update(ALONE);
+    feed.fail(new Error('Unknown key'));
+
+    expect(focus.mock.calls).toStrictEqual([[ALONE], [undefined]]);
+    expect(chime.mock.calls).toStrictEqual([[ALONE], [undefined]]);
   });
 
   it('shows why the query failed instead of the last board', () => {

@@ -3,7 +3,7 @@ import { convexTest } from 'convex-test';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { api, internal } from './_generated/api.js';
-import { FOCUS_LEAD_MS } from './focus.ts';
+import { FOCUS_LEAD_MS } from './presence.ts';
 import schema from './schema.ts';
 
 // The files Convex itself loads: modules whose names have one dot, which

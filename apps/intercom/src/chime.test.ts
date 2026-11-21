@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import type { Board, Focus, Knock } from './board.ts';
+import { focusFrom } from './__tests__/fixtures.ts';
+import type { Board, Knock } from './board.ts';
 import type { ChimeOptions } from './chime.ts';
 import { createChime, SOUNDS } from './chime.ts';
 
@@ -10,14 +11,7 @@ function board(...knocks: Knock[]): Board {
   return { me: 'Me', bars: [], knocks, focus: null };
 }
 
-const FOCUS: Focus = {
-  id: 'f',
-  startedBy: 'Anna',
-  startsAt: NOW + 15_000,
-  endsAt: NOW + 15_000 + 25 * 60_000,
-  cardId: '00000000-0000-4000-8000-000000000000',
-  skipped: [],
-};
+const FOCUS = focusFrom(NOW + 15_000);
 
 function setup(enabled = true) {
   const play = vi.fn<ChimeOptions['play']>(() => Promise.resolve());
@@ -68,6 +62,16 @@ describe('createChime', () => {
     chime.observe(board(knockOnMe));
 
     expect(play).toHaveBeenCalledTimes(2);
+  });
+
+  it('stays quiet while the board is lost, and for what it heard before', () => {
+    const { chime, play } = setup();
+
+    chime.observe(board(knockOnMe));
+    chime.observe(undefined);
+    chime.observe(board(knockOnMe));
+
+    expect(play.mock.calls).toStrictEqual([[SOUNDS.knock]]);
   });
 
   it('stays quiet when sounds are off', () => {

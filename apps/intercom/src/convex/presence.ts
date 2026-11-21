@@ -1,4 +1,6 @@
-// What a bar tells its team, shared by the backend and the bar's process.
+// What the backend and the bar's process share: what a bar tells its team,
+// a knock's status, a team focus's timing, and the error for a key no bar
+// has. It imports no Convex functions, so the bar's process loads none.
 
 import type { Infer } from 'convex/values';
 import { v } from 'convex/values';
@@ -8,6 +10,25 @@ export const HEARTBEAT_MS = 60_000;
 
 /** A bar that has not reported for this long counts as offline. */
 export const OFFLINE_AFTER_MS = 150_000;
+
+/** How long every bar has to skip a team focus before its timers start. */
+export const FOCUS_LEAD_MS = 15_000;
+
+/** A team focus is as long as the bar's own timers allow (busy_timer_common.h). */
+export const FOCUS_MINUTES = { min: 5, max: 24 * 60 } as const;
+
+/** What a function answers when the key it was given names no bar. */
+export const UNKNOWN_KEY = 'unknown_key';
+
+/** A knock waits until the knocked bar answers it or it expires. */
+export const knockStatusValidator = v.union(
+  v.literal('waiting'),
+  v.literal('coming'),
+  v.literal('later'),
+  v.literal('expired'),
+);
+
+export type KnockStatus = Infer<typeof knockStatusValidator>;
 
 /**
  * What a bar's BUSY timer says about its owner. Times are epoch

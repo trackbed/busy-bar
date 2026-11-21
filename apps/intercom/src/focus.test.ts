@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import type { BusySnapshot } from '@busy-bar-apps/bar-kit';
 
+import { focusFrom } from './__tests__/fixtures.ts';
 import type { Board, Focus } from './board.ts';
 import type { FocusOptions } from './focus.ts';
 import { createFocusDriver, JOIN_WINDOW_MS } from './focus.ts';
@@ -17,14 +18,7 @@ const FREE: BusySnapshot = {
   snapshot: { type: 'NOT_STARTED', busy_bar_settings: SETTINGS },
   snapshot_timestamp_ms: NOW - 60 * MINUTE,
 };
-const FOCUS: Focus = {
-  id: 'f',
-  startedBy: 'Anna',
-  startsAt: NOW + 15_000,
-  endsAt: NOW + 15_000 + 25 * MINUTE,
-  cardId: 'c0ffee00-0000-4000-8000-00000000abcd',
-  skipped: [],
-};
+const FOCUS = focusFrom(NOW + 15_000);
 
 afterEach(() => {
   vi.useRealTimers();
@@ -85,6 +79,39 @@ describe('createFocusDriver', () => {
     await vi.advanceTimersByTimeAsync(60_000);
 
     expect(start).not.toHaveBeenCalled();
+  });
+
+  it('drops the plan when the board is lost', async () => {
+    const { driver, start } = setup();
+
+    driver.observe(board(FOCUS));
+    driver.observe(undefined);
+    await vi.advanceTimersByTimeAsync(60_000);
+
+    expect(start).not.toHaveBeenCalled();
+  });
+
+  it('plans again for a session still on when the board comes back', async () => {
+    const { driver, start } = setup();
+
+    driver.observe(board(FOCUS));
+    driver.observe(undefined);
+    driver.observe(board(FOCUS));
+    await vi.advanceTimersByTimeAsync(15_000);
+
+    expect(start.mock.calls).toStrictEqual([[TEAM_TIMER]]);
+  });
+
+  it('does not join a session again when the board comes back after the join', async () => {
+    const { driver, start } = setup();
+
+    driver.observe(board(FOCUS));
+    await vi.advanceTimersByTimeAsync(15_000);
+    driver.observe(undefined);
+    driver.observe(board(FOCUS));
+    await vi.advanceTimersByTimeAsync(15_000);
+
+    expect(start).toHaveBeenCalledOnce();
   });
 
   it('joins a session that just started, but not one long under way', async () => {

@@ -3,7 +3,7 @@ import { printPreview } from '@busy-bar-apps/bar-kit';
 
 import type { Board, Focus, Knock, TeamBar } from './board.ts';
 import { FOCUS_ROW } from './board.ts';
-import { FOCUS_LEAD_MS } from './convex/focus.ts';
+import { FOCUS_LEAD_MS } from './convex/presence.ts';
 import type { Presence } from './convex/presence.ts';
 import type { TeamView } from './render.ts';
 import { render } from './render.ts';

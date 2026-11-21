@@ -1,18 +1,7 @@
 import { defineSchema, defineTable } from 'convex/server';
-import type { Infer } from 'convex/values';
 import { v } from 'convex/values';
 
-import { presenceValidator } from './presence.ts';
-
-/** A knock waits until the knocked bar answers it or it expires. */
-export const knockStatusValidator = v.union(
-  v.literal('waiting'),
-  v.literal('coming'),
-  v.literal('later'),
-  v.literal('expired'),
-);
-
-export type KnockStatus = Infer<typeof knockStatusValidator>;
+import { knockStatusValidator, presenceValidator } from './presence.ts';
 
 export default defineSchema({
   // One row per bar on the team. Every bar subscribes to this table, so a

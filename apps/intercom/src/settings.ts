@@ -1,4 +1,4 @@
-import { FOCUS_MINUTES } from './convex/focus.ts';
+import { FOCUS_MINUTES } from './convex/presence.ts';
 
 /** What the intercom needs from the environment. */
 export interface IntercomSettings {

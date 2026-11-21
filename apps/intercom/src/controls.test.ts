@@ -2,18 +2,14 @@ import { describe, expect, it, vi } from 'vitest';
 
 import type { InputEvent } from '@busy-bar-apps/bar-kit';
 
-import type { Board, Focus, Knock, TeamBar } from './board.ts';
+import { bar, focusFrom } from './__tests__/fixtures.ts';
+import type { Board, Focus, Knock } from './board.ts';
 import { FOCUS_ROW } from './board.ts';
 import type { ControlsOptions } from './controls.ts';
 import { createControls } from './controls.ts';
-import type { Presence } from './convex/presence.ts';
 
 const NOW = Date.parse('2026-10-26T13:00:00Z');
 const MINUTE = 60_000;
-
-function bar(name: string, presence: Presence = { state: 'free' }): TeamBar {
-  return { id: name, name, online: true, presence };
-}
 
 const TEAM = [
   bar('Anna'),
@@ -22,14 +18,7 @@ const TEAM = [
   bar('Cleo'),
 ];
 
-const FOCUS: Focus = {
-  id: 'f',
-  startedBy: 'Anna',
-  startsAt: NOW + 10_000,
-  endsAt: NOW + 10_000 + 25 * MINUTE,
-  cardId: '00000000-0000-4000-8000-000000000000',
-  skipped: [],
-};
+const FOCUS = focusFrom(NOW + 10_000);
 
 function setup(
   options: {

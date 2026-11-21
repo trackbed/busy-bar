@@ -1,12 +1,11 @@
 import type { InputEvent } from '@busy-bar-apps/bar-kit';
 
-import type { Board, Focus } from './board.ts';
+import type { Board, Focus, Knock } from './board.ts';
 import {
-  incomingKnock,
   runningFocus,
+  screenOf,
   selectable,
   selectionOf,
-  startingFocus,
   statusAt,
 } from './board.ts';
 
@@ -76,6 +75,56 @@ export function createControls(options: ControlsOptions): Controls {
     event.button === button &&
     event.action === 'press';
 
+  /** While a team focus counts down: BACK skips it, or calls it off. */
+  const onCountdown = (event: InputEvent, focus: Focus): void => {
+    if (press(event, 'back')) {
+      send('Skipping the team focus', skipFocus(focus.id));
+    }
+  };
+
+  /** While a knock waits on this bar: OK answers "coming", BACK "later". */
+  const onKnock = (event: InputEvent, waiting: Knock): void => {
+    let reply: Reply | undefined;
+    if (press(event, 'ok')) {
+      reply = 'coming';
+    } else if (press(event, 'back')) {
+      reply = 'later';
+    }
+    if (reply !== undefined) {
+      send('Answering the knock', answer(waiting.id, reply));
+    }
+  };
+
+  /** On the team's board: the wheel moves the highlight, OK acts on it. */
+  const onTeam = (event: InputEvent, shown: Board, at: number): void => {
+    const selection = selectionOf(shown, selected);
+    if (event.kind === 'wheel') {
+      // A positive step moves the highlight down, as in agent-fleet.
+      const order = selectable(shown);
+      const current =
+        selection?.kind === 'teammate' ? selection.bar.id : selected;
+      const index = Math.max(0, order.indexOf(current ?? ''));
+      selected =
+        order[Math.max(0, Math.min(order.length - 1, index + event.delta))];
+      return;
+    }
+    if (!press(event, 'ok') || selection === undefined) {
+      return;
+    }
+    if (selection.kind === 'teammate') {
+      if (statusAt(selection.bar, at).status === 'free') {
+        send(`Knocking on ${selection.bar.name}`, knock(selection.bar.id));
+      }
+      return;
+    }
+    const running = runningFocus(shown, at);
+    if (running !== undefined) {
+      send('Joining the team focus', joinFocus(running));
+    } else if (shown.focus === null) {
+      send('Starting a team focus', startFocus());
+    }
+  };
+
   return {
     selected: () => selected,
     handle: (event) => {
@@ -84,45 +133,17 @@ export function createControls(options: ControlsOptions): Controls {
         return;
       }
       const at = now();
-      const starting = startingFocus(shown, at);
-      if (starting !== undefined) {
-        if (press(event, 'back')) {
-          send('Skipping the team focus', skipFocus(starting.id));
-        }
-        return;
-      }
-      const waiting = incomingKnock(shown);
-      if (waiting !== undefined) {
-        if (press(event, 'ok') || press(event, 'back')) {
-          send(
-            'Answering the knock',
-            answer(waiting.id, press(event, 'ok') ? 'coming' : 'later'),
-          );
-        }
-        return;
-      }
-      const selection = selectionOf(shown, selected);
-      if (event.kind === 'wheel') {
-        // A positive step moves the highlight down, as in agent-fleet.
-        const order = selectable(shown);
-        const current =
-          selection?.kind === 'teammate' ? selection.bar.id : selected;
-        const index = Math.max(0, order.indexOf(current ?? ''));
-        selected =
-          order[Math.max(0, Math.min(order.length - 1, index + event.delta))];
-      } else if (press(event, 'ok') && selection !== undefined) {
-        if (selection.kind === 'teammate') {
-          if (statusAt(selection.bar, at).status === 'free') {
-            send(`Knocking on ${selection.bar.name}`, knock(selection.bar.id));
-          }
+      const screen = screenOf(shown, at);
+      switch (screen.kind) {
+        case 'countdown':
+          onCountdown(event, screen.focus);
           return;
-        }
-        const running = runningFocus(shown, at);
-        if (running !== undefined) {
-          send('Joining the team focus', joinFocus(running));
-        } else if (shown.focus === null) {
-          send('Starting a team focus', startFocus());
-        }
+        case 'knock':
+          onKnock(event, screen.knock);
+          return;
+        case 'team':
+          onTeam(event, shown, at);
+          return;
       }
     },
   };

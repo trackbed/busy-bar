@@ -5,9 +5,7 @@ import { ConvexError } from 'convex/values';
 
 import type { Doc } from './_generated/dataModel.js';
 import type { QueryCtx } from './_generated/server.js';
-
-/** What a function answers when the key it was given names no bar. */
-export const UNKNOWN_KEY = 'unknown_key';
+import { UNKNOWN_KEY } from './presence.ts';
 
 const KEY_BYTES = 24;
 
