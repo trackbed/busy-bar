@@ -73,7 +73,11 @@ disappear on `SessionEnd` or after eight hours without an event.
 - **Wheel**: move the highlight on the back display.
 - **OK**: mark the highlighted session as seen.
 - **BACK**: mark every session that waits on you as seen.
-- **Selector** on BUSY, CUSTOM, or OFF: mutes the chime.
+- **Selector** on BUSY, CUSTOM, or OFF: mutes the chime. The bar reports
+  the selector only when it moves, so after the board starts or reconnects to
+  the bar its position is unknown until you move it. Until then the chime
+  plays only while the board is on screen, which keeps it quiet while a BUSY
+  or CUSTOM session's timer holds the screen.
 
 The wheel, OK, and BACK act only while the board is on screen, that is,
 while its last frame drew within 2.5 seconds. The bar reports input to every

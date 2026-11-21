@@ -42,7 +42,7 @@ async def main(settings: FleetSettings) -> None:
         async def play(sound: str) -> object:
             return await client.audio_play(stock_path=sound, application_name=NAME)
 
-        chime = Chime(play, enabled=settings.sound)
+        chime = Chime(play, enabled=settings.sound, on_screen=screen.on_screen)
         controls = Controls(fleet, chime, on_screen=screen.on_screen)
 
         server = await start_hook_server(
@@ -53,7 +53,7 @@ async def main(settings: FleetSettings) -> None:
             listen_for_input(
                 name=NAME,
                 config=config,
-                stream=client.stream_status_ws,
+                stream=controls.input_stream(client.stream_status_ws),
                 handle=controls.handle,
                 stop=stop,
             )
