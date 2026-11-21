@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 
+import { SetupError } from '@busy-bar-apps/bar-kit';
 import { objectAt } from '@busy-bar-apps/json-values';
 
 import type { QueueScope } from './linear.ts';
@@ -227,21 +228,40 @@ describe('fetchQueue', () => {
     expect(endless).toHaveBeenCalledTimes(MAX_PAGES * 2);
   });
 
-  it('rejects with the status when Linear refuses the request', async () => {
-    const fetch = vi.fn<typeof globalThis.fetch>(() =>
-      Promise.resolve(
-        new Response('', { status: 400, statusText: 'Bad Request' }),
-      ),
-    );
-
-    const failed = fetchQueue({
+  function refusing(status: number, statusText: string) {
+    return fetchQueue({
       apiKey: 'wrong',
       scope: SCOPE,
       signal: new AbortController().signal,
-      fetch,
+      fetch: vi.fn<typeof globalThis.fetch>(() =>
+        Promise.resolve(new Response('', { status, statusText })),
+      ),
     });
+  }
 
-    await expect(failed).rejects.toThrow('Linear answered 400 Bad Request');
-    await expect(failed).rejects.toMatchObject({ status: 400 });
+  it.each([
+    [400, 'Bad Request'],
+    [401, 'Unauthorized'],
+  ])(
+    'names the settings to check when Linear rejects them (%d)',
+    async (status, statusText) => {
+      const failed = refusing(status, statusText);
+
+      await expect(failed).rejects.toBeInstanceOf(SetupError);
+      await expect(failed).rejects.toMatchObject({
+        summary: 'key rejected',
+        lines: [
+          'Linear rejected the request.',
+          'Check LINEAR_API_KEY and the team key.',
+        ],
+        cause: new LinearError(`Linear answered ${status} ${statusText}`),
+      });
+    },
+  );
+
+  it('rejects with the status when Linear fails', async () => {
+    await expect(refusing(503, 'Service Unavailable')).rejects.toStrictEqual(
+      new LinearError('Linear answered 503 Service Unavailable'),
+    );
   });
 });

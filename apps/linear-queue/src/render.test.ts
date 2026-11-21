@@ -7,11 +7,11 @@ import {
   elementsById,
   FRONT_DISPLAY,
   overflowingText,
+  SetupError,
   textOf,
 } from '@busy-bar-apps/bar-kit';
 
 import type { QueueCounts } from './linear.ts';
-import { LinearError } from './linear.ts';
 import type { QueueView } from './render.ts';
 import {
   heading,
@@ -159,14 +159,12 @@ describe('render', () => {
   it.each([
     [undefined, 'loading', 'Counting the Linear queue'],
     [
-      { error: new LinearError('no', 401), at: NOW },
+      {
+        error: new SetupError('key rejected', ['Check LINEAR_API_KEY.']),
+        at: NOW,
+      },
       'key rejected',
-      'Linear rejected the request.',
-    ],
-    [
-      { error: new LinearError('no', 400), at: NOW },
-      'key rejected',
-      'Linear rejected the request.',
+      'Check LINEAR_API_KEY.',
     ],
     [
       { error: new Error('fetch failed'), at: NOW },

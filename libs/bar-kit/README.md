@@ -47,6 +47,10 @@ variables and behave the same way.
   or `<source> unreachable, showing old data` once the source has failed and
   the latest value is older than the app's limit. `formatAge` is its age
   format: `now`, whole minutes, then whole hours.
+- `SetupError`: a failure only the person running the app can fix, such as a
+  rejected key. The client that learns the cause throws it with a `summary`
+  for the front display and `lines` saying what to change, and the app's
+  screen for a source it cannot read shows those instead of the message.
 - The buttons, wheel, and mode selector (`listenForInput`): read the bar's
   status stream over Node's WebSocket, hand each `InputEvent` to a handler,
   reopen the stream after it drops, and log a handler that throws. The cloud

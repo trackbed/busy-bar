@@ -11,6 +11,7 @@ import {
   PALETTE,
   freshnessLine,
   rgba,
+  SetupError,
   solidRectangle,
   SUMMARY_Y,
   textElement,
@@ -18,7 +19,6 @@ import {
 } from '@busy-bar-apps/bar-kit';
 
 import type { QueueCounts, QueueScope } from './linear.ts';
-import { LinearError } from './linear.ts';
 
 export const READY_COLORS = {
   plenty: PALETTE.good,
@@ -201,15 +201,9 @@ function unavailable(failure: PollFailure | undefined): BarElements {
   if (failure === undefined) {
     summary = 'loading';
     lines = ['Counting the Linear queue'];
-  } else if (
-    failure.error instanceof LinearError &&
-    (failure.error.status === 401 || failure.error.status === 400)
-  ) {
-    summary = 'key rejected';
-    lines = [
-      'Linear rejected the request.',
-      'Check LINEAR_API_KEY and the team key.',
-    ];
+  } else if (failure.error instanceof SetupError) {
+    summary = failure.error.summary;
+    lines = failure.error.lines;
   } else {
     summary = 'unreachable';
     lines = ['Cannot reach Linear:', failure.error.message];

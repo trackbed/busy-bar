@@ -63,6 +63,7 @@ export {
 } from './run-bar-app.ts';
 export type { TrackedScreen } from './screen.ts';
 export { trackScreen } from './screen.ts';
+export { SetupError } from './setup-error.ts';
 export type {
   BarAudioClient,
   Speaker,

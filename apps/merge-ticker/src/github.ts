@@ -1,4 +1,4 @@
-import { toBarText } from '@busy-bar-apps/bar-kit';
+import { SetupError, toBarText } from '@busy-bar-apps/bar-kit';
 import type { JsonObject } from '@busy-bar-apps/json-values';
 import {
   arrayAt,
@@ -40,12 +40,6 @@ export interface PullRequests {
 /** GitHub refused the request or answered with errors. */
 export class GitHubError extends Error {
   override readonly name = 'GitHubError';
-  readonly status: number | undefined;
-
-  constructor(message: string, status?: number) {
-    super(message);
-    this.status = status;
-  }
 }
 
 export const GITHUB_GRAPHQL_URL = 'https://api.github.com/graphql';
@@ -145,10 +139,17 @@ export async function fetchPullRequests(
     signal,
   });
   if (!response.ok) {
-    throw new GitHubError(
+    const refusal = new GitHubError(
       `GitHub answered ${response.status} ${response.statusText}`.trim(),
-      response.status,
     );
+    if (response.status === 401) {
+      throw new SetupError(
+        'token rejected',
+        ['GitHub rejected GITHUB_TOKEN.', 'Try GITHUB_TOKEN=$(gh auth token).'],
+        { cause: refusal },
+      );
+    }
+    throw refusal;
   }
   return parsePullRequests(await response.json());
 }

@@ -12,6 +12,7 @@ import {
   PALETTE,
   freshnessLine,
   rgba,
+  SetupError,
   statusCells,
   SUMMARY_Y,
   textElement,
@@ -20,7 +21,6 @@ import {
 } from '@busy-bar-apps/bar-kit';
 
 import type { Checks, OpenPullRequest, PullRequests } from './github.ts';
-import { GitHubError } from './github.ts';
 import type { Celebration, TickerState } from './watch.ts';
 
 export const MERGED_COLOR = PALETTE.good;
@@ -278,15 +278,9 @@ function unavailable(failure: PollFailure | undefined): BarElements {
   if (failure === undefined) {
     summary = 'loading';
     lines = ['Asking GitHub for your pull requests'];
-  } else if (
-    failure.error instanceof GitHubError &&
-    failure.error.status === 401
-  ) {
-    summary = 'token rejected';
-    lines = [
-      'GitHub rejected GITHUB_TOKEN.',
-      'Try GITHUB_TOKEN=$(gh auth token).',
-    ];
+  } else if (failure.error instanceof SetupError) {
+    summary = failure.error.summary;
+    lines = failure.error.lines;
   } else {
     summary = 'unreachable';
     lines = ['Cannot reach GitHub:', failure.error.message];

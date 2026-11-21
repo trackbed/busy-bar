@@ -7,11 +7,11 @@ import {
   elementsById,
   FRONT_DISPLAY,
   overflowingText,
+  SetupError,
   textOf,
 } from '@busy-bar-apps/bar-kit';
 
 import type { OpenPullRequest, PullRequests } from './github.ts';
-import { GitHubError } from './github.ts';
 import {
   CELEBRATION_MS,
   CHECK_COLORS,
@@ -218,9 +218,12 @@ describe('render', () => {
   it.each([
     [undefined, 'loading', 'Asking GitHub for your pull requests'],
     [
-      { error: new GitHubError('no', 401), at: NOW },
+      {
+        error: new SetupError('token rejected', ['Check GITHUB_TOKEN.']),
+        at: NOW,
+      },
       'token rejected',
-      'GitHub rejected GITHUB_TOKEN.',
+      'Check GITHUB_TOKEN.',
     ],
     [
       { error: new Error('fetch failed'), at: NOW },

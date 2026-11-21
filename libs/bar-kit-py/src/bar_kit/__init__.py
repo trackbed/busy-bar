@@ -48,6 +48,7 @@ from bar_kit.run import (
     run_bar_app,
 )
 from bar_kit.screen import TrackedScreen, track_screen
+from bar_kit.setup_error import SetupError
 from bar_kit.speaker import AudioClient, Speaker, StockSound
 from bar_kit.text import to_bar_text
 
@@ -84,6 +85,7 @@ __all__ = [
     "SelectorEvent",
     "SelectorPosition",
     "SettingsError",
+    "SetupError",
     "Snapshot",
     "Speaker",
     "StockSound",
