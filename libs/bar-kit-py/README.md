@@ -7,8 +7,9 @@ both read the same environment variables and behave the same way.
 ## Owns
 
 - Connection settings from `BUSYBAR_ADDR` and `BUSYBAR_TOKEN`
-  (`load_bar_config`) and the async busylib client built from them
-  (`create_busy_bar`).
+  (`load_bar_config`, which raises a `BarConfigError` for an address that is
+  not a host name, IP address, or URL, or for the cloud without a token) and
+  the async busylib client built from them (`create_busy_bar`).
 - Display sizes (`FRONT_DISPLAY`, and `BACK_DISPLAY`: the 148×80 of the
   back screen that the status bar leaves to apps) and colours (`rgba`).
 - The frame loop (`run_bar_app`): draw every interval at a `priority`

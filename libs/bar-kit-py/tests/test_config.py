@@ -1,14 +1,8 @@
 import pytest
 from contract import addresses
 
-from bar_kit import (
-    CLOUD_ADDRESS,
-    USB_ADDRESS,
-    BarConfig,
-    BarConfigError,
-    is_cloud_address,
-    load_bar_config,
-)
+from bar_kit import BarConfig, BarConfigError, load_bar_config
+from bar_kit.config import CLOUD_ADDRESS, USB_ADDRESS, is_cloud_address
 
 
 def test_defaults_to_a_bar_plugged_in_over_usb() -> None:

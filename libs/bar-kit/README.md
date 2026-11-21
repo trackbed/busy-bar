@@ -8,7 +8,9 @@ variables and behave the same way.
 ## Owns
 
 - Connection settings from `BUSYBAR_ADDR` and `BUSYBAR_TOKEN`
-  (`loadBarConfig`) and the busy-lib client built from them (`createBusyBar`).
+  (`loadBarConfig`, which throws a `BarConfigError` for an address that is
+  not a host name, IP address, or URL, or for the cloud without a token) and
+  the busy-lib client built from them (`createBusyBar`).
 - Display sizes (`FRONT_DISPLAY`, and `BACK_DISPLAY`: the 148×80 of the
   back screen that the status bar leaves to apps) and colours (`rgba`).
 - The frame loop (`runBarApp`): draw every interval at a `priority`
