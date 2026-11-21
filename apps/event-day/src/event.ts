@@ -1,3 +1,5 @@
+import type { StockSound } from '@busy-bar-apps/bar-kit';
+
 import type { ChallengeStatus } from './challenge.ts';
 import type { BoothRef, BoothState, BoothStatus } from './photocraft.ts';
 
@@ -15,10 +17,10 @@ export type BoothView = BoothState | 'quiet';
 /** A change worth a sound: a booth went quiet, or stopped answering. */
 export type Alert = 'quiet' | 'down';
 
-/** The built-in sound every bar ships for each alert. */
-export const ALERT_SOUNDS: Readonly<Record<Alert, string>> = {
-  quiet: 'shared/sounds/calendar_reminder_ends.snd',
-  down: 'shared/sounds/calendar_event_starts.snd',
+/** The stock sound each alert plays. */
+const ALERT_SOUNDS: Readonly<Record<Alert, StockSound>> = {
+  quiet: 'reminder',
+  down: 'event',
 };
 
 /**
@@ -75,8 +77,6 @@ export class EventWatch {
 }
 
 export interface EventFetchOptions {
-  /** Names the app in log messages. */
-  readonly name: string;
   readonly booths: readonly BoothRef[];
   /** Reads one booth, such as `PhotoCraft.status`; unset without a PhotoCraft URL. */
   readonly boothStatus:
@@ -88,31 +88,27 @@ export interface EventFetchOptions {
     | undefined;
   /** How long a live booth may go without a portrait before it is quiet. */
   readonly quietMs: number;
-  /** Plays a stock sound, such as busy-lib's `AudioPlay`; unset when sounds are off. */
-  readonly play: ((stockPath: string) => Promise<unknown>) | undefined;
+  /** Starts a sound and returns at once, such as bar-kit's `Speaker.play`. */
+  readonly play: (sound: StockSound) => void;
   readonly now?: () => Date;
-  readonly log?: Pick<Console, 'warn'>;
 }
 
 /**
  * One poll of the board for `createPoller`: every booth and the leaderboard,
  * then the sound for a booth that just went quiet or down. A booth that cannot
  * be read fails the poll; a leaderboard that cannot be read becomes
- * `challengeProblem`, so the booths still show. A sound that fails to play is
- * logged and the poll still succeeds.
+ * `challengeProblem`, so the booths still show.
  */
 export function createEventFetch(
   options: EventFetchOptions,
 ): (signal: AbortSignal) => Promise<EventSnapshot> {
   const {
-    name,
     booths,
     boothStatus,
     challenge,
     quietMs,
     play,
     now = () => new Date(),
-    log = console,
   } = options;
   const watch = new EventWatch(quietMs);
 
@@ -149,12 +145,8 @@ export function createEventFetch(
     ]);
     const snapshot: EventSnapshot = { booths: statuses, ...leaderboard };
     const alert = watch.observe(snapshot, now());
-    if (alert !== undefined && play !== undefined) {
-      try {
-        await play(ALERT_SOUNDS[alert]);
-      } catch (error) {
-        log.warn(`[${name}] Playing a sound failed:`, error);
-      }
+    if (alert !== undefined) {
+      play(ALERT_SOUNDS[alert]);
     }
     return snapshot;
   };

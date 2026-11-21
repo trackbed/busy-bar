@@ -51,6 +51,13 @@ variables and behave the same way.
   client `runBarApp` draws with and reports whether the app's frames reach the
   screen (`onScreen()`): true for 2.5 seconds after a frame draws, false as
   soon as the bar refuses one.
+- Alert sounds (`createSpeaker`): `play` a stock sound by busylib's name
+  (`StockSound`: `event`, `reminder`, `volume`; paths in `STOCK_SOUNDS`)
+  under the app's name. `play` returns at once and never throws, so a slow or
+  absent bar never holds up a poll; a failed sound is logged, a speaker made
+  with `enabled: false` stays silent, and a `signal` cancels sounds still in
+  flight at shutdown. `wait()` settles started sounds in tests. Each app keeps
+  only its choice of which alert plays which sound.
 - Text for the bitmap fonts: `toBarText` turns any text into printable ASCII
   the fonts draw (`Nørreport` becomes `Noerreport`, a backtick an
   apostrophe, any run of Unicode whitespace one space), `textWidth` measures

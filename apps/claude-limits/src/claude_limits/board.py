@@ -1,17 +1,14 @@
 """How full each account is, judged the way the rotation tool judges it."""
 
 import asyncio
-import logging
-from collections.abc import Awaitable, Callable, Mapping
+from collections.abc import Callable, Mapping
 from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Literal
 
-from bar_kit import to_bar_text
+from bar_kit import StockSound, to_bar_text
 from claude_limits.rotation import Account, Rotation, Window, read_rotation
-
-logger = logging.getLogger(__name__)
 
 type Level = Literal["ok", "high", "limit", "unknown"]
 type Alert = Literal["rotated", "exhausted"]
@@ -19,11 +16,11 @@ type Alert = Literal["rotated", "exhausted"]
 HIGH_SHARE = 0.8
 """From this share of the rotation threshold on, an account shows as high."""
 
-SOUNDS: Mapping[Alert, str] = {
-    "rotated": "shared/sounds/calendar_reminder_ends.snd",
-    "exhausted": "shared/sounds/calendar_event_starts.snd",
+SOUNDS: Mapping[Alert, StockSound] = {
+    "rotated": "reminder",
+    "exhausted": "event",
 }
-"""The built-in sound every bar ships for each alert."""
+"""The stock sound each alert plays."""
 
 
 @dataclass(frozen=True, slots=True)
@@ -118,15 +115,15 @@ def _utc_now() -> datetime:
 class RotationWatch:
     """Reads the rotation every poll and sounds a change worth a sound.
 
-    The first reading only sets the baseline. A sound that fails to play is
-    logged and the poll still returns the reading.
+    The first reading only sets the baseline. `play` returns at once, such as
+    `Speaker.play`, so the poll never waits on the bar's speaker.
     """
 
     def __init__(
         self,
         root: Path,
         *,
-        play: Callable[[str], Awaitable[object]] | None,
+        play: Callable[[StockSound], None],
         read: Callable[[Path], Rotation] = read_rotation,
         now: Callable[[], datetime] = _utc_now,
     ) -> None:
@@ -137,15 +134,12 @@ class RotationWatch:
         self._previous: Rotation | None = None
 
     async def fetch(self) -> Rotation:
-        """Read the rotation, for a `Poller`; `play` is None when sounds are off."""
+        """Read the rotation, for a `Poller`."""
         rotation = await asyncio.to_thread(self._read, self._root)
         alert = alert_for(self._previous, rotation, self._now())
         self._previous = rotation
-        if alert is not None and self._play is not None:
-            try:
-                await self._play(SOUNDS[alert])
-            except Exception:  # A missed sound must not end the app.
-                logger.warning("Playing a sound failed.", exc_info=True)
+        if alert is not None:
+            self._play(SOUNDS[alert])
         return rotation
 
 

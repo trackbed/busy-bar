@@ -1,6 +1,7 @@
 import {
   createBusyBar,
   createPoller,
+  createSpeaker,
   loadBarConfig,
   runBarApp,
   shutdownSignal,
@@ -25,12 +26,17 @@ const photoCraft =
     ? undefined
     : new PhotoCraft({ appUrl: settings.photoCraftUrl });
 const { challenge } = settings;
+const speaker = createSpeaker({
+  name: NAME,
+  client: bar,
+  enabled: settings.sound,
+  signal,
+});
 
 const poller = createPoller<EventSnapshot>({
   name: NAME,
   intervalMs: REFRESH_MS,
   fetch: createEventFetch({
-    name: NAME,
     booths: settings.booths,
     boothStatus:
       photoCraft === undefined
@@ -42,10 +48,7 @@ const poller = createPoller<EventSnapshot>({
         : (fetchSignal) =>
             fetchChallenge({ ...challenge, signal: fetchSignal }),
     quietMs,
-    play: settings.sound
-      ? (stockPath) =>
-          bar.AudioPlay({ application_name: NAME, stock_path: stockPath })
-      : undefined,
+    play: speaker.play,
   }),
 });
 

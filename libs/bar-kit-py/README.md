@@ -52,6 +52,14 @@ both read the same environment variables and behave the same way.
   `track_screen` wraps the client `run_bar_app` draws with and reports
   whether the app's frames reach the screen (`on_screen()`): true for 2.5
   seconds after a frame draws, false as soon as the bar refuses one.
+- Alert sounds (`Speaker`): `play` a stock sound by busylib's name
+  (`StockSound`: `event`, `reminder`, `volume`; paths in busylib's
+  `STOCK_SOUNDS`, re-exported) under the app's name. `play` returns at once
+  and never raises, so a slow or absent bar never holds up a poll; a failed
+  sound is logged, and a speaker made with `enabled=False` stays silent.
+  Sounds still playing are cancelled with the event loop at shutdown.
+  `wait()` settles started sounds in tests. Each app keeps only its choice of
+  which alert plays which sound.
 - Text for the bitmap fonts: `to_bar_text` turns any text into printable ASCII
   the fonts draw (`Nørreport` becomes `Noerreport`, a backtick an
   apostrophe, any run of Unicode whitespace one space), `text_width` measures

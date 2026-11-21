@@ -1,9 +1,7 @@
 """The bar's wheel, buttons, and speaker, and Claude Code's hooks, as the fleet
 board uses them."""
 
-import asyncio
-import logging
-from collections.abc import AsyncIterator, Awaitable, Callable, Mapping
+from collections.abc import AsyncIterator, Callable, Mapping
 from datetime import UTC, datetime, timedelta
 
 from agent_fleet.fleet import Fleet, Status
@@ -14,16 +12,15 @@ from bar_kit import (
     InputEvent,
     SelectorEvent,
     SelectorPosition,
+    StockSound,
 )
 
-logger = logging.getLogger(__name__)
-
-# Built-in sounds every bar ships (busylib's `features.notification`).
-SOUNDS: Mapping[Status, str] = {
-    "done": "shared/sounds/calendar_reminder_ends.snd",
-    "asking": "shared/sounds/calendar_event_starts.snd",
-    "failed": "shared/sounds/calendar_event_starts.snd",
+SOUNDS: Mapping[Status, StockSound] = {
+    "done": "reminder",
+    "asking": "event",
+    "failed": "event",
 }
+"""The stock sound each alert plays."""
 
 # Selector positions where the bar asks not to be disturbed: a running BUSY or
 # CUSTOM session, or OFF, the bar's do-not-disturb.
@@ -48,20 +45,17 @@ class Chime:
 
     def __init__(
         self,
-        play: Callable[[str], Awaitable[object]],
+        play: Callable[[StockSound], None],
         *,
-        enabled: bool,
         on_screen: Callable[[], bool],
         min_gap: timedelta = DEFAULT_MIN_GAP,
         now: Callable[[], datetime] = _utc_now,
     ) -> None:
         self._play = play
-        self._enabled = enabled
         self._on_screen = on_screen
         self._min_gap = min_gap
         self._now = now
         self._last: datetime | None = None
-        self._tasks: set[asyncio.Task[None]] = set()
         self.selector: SelectorPosition | None = None
         """Where the bar's selector is, or None until the bar reports it."""
 
@@ -76,24 +70,12 @@ class Chime:
         """Sound the alert for `status`, unless something says not to."""
         sound = SOUNDS.get(status)
         now = self._now()
-        if not self._enabled or sound is None or self.muted:
+        if sound is None or self.muted:
             return
         if self._last is not None and now - self._last < self._min_gap:
             return
         self._last = now
-        task = asyncio.create_task(self._play_quietly(sound))
-        self._tasks.add(task)
-        task.add_done_callback(self._tasks.discard)
-
-    async def wait(self) -> None:
-        """Wait for sounds already started; tests use it to settle."""
-        await asyncio.gather(*self._tasks)
-
-    async def _play_quietly(self, sound: str) -> None:
-        try:
-            await self._play(sound)
-        except Exception:  # A missed chime must not end the app.
-            logger.warning("Playing %s on the bar failed.", sound, exc_info=True)
+        self._play(sound)
 
 
 class Controls:

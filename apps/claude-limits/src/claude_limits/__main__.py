@@ -6,6 +6,7 @@ import os
 
 from bar_kit import (
     Poller,
+    Speaker,
     create_busy_bar,
     install_shutdown_handlers,
     load_bar_config,
@@ -24,11 +25,8 @@ async def main() -> None:
     stop = asyncio.Event()
     install_shutdown_handlers(stop)
     client = create_busy_bar(load_bar_config())
-
-    async def play(sound: str) -> object:
-        return await client.audio_play(stock_path=sound, application_name=NAME)
-
-    watch = RotationWatch(settings.root, play=play if settings.sound else None)
+    speaker = Speaker(client, name=NAME, enabled=settings.sound)
+    watch = RotationWatch(settings.root, play=speaker.play)
     poller = Poller(name=NAME, fetch=watch.fetch, interval=REFRESH_SECONDS)
     # busylib types `__aenter__` as returning its base client, so keep this
     # reference instead of binding the context manager's result.

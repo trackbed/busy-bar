@@ -3,6 +3,7 @@ import { ConvexClient } from 'convex/browser';
 import {
   createBusyBar,
   createPoller,
+  createSpeaker,
   listenForInput,
   loadBarConfig,
   runBarApp,
@@ -38,11 +39,13 @@ const focus = createFocusDriver({
   snapshot: () => bar.BusySnapshotGet(),
   start: (snapshot) => bar.BusySnapshotSet(snapshot),
 });
-const chime = createChime({
+const speaker = createSpeaker({
   name: NAME,
+  client: bar,
   enabled: settings.sound,
-  play: (sound) => bar.AudioPlay({ application_name: NAME, stock_path: sound }),
+  signal,
 });
+const chime = createChime({ play: speaker.play });
 const feed = createBoardFeed([focus.observe, chime.observe]);
 const unsubscribe = convex.onUpdate(
   api.team.board,

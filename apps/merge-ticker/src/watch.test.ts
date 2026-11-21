@@ -1,7 +1,9 @@
 import { describe, expect, it, vi } from 'vitest';
 
+import type { StockSound } from '@busy-bar-apps/bar-kit';
+
 import type { Checks, PullRequests } from './github.ts';
-import { ALERT_SOUNDS, createTickerFetch, MergeWatch } from './watch.ts';
+import { createTickerFetch, MergeWatch } from './watch.ts';
 
 const NOW = new Date('2026-10-20T10:00:00Z');
 const LATER = new Date('2026-10-20T10:01:00Z');
@@ -101,23 +103,18 @@ describe('createTickerFetch', () => {
   type Options = Parameters<typeof createTickerFetch>[0];
 
   function setup(overrides: Partial<Options> = {}) {
-    const log = { warn: vi.fn<Console['warn']>() };
-    const play = vi.fn<(stockPath: string) => Promise<unknown>>(() =>
-      Promise.resolve(),
-    );
+    const play = vi.fn<(sound: StockSound) => void>();
     const readings: PullRequests[] = [];
     const pullRequests = vi.fn<Options['pullRequests']>(() =>
       Promise.resolve(readings.shift() ?? pulls({})),
     );
     const fetch = createTickerFetch({
-      name: 'test',
       pullRequests,
       play,
       now: () => NOW,
-      log,
       ...overrides,
     });
-    return { fetch, play, log, pullRequests, readings };
+    return { fetch, play, pullRequests, readings };
   }
 
   it('reads the pull requests as of now', async () => {
@@ -141,36 +138,6 @@ describe('createTickerFetch', () => {
     await fetch(SIGNAL);
     await fetch(SIGNAL);
 
-    expect(play.mock.calls).toStrictEqual([
-      [ALERT_SOUNDS.merged],
-      [ALERT_SOUNDS.failing],
-    ]);
-  });
-
-  it('stays silent with sounds off and still celebrates', async () => {
-    const { fetch, readings } = setup({ play: undefined });
-    readings.push(pulls({}), pulls({ merged: [7] }));
-
-    await fetch(SIGNAL);
-    const state = await fetch(SIGNAL);
-
-    expect(state.celebration?.merge.number).toBe(7);
-  });
-
-  it('logs a sound that fails and still returns the reading', async () => {
-    const failure = new Error('speaker busy');
-    const { fetch, log, readings } = setup({
-      play: () => Promise.reject(failure),
-    });
-    readings.push(pulls({}), pulls({ merged: [3] }));
-
-    await fetch(SIGNAL);
-    const state = await fetch(SIGNAL);
-
-    expect(state.celebration?.merge.number).toBe(3);
-    expect(log.warn).toHaveBeenCalledWith(
-      '[test] Playing a sound failed:',
-      failure,
-    );
+    expect(play.mock.calls).toStrictEqual([['event'], ['reminder']]);
   });
 });

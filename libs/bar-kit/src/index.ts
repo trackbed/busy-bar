@@ -62,3 +62,10 @@ export {
 } from './run-bar-app.ts';
 export type { TrackedScreen } from './screen.ts';
 export { trackScreen } from './screen.ts';
+export type {
+  BarAudioClient,
+  Speaker,
+  SpeakerOptions,
+  StockSound,
+} from './speaker.ts';
+export { createSpeaker, STOCK_SOUNDS } from './speaker.ts';

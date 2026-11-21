@@ -1,6 +1,7 @@
 import {
   createBusyBar,
   createPoller,
+  createSpeaker,
   loadBarConfig,
   runBarApp,
   shutdownSignal,
@@ -18,12 +19,17 @@ const REFRESH_MS = 60_000;
 const settings = loadSettings(process.env);
 const bar = createBusyBar(loadBarConfig());
 const signal = shutdownSignal();
+const speaker = createSpeaker({
+  name: NAME,
+  client: bar,
+  enabled: settings.sound,
+  signal,
+});
 
 const poller = createPoller<TickerState>({
   name: NAME,
   intervalMs: REFRESH_MS,
   fetch: createTickerFetch({
-    name: NAME,
     pullRequests: (now, fetchSignal) =>
       fetchPullRequests({
         token: settings.token,
@@ -31,10 +37,7 @@ const poller = createPoller<TickerState>({
         startOfDay: startOfDay(now, settings.timeZone),
         signal: fetchSignal,
       }),
-    play: settings.sound
-      ? (stockPath) =>
-          bar.AudioPlay({ application_name: NAME, stock_path: stockPath })
-      : undefined,
+    play: speaker.play,
   }),
 });
 

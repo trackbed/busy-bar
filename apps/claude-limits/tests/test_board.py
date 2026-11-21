@@ -1,10 +1,10 @@
-import logging
 from datetime import timedelta
 from pathlib import Path
 
 import pytest
 from samples import NOW
 
+from bar_kit import StockSound
 from claude_limits.board import (
     SOUNDS,
     Level,
@@ -160,21 +160,8 @@ def test_sounds_an_alert_when_the_tool_switches_accounts() -> None:
 ROOT = Path("/rotation")
 
 
-class Speaker:
-    def __init__(self, *, broken: bool = False) -> None:
-        self.played: list[str] = []
-        self.broken = broken
-
-    async def play(self, sound: str) -> object:
-        self.played.append(sound)
-        if self.broken:
-            message = "bar offline"
-            raise ConnectionError(message)
-        return None
-
-
 def watch_over(
-    *readings: Rotation, speaker: Speaker | None
+    *readings: Rotation, played: list[StockSound]
 ) -> tuple[RotationWatch, list[Path]]:
     pending = list(readings)
     roots: list[Path] = []
@@ -183,45 +170,30 @@ def watch_over(
         roots.append(root)
         return pending.pop(0)
 
-    play = None if speaker is None else speaker.play
-    return RotationWatch(ROOT, play=play, read=read, now=lambda: NOW), roots
+    return RotationWatch(ROOT, play=played.append, read=read, now=lambda: NOW), roots
 
 
 async def test_reads_the_rotation_and_sounds_when_the_tool_rotates() -> None:
-    speaker = Speaker()
+    played: list[StockSound] = []
     first = rotation(account("a", window(10)), account("b", window(10)))
     rotated = rotation(account("a", window(10)), account("b", window(10)), current="b")
-    watch, roots = watch_over(first, first, rotated, speaker=speaker)
+    watch, roots = watch_over(first, first, rotated, played=played)
 
     assert await watch.fetch() == first
     await watch.fetch()
     assert await watch.fetch() == rotated
 
     assert roots == [ROOT, ROOT, ROOT]
-    assert speaker.played == [SOUNDS["rotated"]]
+    assert played == ["reminder"]
 
 
-async def test_stays_silent_with_sounds_off() -> None:
+async def test_sounds_when_every_account_runs_out() -> None:
+    played: list[StockSound] = []
     first = rotation(account("a", window(10)))
     exhausted = rotation(account("a", window(100)))
-    watch, _ = watch_over(first, exhausted, speaker=None)
+    watch, _ = watch_over(first, exhausted, played=played)
 
     await watch.fetch()
 
     assert await watch.fetch() == exhausted
-
-
-async def test_logs_a_sound_that_fails_and_keeps_the_reading(
-    caplog: pytest.LogCaptureFixture,
-) -> None:
-    first = rotation(account("a", window(10)))
-    exhausted = rotation(account("a", window(100)))
-    speaker = Speaker(broken=True)
-    watch, _ = watch_over(first, exhausted, speaker=speaker)
-    await watch.fetch()
-
-    with caplog.at_level(logging.WARNING, logger="claude_limits.board"):
-        assert await watch.fetch() == exhausted
-
-    assert speaker.played == [SOUNDS["exhausted"]]
-    assert "Playing a sound failed." in caplog.text
+    assert played == [SOUNDS["exhausted"]]

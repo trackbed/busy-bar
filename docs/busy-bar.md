@@ -110,7 +110,9 @@ TypeScript client uploads bytes as they are.
 bar ships, with no upload. busylib lists three that ship with the firmware:
 `shared/sounds/calendar_event_starts.snd`,
 `shared/sounds/calendar_reminder_ends.snd`, and
-`shared/sounds/volume_change.snd`.
+`shared/sounds/volume_change.snd`. Apps play them through the kits'
+speaker (`createSpeaker` / `Speaker`) by busylib's names for them (`event`,
+`reminder`, `volume`), so a failed sound is logged and never holds up a poll.
 
 ## BUSY Timer
 

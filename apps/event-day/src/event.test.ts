@@ -1,13 +1,10 @@
 import { describe, expect, it, vi } from 'vitest';
 
+import type { StockSound } from '@busy-bar-apps/bar-kit';
+
 import type { ChallengeStatus } from './challenge.ts';
 import type { EventSnapshot } from './event.ts';
-import {
-  ALERT_SOUNDS,
-  boothView,
-  createEventFetch,
-  EventWatch,
-} from './event.ts';
+import { boothView, createEventFetch, EventWatch } from './event.ts';
 import type { BoothState, BoothStatus } from './photocraft.ts';
 
 const NOW = new Date('2026-10-20T10:00:00Z');
@@ -103,26 +100,21 @@ describe('createEventFetch', () => {
   type Options = Parameters<typeof createEventFetch>[0];
 
   function setup(overrides: Partial<Options> = {}) {
-    const log = { warn: vi.fn<Console['warn']>() };
-    const play = vi.fn<(stockPath: string) => Promise<unknown>>(() =>
-      Promise.resolve(),
-    );
+    const play = vi.fn<(sound: StockSound) => void>();
     let statuses = [booth('a', 'live', 1)];
     const fetch = createEventFetch({
-      name: 'test',
       booths: [{ eventSlug: 'summit-2026', boothSlug: 'a' }],
       boothStatus: () => Promise.resolve(statuses[0] ?? booth('a', 'error')),
       challenge: () => Promise.resolve(LEADERBOARD),
       quietMs: QUIET_MS,
       play,
       now: () => NOW,
-      log,
       ...overrides,
     });
     const next = (state: BoothStatus): void => {
       statuses = [state];
     };
-    return { fetch, play, log, next };
+    return { fetch, play, next };
   }
 
   it('reads every booth and the leaderboard into one snapshot', async () => {
@@ -186,36 +178,6 @@ describe('createEventFetch', () => {
     next(booth('a', 'live', 20));
     await fetch(SIGNAL);
 
-    expect(play.mock.calls).toStrictEqual([
-      [ALERT_SOUNDS.down],
-      [ALERT_SOUNDS.quiet],
-    ]);
-  });
-
-  it('stays silent with sounds off', async () => {
-    const { fetch, next } = setup({ play: undefined });
-    await fetch(SIGNAL);
-    next(booth('a', 'error'));
-
-    expect(await fetch(SIGNAL)).toMatchObject({
-      booths: [booth('a', 'error')],
-    });
-  });
-
-  it('logs a sound that fails and still returns the snapshot', async () => {
-    const failure = new Error('speaker busy');
-    const { fetch, log, next } = setup({
-      play: () => Promise.reject(failure),
-    });
-    await fetch(SIGNAL);
-    next(booth('a', 'error'));
-
-    expect(await fetch(SIGNAL)).toMatchObject({
-      booths: [booth('a', 'error')],
-    });
-    expect(log.warn).toHaveBeenCalledWith(
-      '[test] Playing a sound failed:',
-      failure,
-    );
+    expect(play.mock.calls).toStrictEqual([['event'], ['reminder']]);
   });
 });
