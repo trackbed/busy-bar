@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import type { BarElements, PollFailure } from '@busy-bar-apps/bar-kit';
+import type { BarElements } from '@busy-bar-apps/bar-kit';
 import {
   BACK_DISPLAY,
   colorOf,
@@ -20,7 +20,6 @@ import {
   render,
   ROTATE_MS,
   rotatingLine,
-  STALE_MS,
   VIEW_COLORS,
 } from './render.ts';
 
@@ -58,14 +57,10 @@ const CHALLENGE: ChallengeStatus = {
 
 function draw(
   value: EventSnapshot | undefined,
-  {
-    at = NOW,
-    failure,
-    now = NOW,
-  }: { at?: Date; failure?: PollFailure; now?: Date } = {},
+  { at = NOW, now = NOW }: { at?: Date; now?: Date } = {},
 ): Map<string, BarElements[number]> {
   const latest = value === undefined ? undefined : { value, at };
-  return elementsById(render(now, latest, failure, { quietMs: QUIET_MS }));
+  return elementsById(render(now, latest, { quietMs: QUIET_MS }));
 }
 
 function event(
@@ -199,7 +194,7 @@ describe('render', () => {
       ['name', 'status', 'photos', 'last'].map((column) =>
         textOf(elements, `row-1-${column}`),
       ),
-    ).toStrictEqual(['vip', 'error', '', '']);
+    ).toStrictEqual(['vip', 'fetch failed', '', '']);
     expect(elements.get('challenge')).toMatchObject({ y: 32 });
     expect(textOf(elements, 'footer')).toBe('updated 1m ago');
     expect(textOf(draw(event([booth('main', 'live')])), 'footer')).toBe(
@@ -207,18 +202,20 @@ describe('render', () => {
     );
   });
 
-  it('says when Event Studio has been unreachable for a while', () => {
-    const failure = { error: new Error('offline'), at: NOW };
+  it('cuts a long booth problem to the row', () => {
+    const elements = draw(
+      event([
+        {
+          ...booth('vip', 'error'),
+          problem: 'Unexpected token < in JSON at position 0',
+        },
+      ]),
+    );
 
+    expect(textOf(elements, 'row-0-status')).toMatch(/^Unexpected .*\.\.$/u);
     expect(
-      textOf(
-        draw(event([booth('main', 'live')]), {
-          at: new Date(NOW.getTime() - STALE_MS - 1),
-          failure,
-        }),
-        'footer',
-      ),
-    ).toBe('Event Studio unreachable, showing old data');
+      overflowingText(elements.values()).map((element) => element.id),
+    ).toStrictEqual([]);
   });
 
   it('keeps every text inside its display', () => {
@@ -246,23 +243,13 @@ describe('render', () => {
     expect(outside.map((element) => element.id)).toStrictEqual([]);
   });
 
-  it.each([
-    [undefined, 'loading', 'loading'],
-    [
-      { error: new Error('fetch failed'), at: NOW },
-      'unreachable',
-      'fetch failed',
-    ],
-  ])(
-    'explains why there is nothing to show (%#)',
-    (failure, summary, header) => {
-      const elements = draw(undefined, failure ? { failure } : {});
+  it('says it is loading before the first poll', () => {
+    const elements = draw(undefined);
 
-      expect(textOf(elements, 'headline')).toBe('EVENT');
-      expect(textOf(elements, 'summary')).toBe(summary);
-      expect(textOf(elements, 'header')).toBe(header);
-    },
-  );
+    expect(textOf(elements, 'headline')).toBe('EVENT');
+    expect(textOf(elements, 'summary')).toBe('loading');
+    expect(textOf(elements, 'header')).toBe('Reading the event');
+  });
 });
 
 describe('rotatingLine', () => {

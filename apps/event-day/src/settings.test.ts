@@ -12,11 +12,13 @@ describe('loadSettings', () => {
         EVENT_DAY_BOOTHS: ' summit-2026/main-booth , summit-2026/side-booth ',
       }),
     ).toStrictEqual({
-      photoCraftUrl: 'https://photos.example.com',
-      booths: [
-        { eventSlug: 'summit-2026', boothSlug: 'main-booth' },
-        { eventSlug: 'summit-2026', boothSlug: 'side-booth' },
-      ],
+      photoCraft: {
+        url: 'https://photos.example.com',
+        booths: [
+          { eventSlug: 'summit-2026', boothSlug: 'main-booth' },
+          { eventSlug: 'summit-2026', boothSlug: 'side-booth' },
+        ],
+      },
       quietMinutes: DEFAULT_QUIET_MINUTES,
       challenge: undefined,
       priority: DEFAULT_PRIORITY,
@@ -34,8 +36,7 @@ describe('loadSettings', () => {
         EVENT_DAY_SOUND: 'off',
       }),
     ).toStrictEqual({
-      photoCraftUrl: undefined,
-      booths: [],
+      photoCraft: undefined,
       quietMinutes: 5,
       challenge: {
         convexUrl: 'https://happy-otter-123.convex.cloud',
@@ -44,6 +45,16 @@ describe('loadSettings', () => {
       priority: 91,
       sound: false,
     });
+  });
+
+  it('reads no PhotoCraft without booths, even with its URL', () => {
+    expect(
+      loadSettings({
+        EVENT_DAY_PHOTOCRAFT_URL: 'https://photos.example.com',
+        EVENT_DAY_CHALLENGE_URL: 'https://happy-otter-123.convex.cloud',
+        EVENT_DAY_CHALLENGE_TOKEN: 'tv-token',
+      }).photoCraft,
+    ).toBeUndefined();
   });
 
   it.each([

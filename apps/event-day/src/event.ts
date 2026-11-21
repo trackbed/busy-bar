@@ -77,10 +77,18 @@ export class EventWatch {
 }
 
 export interface EventFetchOptions {
-  readonly booths: readonly BoothRef[];
-  /** Reads one booth, such as `PhotoCraft.status`; unset without a PhotoCraft URL. */
-  readonly boothStatus:
-    | ((booth: BoothRef, signal: AbortSignal) => Promise<BoothStatus>)
+  /** Names the app in log messages. */
+  readonly name: string;
+  /** The booths and how to read one, such as `PhotoCraft.status`; unset without booths. */
+  readonly photoCraft:
+    | {
+        readonly booths: readonly BoothRef[];
+        /** Resolves to an `error` status instead of rejecting, except on abort. */
+        readonly status: (
+          booth: BoothRef,
+          signal: AbortSignal,
+        ) => Promise<BoothStatus>;
+      }
     | undefined;
   /** Reads the leaderboard, such as `fetchChallenge`; unset without a challenge. */
   readonly challenge:
@@ -91,24 +99,27 @@ export interface EventFetchOptions {
   /** Starts a sound and returns at once, such as bar-kit's `Speaker.play`. */
   readonly play: (sound: StockSound) => void;
   readonly now?: () => Date;
+  readonly log?: Pick<Console, 'warn'>;
 }
 
 /**
  * One poll of the board for `createPoller`: every booth and the leaderboard,
  * then the sound for a booth that just went quiet or down. A booth that cannot
- * be read fails the poll; a leaderboard that cannot be read becomes
- * `challengeProblem`, so the booths still show.
+ * be read comes back as `error` with its `problem`, and a leaderboard that
+ * cannot be read is logged and becomes `challengeProblem`, so the rest still
+ * shows. The poll rejects only when `signal` aborts.
  */
 export function createEventFetch(
   options: EventFetchOptions,
 ): (signal: AbortSignal) => Promise<EventSnapshot> {
   const {
-    booths,
-    boothStatus,
+    name,
+    photoCraft,
     challenge,
     quietMs,
     play,
     now = () => new Date(),
+    log = console,
   } = options;
   const watch = new EventWatch(quietMs);
 
@@ -127,6 +138,7 @@ export function createEventFetch(
       if (signal.aborted) {
         throw error;
       }
+      log.warn(`[${name}] Reading the challenge leaderboard failed:`, error);
       const problem = error instanceof Error ? error.message : String(error);
       return { challenge: undefined, challengeProblem: problem };
     }
@@ -134,13 +146,11 @@ export function createEventFetch(
 
   return async (signal) => {
     const [statuses, leaderboard] = await Promise.all([
-      Promise.all(
-        booths.map((booth) =>
-          boothStatus === undefined
-            ? Promise.reject(new Error('No PhotoCraft URL'))
-            : boothStatus(booth, signal),
-        ),
-      ),
+      photoCraft === undefined
+        ? []
+        : Promise.all(
+            photoCraft.booths.map((booth) => photoCraft.status(booth, signal)),
+          ),
       readChallenge(signal),
     ]);
     const snapshot: EventSnapshot = { booths: statuses, ...leaderboard };

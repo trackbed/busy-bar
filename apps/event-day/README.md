@@ -15,10 +15,13 @@ when a live booth goes quiet, cannot be read, or disappears.
   `POST /api/photo-craft-token`, then the newest portraits from
   `GET /api/photo-craft?boothId=`. No login is involved. Successful gallery
   snapshots and their versions stay cached through failures and paused booths,
-  so an unchanged response can restore the last photo count and timestamp.
+  so an unchanged response can restore the last photo count and timestamp. A
+  booth that cannot be read is logged and shows what went wrong on its back
+  row.
 - Reading a ChallengeCraft leaderboard ([src/challenge.ts](src/challenge.ts))
   with the public `leaderboard:getLeaderboard` query and the TV leaderboard's
-  token, through Convex's HTTP API.
+  token, through Convex's HTTP API. A leaderboard that cannot be read is
+  logged and shows why on the back.
 - One poll of the board ([src/event.ts](src/event.ts)): every booth and the
   leaderboard, deciding when a booth is quiet or down, and the sound that
   announces it. The layout is [src/render.ts](src/render.ts).

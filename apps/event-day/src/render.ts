@@ -1,8 +1,4 @@
-import type {
-  BarElements,
-  PollFailure,
-  Snapshot,
-} from '@busy-bar-apps/bar-kit';
+import type { BarElements, Snapshot } from '@busy-bar-apps/bar-kit';
 import {
   BACK_DISPLAY,
   fitText,
@@ -31,8 +27,6 @@ export const VIEW_COLORS: Readonly<Record<BoothView, string>> = {
 
 /** How long each booth stays on the front's second line. */
 export const ROTATE_MS = 4000;
-/** How long PhotoCraft may stay unreachable before the board says so. */
-export const STALE_MS = 2 * 60_000;
 
 const CELL_PITCH = 4;
 const ROW_PITCH = 10;
@@ -67,27 +61,26 @@ export interface EventView {
  * The booths in front: how many are live and how many portraits they have
  * published, with each booth in turn on the second line and one cell per
  * booth on the bottom row. Without booths, the challenge leaderboard takes
- * the front. Every booth and the challenge are listed behind.
+ * the front. Every booth and the challenge are listed behind, a booth that
+ * cannot be read with its problem. The poll itself fails only on shutdown, so
+ * there is nothing to draw only until the first poll.
  */
 export function render(
   now: Date,
   latest: Snapshot<EventSnapshot> | undefined,
-  failure: PollFailure | undefined,
   view: EventView,
 ): BarElements {
   if (latest === undefined) {
-    return unavailable(failure);
+    return loading();
   }
   const event = latest.value;
   const views = event.booths.map((status) =>
     boothView(status, now, view.quietMs),
   );
-  const stale =
-    failure !== undefined && now.getTime() - latest.at.getTime() > STALE_MS;
-  const footer = stale
-    ? 'Event Studio unreachable, showing old data'
-    : updated(now, latest.at);
-  return [...front(event, views, now), ...back(event, views, now, footer)];
+  return [
+    ...front(event, views, now),
+    ...back(event, views, now, updated(now, latest.at)),
+  ];
 }
 
 /**
@@ -334,7 +327,14 @@ function boothRow(
     }),
     textElement({
       id: `row-${index}-status`,
-      text: WORDS[boothState],
+      text:
+        boothState === 'error' && status.problem !== undefined
+          ? fitText(
+              toBarText(status.problem),
+              'small',
+              BACK_DISPLAY.width - STATUS_X,
+            )
+          : WORDS[boothState],
       display: 'back',
       font: 'small',
       x: STATUS_X,
@@ -370,8 +370,7 @@ function photos(status: BoothStatus): string {
   return count >= GALLERY_LIMIT ? `${GALLERY_LIMIT}+` : String(count);
 }
 
-function unavailable(failure: PollFailure | undefined): BarElements {
-  const reason = failure === undefined ? 'loading' : failure.error.message;
+function loading(): BarElements {
   return [
     textElement({
       id: 'headline',
@@ -384,7 +383,7 @@ function unavailable(failure: PollFailure | undefined): BarElements {
     }),
     textElement({
       id: 'summary',
-      text: failure === undefined ? 'loading' : 'unreachable',
+      text: 'loading',
       display: 'front',
       font: 'tiny',
       x: 0,
@@ -393,7 +392,7 @@ function unavailable(failure: PollFailure | undefined): BarElements {
     }),
     textElement({
       id: 'header',
-      text: fitText(toBarText(reason), 'small', BACK_DISPLAY.width),
+      text: 'Reading the event',
       display: 'back',
       font: 'small',
       x: 0,
