@@ -2,12 +2,15 @@ import { describe, expect, it } from 'vitest';
 
 import { FRONT_DISPLAY } from './display.ts';
 import {
+  colorOf,
+  elementsById,
   FOOTER_Y,
   PALETTE,
   solidRectangle,
   statusCells,
   SUMMARY_Y,
   textElement,
+  textOf,
 } from './elements.ts';
 
 describe('PALETTE', () => {
@@ -122,5 +125,36 @@ describe('statusCells', () => {
         color: PALETTE.bad,
       }),
     ]);
+  });
+});
+
+describe('render-test lookups', () => {
+  const elements = elementsById([
+    textElement({
+      id: 'headline',
+      text: 'HI',
+      display: 'front',
+      font: 'small',
+      x: 0,
+      y: 0,
+      color: PALETTE.good,
+    }),
+    ...statusCells([PALETTE.bad], { pitch: 4, width: 3 }),
+  ]);
+
+  it('keys elements by ID', () => {
+    expect([...elements.keys()]).toEqual(['headline', 'cell-0']);
+  });
+
+  it('reads a text element', () => {
+    expect(textOf(elements, 'headline')).toBe('HI');
+    expect(colorOf(elements, 'headline')).toBe(PALETTE.good);
+  });
+
+  it('gives undefined for a missing or non-text element', () => {
+    expect(textOf(elements, 'cell-0')).toBeUndefined();
+    expect(colorOf(elements, 'cell-0')).toBeUndefined();
+    expect(textOf(elements, 'missing')).toBeUndefined();
+    expect(colorOf(elements, 'missing')).toBeUndefined();
   });
 });

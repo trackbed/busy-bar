@@ -23,12 +23,15 @@ export type {
   TextElementOptions,
 } from './elements.ts';
 export {
+  colorOf,
+  elementsById,
   FOOTER_Y,
   PALETTE,
   solidRectangle,
   statusCells,
   SUMMARY_Y,
   textElement,
+  textOf,
 } from './elements.ts';
 export type { BarFont } from './fonts.ts';
 export { ELLIPSIS, fitText, overflowingText, textWidth } from './fonts.ts';

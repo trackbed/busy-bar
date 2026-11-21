@@ -2,6 +2,7 @@ import type { RectangleElement, TextElement } from '@busy-app/busy-lib';
 
 import { BACK_DISPLAY, FRONT_DISPLAY, rgba } from './display.ts';
 import type { BarFont } from './fonts.ts';
+import type { BarElements } from './run-bar-app.ts';
 
 /** The display an element is drawn on. */
 export type BarDisplay = 'front' | 'back';
@@ -143,4 +144,33 @@ export function statusCells(
       color,
     }),
   );
+}
+
+type BarElement = BarElements[number];
+
+/** A frame's elements keyed by ID, for render tests to look them up. */
+export function elementsById(
+  elements: Iterable<BarElement>,
+): Map<string, BarElement> {
+  return new Map([...elements].map((element) => [element.id, element]));
+}
+
+/** What the text element `id` says; undefined without one. */
+export function textOf(
+  elements: ReadonlyMap<string, BarElement>,
+  id: string,
+): string | undefined {
+  const element = elements.get(id);
+  return element?.type === 'text' ? element.text : undefined;
+}
+
+/** The colour of the text or countdown element `id`; undefined without one. */
+export function colorOf(
+  elements: ReadonlyMap<string, BarElement>,
+  id: string,
+): string | undefined {
+  const element = elements.get(id);
+  return element !== undefined && 'color' in element
+    ? element.color
+    : undefined;
 }

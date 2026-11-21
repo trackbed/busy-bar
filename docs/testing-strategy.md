@@ -31,7 +31,9 @@ Status: Current.
    Unit tests cannot see how text looks on the LEDs, but they can check that
    it fits: assert that the kit's `overflowingText` / `overflowing_text` finds
    nothing, as the apps' render and preview tests do. It places each text
-   element by its `x` and `align` the way the bar does.
+   element by its `x` and `align` the way the bar does. Read single
+   elements with the kits' `elementsById`, `textOf`, and `colorOf`
+   (`elements_by_id`, `text_of`, `color_of`) rather than writing lookups.
    `nx run catalogue:build` draws every app's preview scenes with the emulator
    on one page.
 

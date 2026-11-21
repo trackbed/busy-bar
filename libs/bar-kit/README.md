@@ -19,6 +19,8 @@ variables and behave the same way.
   `text`, `dim`, `idle`, `good`, `warn`, `bad`, `info`), and the standard
   line positions `SUMMARY_Y` (front, under the headline) and `FOOTER_Y`
   (back, last line). The Python kit gives the same elements and colours.
+  For render tests, `elementsById` keys a frame by element ID, and `textOf`
+  and `colorOf` read one element from it (undefined when it is missing).
 - The frame loop (`runBarApp`): draw every interval at a `priority`
   (default `DEFAULT_PRIORITY`, 50), delete the elements a frame stops drawing
   (the bar keeps them otherwise), log failed draws and keep going, clear the

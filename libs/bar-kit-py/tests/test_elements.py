@@ -1,3 +1,5 @@
+import pytest
+
 from bar_kit import (
     FOOTER_Y,
     FRONT_DISPLAY,
@@ -6,9 +8,12 @@ from bar_kit import (
     DisplayName,
     RectangleElement,
     TextElement,
+    color_of,
+    elements_by_id,
     solid_rectangle,
     status_cells,
     text_element,
+    text_of,
 )
 
 
@@ -95,3 +100,34 @@ def test_draws_one_cell_per_colour_along_the_front_bottom_row() -> None:
         ("cell-1", 4, 15, 3, 1),
     ]
     assert [cell.fill_colors for cell in cells] == [[PALETTE.good], [PALETTE.bad]]
+
+
+ELEMENTS = elements_by_id(
+    [
+        text_element(
+            element_id="headline",
+            text="HI",
+            display=DisplayName.FRONT,
+            font="small",
+            x=0,
+            y=0,
+            color=PALETTE.good,
+        ),
+        *status_cells([PALETTE.bad], pitch=4, width=3),
+    ]
+)
+
+
+def test_keys_elements_by_id() -> None:
+    assert list(ELEMENTS) == ["headline", "cell-0"]
+
+
+def test_reads_a_text_element() -> None:
+    assert text_of(ELEMENTS, "headline") == "HI"
+    assert color_of(ELEMENTS, "headline") == PALETTE.good
+
+
+@pytest.mark.parametrize("element_id", ["cell-0", "missing"])
+def test_gives_none_for_a_missing_or_non_text_element(element_id: str) -> None:
+    assert text_of(ELEMENTS, element_id) is None
+    assert color_of(ELEMENTS, element_id) is None

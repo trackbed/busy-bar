@@ -18,6 +18,9 @@ both read the same environment variables and behave the same way.
   `text`, `dim`, `idle`, `good`, `warn`, `bad`, `info`), and the standard
   line positions `SUMMARY_Y` (front, under the headline) and `FOOTER_Y`
   (back, last line). The TypeScript kit gives the same elements and colours.
+  For render tests, `elements_by_id` keys a frame by element ID, and
+  `text_of` and `color_of` read one element from it (None when it is
+  missing).
 - The frame loop (`run_bar_app`): draw every interval at a `priority`
   (default `DEFAULT_PRIORITY`, 50), delete the elements a frame stops drawing
   (the bar keeps them otherwise), log failed draws and keep going, clear the

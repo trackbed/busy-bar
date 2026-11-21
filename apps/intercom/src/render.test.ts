@@ -2,6 +2,7 @@ import { ConvexError } from 'convex/values';
 import { describe, expect, it } from 'vitest';
 
 import type { BarElements } from '@busy-bar-apps/bar-kit';
+import { colorOf, elementsById } from '@busy-bar-apps/bar-kit';
 
 import { bar, focusFrom } from './__tests__/fixtures.ts';
 import type { Board, Focus, Knock, TeamBar } from './board.ts';
@@ -50,11 +51,6 @@ function texts(elements: BarElements): Record<string, string> {
   );
 }
 
-function colorOf(elements: BarElements, id: string): string | undefined {
-  const element = elements.find((candidate) => candidate.id === id);
-  return element?.type === 'text' ? element.color : undefined;
-}
-
 function cells(elements: BarElements): (string | undefined)[] {
   return elements.flatMap((element) =>
     element.type === 'rectangle' ? [element.fill_colors?.[0]] : [],
@@ -85,7 +81,9 @@ describe('render', () => {
       headline: '2 FREE',
       summary: 'Ben, Cleo',
     });
-    expect(colorOf(elements, 'headline')).toBe(STATUS_COLORS.free);
+    expect(colorOf(elementsById(elements), 'headline')).toBe(
+      STATUS_COLORS.free,
+    );
     expect(cells(elements)).toStrictEqual([
       STATUS_COLORS.busy,
       STATUS_COLORS.free,
@@ -168,11 +166,11 @@ describe('render', () => {
       'row-3-name': 'Focus together',
       'row-3-status': '25m',
     });
-    expect(colorOf(elements, 'row-1-name')).not.toBe(
-      colorOf(elements, 'row-0-name'),
+    expect(colorOf(elementsById(elements), 'row-1-name')).not.toBe(
+      colorOf(elementsById(elements), 'row-0-name'),
     );
-    expect(colorOf(elements, 'row-2-name')).not.toBe(
-      colorOf(elements, 'row-0-name'),
+    expect(colorOf(elementsById(elements), 'row-2-name')).not.toBe(
+      colorOf(elementsById(elements), 'row-0-name'),
     );
   });
 
@@ -278,7 +276,7 @@ describe('render', () => {
         'button-back': 'BACK',
         'reply-back': 'later',
       });
-      expect(colorOf(elements, 'headline')).toBe(KNOCK_COLOR);
+      expect(colorOf(elementsById(elements), 'headline')).toBe(KNOCK_COLOR);
       expect(cells(elements)).toStrictEqual([]);
     });
 
@@ -366,7 +364,7 @@ describe('render', () => {
         'reply-back': 'skip it',
         footer: 'Anna started it',
       });
-      expect(colorOf(elements, 'headline')).toBe(FOCUS_COLOR);
+      expect(colorOf(elementsById(elements), 'headline')).toBe(FOCUS_COLOR);
     });
 
     it('lets the bar that started it call it off, before a knock shows', () => {

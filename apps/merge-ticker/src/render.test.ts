@@ -3,8 +3,11 @@ import { describe, expect, it } from 'vitest';
 import type { BarElements, PollFailure } from '@busy-bar-apps/bar-kit';
 import {
   BACK_DISPLAY,
+  colorOf,
+  elementsById,
   FRONT_DISPLAY,
   overflowingText,
+  textOf,
 } from '@busy-bar-apps/bar-kit';
 
 import type { OpenPullRequest, PullRequests } from './github.ts';
@@ -56,27 +59,7 @@ function draw(
   { at = NOW, failure }: { at?: Date; failure?: PollFailure } = {},
 ): Map<string, BarElements[number]> {
   const latest = value === undefined ? undefined : { value, at };
-  return new Map(
-    render(NOW, latest, failure).map((element) => [element.id, element]),
-  );
-}
-
-function textOf(
-  elements: Map<string, BarElements[number]>,
-  id: string,
-): string | undefined {
-  const element = elements.get(id);
-  return element !== undefined && 'text' in element ? element.text : undefined;
-}
-
-function colorOf(
-  elements: Map<string, BarElements[number]>,
-  id: string,
-): string | undefined {
-  const element = elements.get(id);
-  return element !== undefined && 'color' in element
-    ? element.color
-    : undefined;
+  return elementsById(render(NOW, latest, failure));
 }
 
 describe('render', () => {

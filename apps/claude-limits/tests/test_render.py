@@ -13,7 +13,9 @@ from bar_kit import (
     RectangleElement,
     Snapshot,
     TextElement,
+    elements_by_id,
     overflowing_text,
+    text_of,
 )
 from claude_limits.render import (
     BARS_WIDTH,
@@ -63,13 +65,7 @@ def draw(
     failure: PollFailure | None = None,
 ) -> dict[str, DisplayElement]:
     latest = None if value is None else Snapshot(value=value, at=NOW - fetched_ago)
-    return {element.id: element for element in render(NOW, latest, failure, root=ROOT)}
-
-
-def text(elements: dict[str, DisplayElement], element_id: str) -> str:
-    element = elements[element_id]
-    assert isinstance(element, TextElement)
-    return element.text
+    return elements_by_id(render(NOW, latest, failure, root=ROOT))
 
 
 def rectangle(elements: dict[str, DisplayElement], element_id: str) -> RectangleElement:
@@ -85,7 +81,7 @@ def test_shows_the_active_accounts_five_hour_usage_and_reset() -> None:
     assert isinstance(headline, TextElement)
     assert headline.text == "A 82%"
     assert headline.color == LEVEL_COLORS["high"]
-    assert text(elements, "summary") == "reset 1h12m"
+    assert text_of(elements, "summary") == "reset 1h12m"
 
 
 def test_draws_a_pair_of_bars_per_account_with_the_active_one_marked() -> None:
@@ -112,14 +108,14 @@ def test_draws_a_pair_of_bars_per_account_with_the_active_one_marked() -> None:
 def test_lists_every_account_behind() -> None:
     elements = draw(TWO_ACCOUNTS, fetched_ago=timedelta(minutes=2))
 
-    assert text(elements, "header") == "Claude accounts: 5h and week"
+    assert text_of(elements, "header") == "Claude accounts: 5h and week"
     assert [
-        text(elements, f"row-0-{column}")
+        text_of(elements, f"row-0-{column}")
         for column in ("marker", "name", "five", "five-reset", "week", "week-reset")
     ] == [">", "account-a", "82%", "1h12m", "45%", "3d04h"]
-    assert text(elements, "row-1-week") == "?"
+    assert text_of(elements, "row-1-week") == "?"
     assert "row-1-week-reset" not in elements
-    assert text(elements, "footer") == "updated 2m ago"
+    assert text_of(elements, "footer") == "updated 2m ago"
 
 
 def test_says_where_a_rotation_is_heading() -> None:
@@ -127,8 +123,8 @@ def test_says_where_a_rotation_is_heading() -> None:
         rotation(Account("account-a", window(99, 30), None), rotating_to="account-b")
     )
 
-    assert text(elements, "summary") == "to account-b"
-    assert text(elements, "header") == "Rotating to account-b"
+    assert text_of(elements, "summary") == "to account-b"
+    assert text_of(elements, "header") == "Rotating to account-b"
 
 
 def test_warns_when_every_account_is_at_its_limit() -> None:
@@ -143,17 +139,17 @@ def test_warns_when_every_account_is_at_its_limit() -> None:
     assert isinstance(headline, TextElement)
     assert headline.text == "ALL LIMITED"
     assert headline.color == LEVEL_COLORS["limit"]
-    assert text(elements, "summary") == "free in 42m"
-    assert text(elements, "header") == "Every account is at its limit"
+    assert text_of(elements, "summary") == "free in 42m"
+    assert text_of(elements, "header") == "Every account is at its limit"
 
 
 def test_copes_without_an_active_account_or_a_reading() -> None:
     assert (
-        text(draw(rotation(Account("x", None, None), current=None)), "headline")
+        text_of(draw(rotation(Account("x", None, None), current=None)), "headline")
         == "NO ACCOUNT"
     )
     assert (
-        text(draw(rotation(Account("account-a", None, None))), "summary")
+        text_of(draw(rotation(Account("account-a", None, None))), "summary")
         == "no reading"
     )
 
@@ -164,9 +160,9 @@ def test_says_when_the_files_have_been_unreadable_for_a_while() -> None:
     recent = draw(TWO_ACCOUNTS, fetched_ago=timedelta(minutes=1), failure=failure)
     old = draw(TWO_ACCOUNTS, fetched_ago=timedelta(minutes=6), failure=failure)
 
-    assert text(recent, "footer") == "updated 1m ago"
-    assert text(draw(TWO_ACCOUNTS), "footer") == "updated just now"
-    assert text(old, "footer") == "files unreadable, showing old data"
+    assert text_of(recent, "footer") == "updated 1m ago"
+    assert text_of(draw(TWO_ACCOUNTS), "footer") == "updated just now"
+    assert text_of(old, "footer") == "files unreadable, showing old data"
 
 
 @pytest.mark.parametrize(
@@ -195,8 +191,8 @@ def test_explains_why_there_is_nothing_to_show(
 ) -> None:
     elements = draw(None, failure=failure)
 
-    assert text(elements, "headline") == headline
-    assert [text(elements, f"line-{index}") for index in range(len(lines))] == lines
+    assert text_of(elements, "headline") == headline
+    assert [text_of(elements, f"line-{index}") for index in range(len(lines))] == lines
 
 
 def test_keeps_every_text_inside_its_display() -> None:

@@ -1,15 +1,10 @@
 import { describe, expect, it } from 'vitest';
 
-import type { BarElements } from '@busy-bar-apps/bar-kit';
+import { elementsById, textOf } from '@busy-bar-apps/bar-kit';
 
 import { renderClock, secondsBarWidth } from './render-clock.ts';
 
 const MORNING = new Date('2026-10-19T09:05:30Z');
-
-function textOf(elements: BarElements, id: string): string | undefined {
-  const element = elements.find((candidate) => candidate.id === id);
-  return element && 'text' in element ? element.text : undefined;
-}
 
 describe('renderClock', () => {
   it('draws the time, the seconds bar, and the date', () => {
@@ -21,13 +16,15 @@ describe('renderClock', () => {
   });
 
   it('shows the time in the requested time zone', () => {
-    expect(textOf(renderClock(MORNING, 'Europe/Copenhagen'), 'time')).toBe(
-      '11:05',
-    );
+    expect(
+      textOf(elementsById(renderClock(MORNING, 'Europe/Copenhagen')), 'time'),
+    ).toBe('11:05');
   });
 
   it('falls back to the system time zone', () => {
-    expect(textOf(renderClock(MORNING), 'time')).toMatch(/^\d{2}:\d{2}$/);
+    expect(textOf(elementsById(renderClock(MORNING)), 'time')).toMatch(
+      /^\d{2}:\d{2}$/,
+    );
   });
 
   it('rejects unknown time zones', () => {

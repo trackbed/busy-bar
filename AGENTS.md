@@ -83,13 +83,16 @@ These apply to every task. Break one only when the user names a concrete reason.
   catalogue sample frames from its own render function.
 - `libs/bar-kit/` (TypeScript) and `libs/bar-kit-py/` (Python): connection
   settings (`BUSYBAR_ADDR`, `BUSYBAR_TOKEN`), display sizes, `rgba()`, the
+  render vocabulary (`textElement` / `text_element`, `solidRectangle`,
+  `statusCells`, the role `PALETTE`, `SUMMARY_Y`, `FOOTER_Y`), the
   frame loop (`runBarApp` / `run_bar_app`), background polling
   (`createPoller` / `Poller`), the bar's buttons and wheel
   (`listenForInput` / `listen_for_input`), whether the app's frames reach
   the screen (`trackScreen` / `track_screen`), and text that fits the bitmap
   fonts (`toBarText` / `to_bar_text`, `textWidth` / `text_width`,
   `fitText` / `fit_text`, and `overflowingText` / `overflowing_text` for
-  layout tests). The two kits share one contract; change both together.
+  layout tests), and render-test lookups (`elementsById`, `textOf`,
+  `colorOf`). The two kits share one contract; change both together.
   Both test their text widths against `bar-kit-text-widths.json`, and their
   text, width-refusal, and address rules against `bar-kit-contract.json`.
 - `libs/json-values/` (TypeScript): narrowing untrusted JSON, such as an API

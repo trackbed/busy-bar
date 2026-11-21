@@ -3,8 +3,11 @@ import { describe, expect, it } from 'vitest';
 import type { BarElements, PollFailure } from '@busy-bar-apps/bar-kit';
 import {
   BACK_DISPLAY,
+  colorOf,
+  elementsById,
   FRONT_DISPLAY,
   overflowingText,
+  textOf,
 } from '@busy-bar-apps/bar-kit';
 
 import type { ChallengeStatus } from './challenge.ts';
@@ -54,12 +57,7 @@ function draw(
   }: { at?: Date; failure?: PollFailure; now?: Date } = {},
 ): Map<string, BarElements[number]> {
   const latest = value === undefined ? undefined : { value, at };
-  return new Map(
-    render(now, latest, failure, { quietMs: QUIET_MS }).map((element) => [
-      element.id,
-      element,
-    ]),
-  );
+  return elementsById(render(now, latest, failure, { quietMs: QUIET_MS }));
 }
 
 function event(
@@ -68,24 +66,6 @@ function event(
   challengeProblem?: string,
 ): EventSnapshot {
   return { booths, challenge, challengeProblem };
-}
-
-function textOf(
-  elements: Map<string, BarElements[number]>,
-  id: string,
-): string | undefined {
-  const element = elements.get(id);
-  return element !== undefined && 'text' in element ? element.text : undefined;
-}
-
-function colorOf(
-  elements: Map<string, BarElements[number]>,
-  id: string,
-): string | undefined {
-  const element = elements.get(id);
-  return element !== undefined && 'color' in element
-    ? element.color
-    : undefined;
 }
 
 describe('render', () => {

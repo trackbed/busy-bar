@@ -17,7 +17,9 @@ from bar_kit import (
     DisplayName,
     RectangleElement,
     TextElement,
+    elements_by_id,
     overflowing_text,
+    text_of,
 )
 
 NOW = datetime(2026, 10, 20, 9, 0, tzinfo=UTC)
@@ -47,22 +49,16 @@ def view_of(*rows: Row) -> FleetView:
 
 def draw(view: FleetView) -> dict[str, DisplayElement]:
     elements = render(NOW, view, listening="127.0.0.1:8740")
-    return {element.id: element for element in elements}
-
-
-def text(elements: dict[str, DisplayElement], element_id: str) -> str:
-    element = elements[element_id]
-    assert isinstance(element, TextElement)
-    return element.text
+    return elements_by_id(elements)
 
 
 def test_waits_for_the_first_session() -> None:
     elements = draw(view_of())
 
-    assert text(elements, "headline") == "NO AGENTS"
-    assert text(elements, "summary") == "waiting for hooks"
-    assert text(elements, "header") == "No sessions yet"
-    assert text(elements, "hint") == "Hooks post to 127.0.0.1:8740"
+    assert text_of(elements, "headline") == "NO AGENTS"
+    assert text_of(elements, "summary") == "waiting for hooks"
+    assert text_of(elements, "header") == "No sessions yet"
+    assert text_of(elements, "hint") == "Hooks post to 127.0.0.1:8740"
 
 
 def test_leads_with_how_many_sessions_need_you() -> None:
@@ -78,8 +74,8 @@ def test_leads_with_how_many_sessions_need_you() -> None:
     assert isinstance(headline, TextElement)
     assert headline.text == "2 NEED YOU"
     assert headline.color == STATUS_COLORS["asking"]
-    assert text(elements, "summary") == "quebec permit"
-    assert text(elements, "age") == "3m"
+    assert text_of(elements, "summary") == "quebec permit"
+    assert text_of(elements, "age") == "3m"
     assert [
         element.fill_colors[0]
         for element in elements.values()
@@ -90,7 +86,7 @@ def test_leads_with_how_many_sessions_need_you() -> None:
 def test_counts_a_single_session_in_the_singular() -> None:
     elements = draw(view_of(row("quebec", "working", minutes=1, selected=True)))
 
-    assert text(elements, "header") == "0 need you, 1 session"
+    assert text_of(elements, "header") == "0 need you, 1 session"
 
 
 def test_lists_every_session_behind() -> None:
@@ -101,13 +97,13 @@ def test_lists_every_session_behind() -> None:
         )
     )
 
-    assert text(elements, "header") == "1 need you, 2 sessions"
-    assert text(elements, "row-0-marker") == ">"
+    assert text_of(elements, "header") == "1 need you, 2 sessions"
+    assert text_of(elements, "row-0-marker") == ">"
     assert [
         (
-            text(elements, f"row-{slot}-name"),
-            text(elements, f"row-{slot}-detail"),
-            text(elements, f"row-{slot}-age"),
+            text_of(elements, f"row-{slot}-name"),
+            text_of(elements, f"row-{slot}-detail"),
+            text_of(elements, f"row-{slot}-age"),
         )
         for slot in (0, 1)
     ] == [("quebec", "done", "2m"), ("davis", "pr-fix-ci", "1h")]
@@ -125,7 +121,7 @@ def test_names_what_the_fleet_does_when_nothing_needs_you() -> None:
         ((row("a", "seen"),), "ALL SEEN"),
     ]
     for rows, headline in cases:
-        assert text(draw(view_of(*rows)), "headline") == headline
+        assert text_of(draw(view_of(*rows)), "headline") == headline
 
 
 def test_keeps_long_names_inside_the_displays() -> None:
@@ -142,7 +138,9 @@ def test_keeps_long_names_inside_the_displays() -> None:
     )
 
     assert [element.id for element in overflowing_text(elements.values())] == []
-    assert text(elements, "summary").endswith("..")
+    summary = text_of(elements, "summary")
+    assert summary is not None
+    assert summary.endswith("..")
     # Other elements start inside their display too.
     assert [
         element.id
@@ -165,7 +163,7 @@ def test_scrolls_the_list_to_keep_the_highlight_visible() -> None:
     elements = draw(view_of(*rows))
 
     names = [
-        text(elements, f"row-{slot}-name")
+        text_of(elements, f"row-{slot}-name")
         for slot in range(VISIBLE_ROWS)
         if f"row-{slot}-name" in elements
     ]

@@ -4,11 +4,18 @@ The Python counterpart of the TypeScript kit's `elements.ts`: the same
 builders give the same elements, and the palette the same colours.
 """
 
-from collections.abc import Sequence
+from collections.abc import Iterable, Mapping, Sequence
 from dataclasses import dataclass
 from typing import Literal
 
-from busylib.types import DisplayFontName, DisplayName, RectangleElement, TextElement
+from busylib.types import (
+    CountdownElement,
+    DisplayElement,
+    DisplayFontName,
+    DisplayName,
+    RectangleElement,
+    TextElement,
+)
 
 from bar_kit.display import BACK_DISPLAY, FRONT_DISPLAY, rgba
 
@@ -144,3 +151,24 @@ def status_cells(
         )
         for index, color in enumerate(colors)
     ]
+
+
+def elements_by_id(elements: Iterable[DisplayElement]) -> dict[str, DisplayElement]:
+    """A frame's elements keyed by ID, for render tests to look them up."""
+    return {element.id: element for element in elements}
+
+
+def text_of(elements: Mapping[str, DisplayElement], element_id: str) -> str | None:
+    """What the text element `element_id` says; None without one."""
+    element = elements.get(element_id)
+    return element.text if isinstance(element, TextElement) else None
+
+
+def color_of(elements: Mapping[str, DisplayElement], element_id: str) -> str | None:
+    """The colour of the text or countdown element `element_id`; None without one."""
+    element = elements.get(element_id)
+    if isinstance(element, TextElement | CountdownElement) and isinstance(
+        element.color, str
+    ):
+        return element.color
+    return None

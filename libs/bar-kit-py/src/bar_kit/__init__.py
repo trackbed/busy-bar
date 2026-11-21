@@ -23,9 +23,12 @@ from bar_kit.elements import (
     SUMMARY_Y,
     Palette,
     TextAlign,
+    color_of,
+    elements_by_id,
     solid_rectangle,
     status_cells,
     text_element,
+    text_of,
 )
 from bar_kit.fonts import ELLIPSIS, fit_text, overflowing_text, text_width
 from bar_kit.input import listen_for_input
@@ -73,7 +76,9 @@ __all__ = [
     "TextAlign",
     "TextElement",
     "TrackedScreen",
+    "color_of",
     "create_busy_bar",
+    "elements_by_id",
     "fit_text",
     "install_shutdown_handlers",
     "listen_for_input",
@@ -85,6 +90,7 @@ __all__ = [
     "solid_rectangle",
     "status_cells",
     "text_element",
+    "text_of",
     "text_width",
     "to_bar_text",
     "track_screen",
