@@ -28,7 +28,8 @@
       "{workspaceRoot}/*.mjs",
       "{workspaceRoot}/*.d.mts",
       "{workspaceRoot}/scripts/**/*",
-      "{workspaceRoot}/tools/workspace/src/**/*"
+      "{workspaceRoot}/tools/workspace/src/**/*",
+      "{workspaceRoot}/libs/json-values/src/**/*"
     ],
     "typescriptToolDependencies": [
       {
