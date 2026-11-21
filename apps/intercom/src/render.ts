@@ -1,5 +1,3 @@
-import { ConvexError } from 'convex/values';
-
 import type { BarElements } from '@busy-bar-apps/bar-kit';
 import {
   BACK_DISPLAY,
@@ -8,6 +6,7 @@ import {
   FRONT_DISPLAY,
   PALETTE,
   rgba,
+  SetupError,
   statusCells,
   SUMMARY_Y,
   textElement,
@@ -27,7 +26,6 @@ import {
   statusAt,
   teammates,
 } from './board.ts';
-import { UNKNOWN_KEY } from './convex/presence.ts';
 
 /** What the bar knows about its team at the moment of a frame. */
 export interface TeamView {
@@ -572,13 +570,9 @@ function unavailable(failure: Error | undefined): BarElements {
   if (failure === undefined) {
     summary = 'connecting';
     lines = ['Connecting to the team'];
-  } else if (failure instanceof ConvexError && failure.data === UNKNOWN_KEY) {
-    summary = 'unknown key';
-    lines = [
-      'The team does not know this',
-      "bar's INTERCOM_KEY. Ask the",
-      'deployment owner for one.',
-    ];
+  } else if (failure instanceof SetupError) {
+    summary = failure.summary;
+    lines = failure.lines;
   } else {
     summary = 'cannot load the team';
     lines = ['Cannot load the team:', failure.message];

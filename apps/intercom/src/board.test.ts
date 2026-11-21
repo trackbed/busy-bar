@@ -1,4 +1,7 @@
+import { ConvexError } from 'convex/values';
 import { describe, expect, it, vi } from 'vitest';
+
+import { SetupError } from '@busy-bar-apps/bar-kit';
 
 import { bar, focusFrom } from './__tests__/fixtures.ts';
 import type { Board, BoardListener, Focus, Knock } from './board.ts';
@@ -17,6 +20,7 @@ import {
   statusAt,
   teammates,
 } from './board.ts';
+import { UNKNOWN_KEY } from './convex/presence.ts';
 
 const NOW = Date.parse('2026-10-26T13:00:00Z');
 const MINUTE = 60_000;
@@ -215,6 +219,24 @@ describe('createBoardFeed', () => {
 
     expect(feed.board()).toBeUndefined();
     expect(feed.failure()).toBe(failure);
+  });
+
+  it('asks for a key the team knows when it rejects this one', () => {
+    const feed = createBoardFeed([]);
+    const rejected = new ConvexError(UNKNOWN_KEY);
+
+    feed.fail(rejected);
+
+    expect(feed.failure()).toBeInstanceOf(SetupError);
+    expect(feed.failure()).toMatchObject({
+      summary: 'unknown key',
+      lines: [
+        'The team does not know this',
+        "bar's INTERCOM_KEY. Ask the",
+        'deployment owner for one.',
+      ],
+      cause: rejected,
+    });
   });
 
   it('clears the failure once a board arrives again', () => {
