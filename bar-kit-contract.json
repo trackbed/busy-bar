@@ -69,6 +69,21 @@
     { "addr": "10.0.4.20:99999", "cloud": null },
     { "addr": "a|b", "cloud": null },
     { "addr": "a<b", "cloud": null },
-    { "addr": "http://[abc", "cloud": null }
+    { "addr": "http://[abc", "cloud": null },
+    { "addr": "http://%41pi.busy.app", "cloud": true },
+    { "addr": "http://%31.2.3.4", "cloud": false },
+    { "addr": "http://a%20b", "cloud": null },
+    { "addr": "http://%zz", "cloud": null },
+    { "addr": "127.1", "cloud": false },
+    { "addr": "http://0x7f.0.0.1", "cloud": false },
+    { "addr": "1.2.3.4.", "cloud": false },
+    { "addr": "http://4294967295", "cloud": false },
+    { "addr": "http://a.0x1g", "cloud": false },
+    { "addr": "192.168.1.256", "cloud": null },
+    { "addr": "http://1.2.3.4.5", "cloud": null },
+    { "addr": "http://08.1.1.1", "cloud": null },
+    { "addr": "http://4294967296", "cloud": null },
+    { "addr": "http://a.1", "cloud": null },
+    { "addr": "http://1..2", "cloud": null }
   ]
 }
