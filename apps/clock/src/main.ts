@@ -6,8 +6,9 @@ import {
 } from '@busy-bar-apps/bar-kit';
 
 import { renderClock } from './render-clock.ts';
+import { loadSettings } from './settings.ts';
 
-const timeZone = process.env['CLOCK_TIME_ZONE']?.trim() || undefined;
+const { timeZone } = loadSettings(process.env);
 
 await runBarApp({
   name: 'clock',

@@ -7,6 +7,8 @@ fills over each minute, and the date on the back display.
 
 - The clock layout ([src/render-clock.ts](src/render-clock.ts)) and its
   one-second redraw ([src/main.ts](src/main.ts)).
+- Its one setting, `CLOCK_TIME_ZONE`, checked at startup
+  ([src/settings.ts](src/settings.ts)).
 - Sample frames for the app catalogue ([src/preview.ts](src/preview.ts)).
 
 ## Does Not Own
@@ -27,8 +29,8 @@ NX_DAEMON=false yarn nx run clock:start
 ```
 
 Set `CLOCK_TIME_ZONE` (an IANA name such as `Europe/Copenhagen`) to override
-the system time zone, and `BUSYBAR_ADDR`/`BUSYBAR_TOKEN` for a bar that is not
-on USB.
+the system time zone; the clock refuses to start with a zone it does not
+know. Set `BUSYBAR_ADDR`/`BUSYBAR_TOKEN` for a bar that is not on USB.
 
 ## Verify
 
