@@ -44,6 +44,10 @@ both read the same environment variables and behave the same way.
   the last failure (`failure`) for a pure render function. A failure's
   `error` is the `Exception` the fetch raised. Setting `stop` cancels a fetch
   in flight.
+- How fresh that data is, for a footer (`freshness_line`): `updated 5m ago`,
+  or `<source> unreachable, showing old data` once the source has failed and
+  the latest value is older than the app's limit. `format_age` is its age
+  format: `now`, whole minutes, then whole hours.
 - The buttons, wheel, and mode selector (`listen_for_input`): read busylib's
   status stream, hand each `InputEvent` to a handler, reopen the stream after
   it drops, and log a handler that raises, until `stop` is set. The cloud

@@ -43,6 +43,10 @@ variables and behave the same way.
   and the last failure (`failure()`) for a pure render function. A failure's
   `error` is always an `Error`: anything else a fetch throws arrives wrapped
   in one, as its `cause`.
+- How fresh that data is, for a footer (`freshnessLine`): `updated 5m ago`,
+  or `<source> unreachable, showing old data` once the source has failed and
+  the latest value is older than the app's limit. `formatAge` is its age
+  format: `now`, whole minutes, then whole hours.
 - The buttons, wheel, and mode selector (`listenForInput`): read the bar's
   status stream over Node's WebSocket, hand each `InputEvent` to a handler,
   reopen the stream after it drops, and log a handler that throws. The cloud

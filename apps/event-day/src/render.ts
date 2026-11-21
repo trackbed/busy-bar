@@ -3,6 +3,7 @@ import {
   BACK_DISPLAY,
   fitText,
   FOOTER_Y,
+  formatAge,
   FRONT_DISPLAY,
   PALETTE,
   statusCells,
@@ -215,20 +216,8 @@ function back(
 }
 
 function updated(now: Date, then: Date): string {
-  const since = age(now, then);
+  const since = formatAge(now, then);
   return since === 'now' ? 'updated just now' : `updated ${since} ago`;
-}
-
-/** `now`, then whole minutes or hours. */
-export function age(now: Date, then: Date): string {
-  const minutes = Math.max(
-    0,
-    Math.floor((now.getTime() - then.getTime()) / 60_000),
-  );
-  if (minutes === 0) {
-    return 'now';
-  }
-  return minutes < 60 ? `${minutes}m` : `${Math.floor(minutes / 60)}h`;
 }
 
 function boothHeadline(
@@ -244,7 +233,9 @@ function boothHeadline(
     }
     if (worst === 'quiet') {
       const since =
-        only.latestPhotoAt === undefined ? '' : age(now, only.latestPhotoAt);
+        only.latestPhotoAt === undefined
+          ? ''
+          : formatAge(now, only.latestPhotoAt);
       return [`QUIET ${since}`.trim(), VIEW_COLORS.quiet];
     }
     return [WORDS[worst].toUpperCase(), VIEW_COLORS[worst]];
@@ -282,7 +273,7 @@ function boothLine(
   if (boothState === 'live' || boothState === 'quiet') {
     return status.latestPhotoAt === undefined
       ? `${name} no photos yet`
-      : `${name} last ${age(now, status.latestPhotoAt)}`;
+      : `${name} last ${formatAge(now, status.latestPhotoAt)}`;
   }
   return `${name} ${WORDS[boothState]}`;
 }
@@ -314,7 +305,9 @@ function boothRow(
   const y = FIRST_ROW_Y + index * ROW_PITCH;
   const color = boothState === 'live' ? PALETTE.text : PALETTE.dim;
   const last =
-    status.latestPhotoAt === undefined ? '' : age(now, status.latestPhotoAt);
+    status.latestPhotoAt === undefined
+      ? ''
+      : formatAge(now, status.latestPhotoAt);
   return [
     textElement({
       id: `row-${index}-name`,

@@ -119,6 +119,12 @@ describe('render', () => {
       ['Backlog', '480'],
     ]);
     expect(textOf(elements, 'footer')).toBe('updated 2m ago');
+    expect(
+      textOf(
+        draw(counts(), { at: new Date(NOW.getTime() - 120 * 60_000) }),
+        'footer',
+      ),
+    ).toBe('updated 2h ago');
   });
 
   it('says when Linear has been unreachable for a while', () => {

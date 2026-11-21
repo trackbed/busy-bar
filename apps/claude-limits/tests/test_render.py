@@ -162,7 +162,11 @@ def test_says_when_the_files_have_been_unreadable_for_a_while() -> None:
 
     assert text_of(recent, "footer") == "updated 1m ago"
     assert text_of(draw(TWO_ACCOUNTS), "footer") == "updated just now"
-    assert text_of(old, "footer") == "files unreadable, showing old data"
+    assert text_of(old, "footer") == "Files unreachable, showing old data"
+    assert (
+        text_of(draw(TWO_ACCOUNTS, fetched_ago=timedelta(minutes=65)), "footer")
+        == "updated 1h ago"
+    )
 
 
 @pytest.mark.parametrize(

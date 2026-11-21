@@ -15,7 +15,6 @@ import type { EventSnapshot } from './event.ts';
 import type { BoothState, BoothStatus } from './photocraft.ts';
 import { GALLERY_LIMIT } from './photocraft.ts';
 import {
-  age,
   challengeText,
   render,
   ROTATE_MS,
@@ -275,15 +274,5 @@ describe('challengeText', () => {
       'Challenge: Leaderboard not found',
     );
     expect(challengeText(event([]))).toBeUndefined();
-  });
-});
-
-describe('age', () => {
-  it('rounds down to minutes, then hours', () => {
-    expect(
-      [0, 59, 60, 3599, 3600].map((seconds) =>
-        age(new Date(NOW.getTime() + seconds * 1000), NOW),
-      ),
-    ).toStrictEqual(['now', 'now', '1m', '59m', '1h']);
   });
 });

@@ -14,6 +14,7 @@ from bar_kit import (
     PollFailure,
     Snapshot,
     fit_text,
+    freshness_line,
     rgba,
     solid_rectangle,
     text_element,
@@ -83,8 +84,8 @@ def render(
     if latest is None:
         return _unavailable(failure, root)
     board = board_at(latest.value, now)
-    stale = failure is not None and now - latest.at > STALE_AFTER
-    return [*_front(board), *_back(board, stale=stale, updated=now - latest.at)]
+    footer = freshness_line("Files", latest, failure, now, STALE_AFTER)
+    return [*_front(board), *_back(board, footer)]
 
 
 def _front(board: Board) -> list[DisplayElement]:
@@ -189,19 +190,13 @@ def _filled_width(usage: Usage) -> int:
     return round(share * BARS_WIDTH)
 
 
-def _back(board: Board, *, stale: bool, updated: timedelta) -> list[DisplayElement]:
+def _back(board: Board, footer: str) -> list[DisplayElement]:
     if board.exhausted:
         header = "Every account is at its limit"
     elif board.rotating_to:
         header = f"Rotating to {board.rotating_to}"
     else:
         header = "Claude accounts: 5h and week"
-    if stale:
-        footer = "files unreadable, showing old data"
-    elif updated < timedelta(minutes=1):
-        footer = "updated just now"
-    else:
-        footer = f"updated {format_duration(updated)} ago"
     elements: list[DisplayElement] = [
         text_element(
             element_id="header",

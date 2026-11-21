@@ -9,6 +9,7 @@ import {
   FOOTER_Y,
   FRONT_DISPLAY,
   PALETTE,
+  freshnessLine,
   rgba,
   solidRectangle,
   SUMMARY_Y,
@@ -89,11 +90,7 @@ export function render(
     ...strip(counts),
   ];
 
-  const stale =
-    failure !== undefined && now.getTime() - latest.at.getTime() > STALE_MS;
-  const footer = stale
-    ? 'Linear unreachable, showing old data'
-    : updated(now, latest.at);
+  const footer = freshnessLine('Linear', latest, failure, now, STALE_MS);
   const rows: readonly (readonly [string, number])[] = [
     [
       view.scope.label === undefined
@@ -196,14 +193,6 @@ function strip(counts: QueueCounts): BarElements {
     x = end;
   }
   return elements;
-}
-
-function updated(now: Date, then: Date): string {
-  const minutes = Math.max(
-    0,
-    Math.floor((now.getTime() - then.getTime()) / 60_000),
-  );
-  return minutes === 0 ? 'updated just now' : `updated ${minutes}m ago`;
 }
 
 function unavailable(failure: PollFailure | undefined): BarElements {
