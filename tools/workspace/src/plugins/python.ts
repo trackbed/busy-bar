@@ -8,6 +8,7 @@ import { existsSync, readFileSync } from 'node:fs';
 import { basename, dirname, join } from 'node:path';
 import type {
   CreateDependencies,
+  CreateDependenciesContext,
   CreateNodes,
   CreateNodesResult,
   RawProjectGraphDependency,
@@ -183,7 +184,7 @@ function hasModule(
  */
 export const createDependencies: CreateDependencies = (_options, context) => {
   const pythonProjects = Object.entries(context.projects).flatMap(
-    ([projectName, project]) => {
+    ([projectName, project]): PythonProject[] => {
       const file = join(context.workspaceRoot, project.root, 'pyproject.toml');
       return PROJECT_ROOT.test(project.root) && existsSync(file)
         ? [{ projectName, root: project.root, pyproject: readPyproject(file) }]
@@ -198,59 +199,77 @@ export const createDependencies: CreateDependencies = (_options, context) => {
     pythonProjects.map((project) => [project.pyproject.moduleName, project]),
   );
 
-  return pythonProjects.flatMap(
-    ({ projectName, root, pyproject }): RawProjectGraphDependency[] => {
-      const required = new Set(
-        pyproject.requirements.flatMap((requirement) => {
-          const target = byDistribution.get(requirement);
-          return target === undefined || target.projectName === projectName
-            ? []
-            : [target.projectName];
-        }),
-      );
-      const declared = [...required].map((target) => ({
-        source: projectName,
-        target,
-        type: DependencyType.static,
-        sourceFile: `${root}/pyproject.toml`,
-      }));
-
-      const pythonFiles = (
-        context.fileMap.projectFileMap[projectName] ?? []
-      ).flatMap(({ file }) => (file.endsWith('.py') ? [file] : []));
-      const imported = pythonFiles.flatMap((file) =>
-        [
-          ...new Set(
-            importedModules(
-              readFileSync(join(context.workspaceRoot, file), 'utf8'),
-            ),
-          ),
-        ].flatMap((module) => {
-          const target = byModule.get(module);
-          if (target === undefined || target.projectName === projectName) {
-            return [];
-          }
-          if (!required.has(target.projectName)) {
-            throw new Error(
-              `${file} imports ${module} from ${target.root}, but ${root}/pyproject.toml does not require ${target.pyproject.name}. ` +
-                `If project-boundaries.mjs allows the dependency, declare it with \`uv add --package ${pyproject.name} ${target.pyproject.name}\`; see docs/python.md.`,
-            );
-          }
-          return [
-            {
-              source: projectName,
-              target: target.projectName,
-              type: DependencyType.static,
-              sourceFile: file,
-            },
-          ];
-        }),
-      );
-
-      return [...declared, ...imported];
-    },
-  );
+  return pythonProjects.flatMap((project) => {
+    const declared = requirementEdges(project, byDistribution);
+    const required = new Set(declared.map(({ target }) => target));
+    return [...declared, ...importEdges(project, byModule, required, context)];
+  });
 };
+
+interface PythonProject {
+  readonly projectName: string;
+  readonly root: string;
+  readonly pyproject: PyprojectInfo;
+}
+
+/** One edge per workspace member that `project`'s pyproject.toml requires. */
+function requirementEdges(
+  { projectName, root, pyproject }: PythonProject,
+  byDistribution: ReadonlyMap<string, PythonProject>,
+): RawProjectGraphDependency[] {
+  const targets = new Set(
+    pyproject.requirements.flatMap((requirement) => {
+      const target = byDistribution.get(requirement);
+      return target === undefined || target.projectName === projectName
+        ? []
+        : [target.projectName];
+    }),
+  );
+  return [...targets].map((target) => ({
+    source: projectName,
+    target,
+    type: DependencyType.static,
+    sourceFile: `${root}/pyproject.toml`,
+  }));
+}
+
+/**
+ * One edge per workspace member each of `project`'s Python files imports.
+ * Throws when a file imports a member that `required` does not hold.
+ */
+function importEdges(
+  { projectName, root, pyproject }: PythonProject,
+  byModule: ReadonlyMap<string, PythonProject>,
+  required: ReadonlySet<string>,
+  context: CreateDependenciesContext,
+): RawProjectGraphDependency[] {
+  const edges: RawProjectGraphDependency[] = [];
+  for (const { file } of context.fileMap.projectFileMap[projectName] ?? []) {
+    if (!file.endsWith('.py')) {
+      continue;
+    }
+    const source = readFileSync(join(context.workspaceRoot, file), 'utf8');
+    for (const module of new Set(importedModules(source))) {
+      const target = byModule.get(module);
+      if (target === undefined || target.projectName === projectName) {
+        continue;
+      }
+      if (!required.has(target.projectName)) {
+        throw new Error(
+          `${file} imports ${module} from ${target.root}, but ${root}/pyproject.toml does not require ${target.pyproject.name}. ` +
+            `If project-boundaries.mjs allows the dependency, declare it with \`uv add --package ${pyproject.name} ${target.pyproject.name}\`; see docs/python.md.`,
+        );
+      }
+      edges.push({
+        source: projectName,
+        target: target.projectName,
+        type: DependencyType.static,
+        sourceFile: file,
+      });
+    }
+  }
+  return edges;
+}
 
 // `import a.b, c as d` and `from a.b import c`, at the start of a line.
 // Relative imports (`from . import x`) stay inside the package.
