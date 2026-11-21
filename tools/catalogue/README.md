@@ -20,7 +20,8 @@ it works opened from disk or hosted anywhere.
   ([src/preview.ts](src/preview.ts)).
 - Drawing each scene with the emulator, as the app's `application_name`
   ([src/catalogue.ts](src/catalogue.ts)). A scene the bar would refuse fails
-  the build with the bar's own error message.
+  the build with the bar's own error message; any other failure fails it
+  with its stack trace.
 - The page ([src/page.ts](src/page.ts), [src/page.css](src/page.css)).
 
 ## Does Not Own

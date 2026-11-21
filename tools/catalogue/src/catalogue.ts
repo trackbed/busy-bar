@@ -2,6 +2,7 @@
 // the bar draws it.
 
 import type { Screenshots } from '@busy-bar-apps/emulator';
+import { ApiError } from '@busy-bar-apps/emulator';
 import { isObject, stringAt } from '@busy-bar-apps/json-values';
 
 import type { AppProject } from './apps.ts';
@@ -43,8 +44,12 @@ export async function catalogueApp(
       try {
         screenshots = await draw(body, now);
       } catch (error) {
+        // Anything but the bar's refusal is a fault to show with its stack.
+        if (!(error instanceof ApiError)) {
+          throw error;
+        }
         throw new CatalogueError(
-          `${project.name}: the bar would refuse scene "${scene.title}": ${error instanceof Error ? error.message : String(error)}`,
+          `${project.name}: the bar would refuse scene "${scene.title}": ${error.message}`,
           { cause: error },
         );
       }
