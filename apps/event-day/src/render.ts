@@ -78,23 +78,65 @@ export function render(
   if (latest === undefined) {
     return unavailable(failure);
   }
-  const { booths, challenge, challengeProblem } = latest.value;
-  const views = booths.map((status) => boothView(status, now, view.quietMs));
+  const event = latest.value;
+  const views = event.booths.map((status) =>
+    boothView(status, now, view.quietMs),
+  );
+  const stale =
+    failure !== undefined && now.getTime() - latest.at.getTime() > STALE_MS;
+  const footer = stale
+    ? 'Event Studio unreachable, showing old data'
+    : updated(now, latest.at);
+  return [...front(event, views, now), ...back(event, views, now, footer)];
+}
+
+/**
+ * The front's second line at `now`: each booth in turn, then the challenge,
+ * for {@link ROTATE_MS} each.
+ */
+export function rotatingLine(
+  { booths, challenge }: EventSnapshot,
+  views: readonly BoothView[],
+  now: Date,
+): string {
   const lines = [
     ...booths.map((status, index) =>
       boothLine(status, views[index] ?? status.state, now),
     ),
     ...(challenge === undefined ? [] : [challengeShort(challenge)]),
   ];
-  const rotating =
+  return (
     lines[Math.floor(now.getTime() / ROTATE_MS) % Math.max(1, lines.length)] ??
-    '';
+    ''
+  );
+}
 
+/**
+ * The challenge's line behind: its leaderboard, or why it cannot be read.
+ * Undefined when the event has no challenge.
+ */
+export function challengeText({
+  challenge,
+  challengeProblem,
+}: EventSnapshot): string | undefined {
+  if (challenge !== undefined) {
+    return `Challenge: ${challengeLine(challenge)}`;
+  }
+  return challengeProblem === undefined
+    ? undefined
+    : `Challenge: ${toBarText(challengeProblem)}`;
+}
+
+function front(
+  event: EventSnapshot,
+  views: readonly BoothView[],
+  now: Date,
+): BarElements {
   const [headline, color] =
-    booths.length > 0
-      ? boothHeadline(booths, views, now)
-      : challengeHeadline(challenge, challengeProblem);
-  const elements: BarElements = [
+    event.booths.length > 0
+      ? boothHeadline(event.booths, views, now)
+      : challengeHeadline(event.challenge, event.challengeProblem);
+  return [
     textElement({
       id: 'headline',
       text: fitText(headline, 'small', FRONT_DISPLAY.width),
@@ -106,7 +148,11 @@ export function render(
     }),
     textElement({
       id: 'summary',
-      text: fitText(rotating, 'tiny', FRONT_DISPLAY.width),
+      text: fitText(
+        rotatingLine(event, views, now),
+        'tiny',
+        FRONT_DISPLAY.width,
+      ),
       display: 'front',
       font: 'tiny',
       x: 0,
@@ -120,12 +166,20 @@ export function render(
       { pitch: CELL_PITCH, width: CELL_PITCH - 1 },
     ),
   ];
+}
 
+function back(
+  event: EventSnapshot,
+  views: readonly BoothView[],
+  now: Date,
+  footer: string,
+): BarElements {
+  const { booths } = event;
   const header =
     booths[0] === undefined
       ? 'ChallengeCraft'
       : `PhotoCraft: ${booths[0].booth.eventSlug}`;
-  elements.push(
+  const elements: BarElements = [
     textElement({
       id: 'header',
       text: fitText(header, 'small', BACK_DISPLAY.width),
@@ -139,33 +193,24 @@ export function render(
       .flatMap((status, index) =>
         boothRow(index, status, views[index] ?? status.state, now),
       ),
-  );
-  const challengeY =
-    FIRST_ROW_Y + Math.min(booths.length, MAX_BOOTH_ROWS) * ROW_PITCH;
-  if (challenge !== undefined || challengeProblem !== undefined) {
-    const challengeText =
-      challenge === undefined
-        ? `Challenge: ${toBarText(challengeProblem ?? '')}`
-        : `Challenge: ${challengeLine(challenge)}`;
+  ];
+  const challenge = challengeText(event);
+  if (challenge !== undefined) {
     elements.push(
       textElement({
         id: 'challenge',
-        text: fitText(challengeText, 'small', BACK_DISPLAY.width),
+        text: fitText(challenge, 'small', BACK_DISPLAY.width),
         display: 'back',
         font: 'small',
         x: 0,
-        y: challengeY,
+        y: FIRST_ROW_Y + Math.min(booths.length, MAX_BOOTH_ROWS) * ROW_PITCH,
       }),
     );
   }
-  const stale =
-    failure !== undefined && now.getTime() - latest.at.getTime() > STALE_MS;
   elements.push(
     textElement({
       id: 'footer',
-      text: stale
-        ? 'Event Studio unreachable, showing old data'
-        : updated(now, latest.at),
+      text: footer,
       display: 'back',
       font: 'tiny',
       x: 0,

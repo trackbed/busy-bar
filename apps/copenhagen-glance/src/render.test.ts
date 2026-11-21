@@ -15,6 +15,7 @@ import type { GlanceData } from './render.ts';
 import {
   BAR_HOURS,
   CO2_MAX_AGE_MS,
+  glanceAt,
   kroner,
   LEVEL_COLORS,
   RAIN_COLOR,
@@ -205,6 +206,31 @@ describe('render', () => {
         (element.display === 'back' ? BACK_DISPLAY.width : FRONT_DISPLAY.width),
     );
     expect(outside.map((element) => element.id)).toStrictEqual([]);
+  });
+});
+
+describe('glanceAt', () => {
+  it('keeps a CO2 reading until it is too old to show', () => {
+    const reading = (ageMs: number): GlanceData['co2'] => ({
+      value: { at: new Date(NOW.getTime() - ageMs), gramsPerKwh: 83 },
+      at: NOW,
+    });
+
+    expect(glanceAt(data({ co2: reading(CO2_MAX_AGE_MS) }), NOW).co2).toEqual(
+      reading(CO2_MAX_AGE_MS)?.value,
+    );
+    expect(
+      glanceAt(data({ co2: reading(CO2_MAX_AGE_MS + 1) }), NOW).co2,
+    ).toBeUndefined();
+  });
+
+  it('calls it raining from the threshold in the coming hour', () => {
+    expect(glanceAt(data({ rain: rain(0.2, 0) }), NOW).raining).toBe(true);
+    expect(glanceAt(data({ rain: rain(0.1, 5) }), NOW).raining).toBe(false);
+    expect(glanceAt(data(), NOW)).toMatchObject({
+      rain: undefined,
+      raining: false,
+    });
   });
 });
 

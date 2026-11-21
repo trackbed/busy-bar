@@ -11,7 +11,7 @@ import {
 
 import type { RainHour } from './dmi.ts';
 import type { Co2Reading, PriceArea, PriceSlot } from './energi.ts';
-import type { PriceLevel, PriceWindow } from './outlook.ts';
+import type { PriceLevel, PriceOutlook, PriceWindow } from './outlook.ts';
 import { priceOutlook, RAIN_THRESHOLD_MM, rainAhead } from './outlook.ts';
 
 export const LEVEL_COLORS: Readonly<Record<PriceLevel, string>> = {
@@ -50,6 +50,24 @@ export interface GlanceData {
  * CO2, or rain when it is coming. The details are listed behind.
  */
 export function render(now: Date, data: GlanceData): BarElements {
+  const glance = glanceAt(data, now);
+  return [...front(glance), ...back(glance, data, now)];
+}
+
+/** What the glance shows at a moment: the readings still worth drawing. */
+export interface Glance {
+  /** Undefined until Energi Data Service publishes prices for now. */
+  readonly outlook: PriceOutlook | undefined;
+  /** Undefined without a reading, or with one too old to show. */
+  readonly co2: Co2Reading | undefined;
+  /** Millimetres per hour for the next hours; undefined without a forecast. */
+  readonly rain: readonly number[] | undefined;
+  /** Whether the coming hour brings enough rain to say so in front. */
+  readonly raining: boolean;
+}
+
+/** Pick out of `data` what the glance shows at `now`. */
+export function glanceAt(data: GlanceData, now: Date): Glance {
   const outlook =
     data.prices === undefined
       ? undefined
@@ -64,7 +82,10 @@ export function render(now: Date, data: GlanceData): BarElements {
       ? undefined
       : rainAhead(data.rain.value, now, RAIN_HOURS);
   const raining = rain !== undefined && (rain[0] ?? 0) >= RAIN_THRESHOLD_MM;
+  return { outlook, co2, rain, raining };
+}
 
+function front({ outlook, co2, raining }: Glance): BarElements {
   const elements: BarElements = [
     outlook === undefined
       ? textElement({
@@ -114,26 +135,36 @@ export function render(now: Date, data: GlanceData): BarElements {
     );
   }
   if (outlook !== undefined) {
-    const prices = outlook.hours.map((hour) => hour.kronerPerKwh);
-    const low = Math.min(...prices);
-    const high = Math.max(...prices);
-    outlook.hours.forEach((hour, index) => {
-      const share = high > low ? (hour.kronerPerKwh - low) / (high - low) : 0.5;
-      const height = 1 + Math.round(share * (BAR_MAX_HEIGHT - 1));
-      elements.push(
-        solidRectangle({
-          id: `bar-${index}`,
-          display: 'front',
-          x: index * BAR_PITCH,
-          y: FRONT_DISPLAY.height - height,
-          width: BAR_PITCH - 1,
-          height,
-          color: LEVEL_COLORS[hour.level],
-        }),
-      );
-    });
+    elements.push(...priceBars(outlook));
   }
+  return elements;
+}
 
+/** One bar per hour, as tall as its price within the outlook's range. */
+function priceBars(outlook: PriceOutlook): BarElements {
+  const prices = outlook.hours.map((hour) => hour.kronerPerKwh);
+  const low = Math.min(...prices);
+  const high = Math.max(...prices);
+  return outlook.hours.map((hour, index) => {
+    const share = high > low ? (hour.kronerPerKwh - low) / (high - low) : 0.5;
+    const height = 1 + Math.round(share * (BAR_MAX_HEIGHT - 1));
+    return solidRectangle({
+      id: `bar-${index}`,
+      display: 'front',
+      x: index * BAR_PITCH,
+      y: FRONT_DISPLAY.height - height,
+      width: BAR_PITCH - 1,
+      height,
+      color: LEVEL_COLORS[hour.level],
+    });
+  });
+}
+
+function back(
+  { outlook, co2, rain }: Glance,
+  data: GlanceData,
+  now: Date,
+): BarElements {
   const lines = [
     outlook === undefined
       ? `Spot price ${data.area}: not published yet`
@@ -145,7 +176,7 @@ export function render(now: Date, data: GlanceData): BarElements {
       : `CO2: ${Math.round(co2.gramsPerKwh)} g/kWh`,
     rainLine(data.rainEnabled, rain),
   ];
-  elements.push(
+  return [
     ...lines.map((line, index) =>
       textElement({
         id: `line-${index}`,
@@ -165,8 +196,7 @@ export function render(now: Date, data: GlanceData): BarElements {
       y: FOOTER_Y,
       color: PALETTE.dim,
     }),
-  );
-  return elements;
+  ];
 }
 
 /** Kroner with a Danish decimal comma: `1,11`. */

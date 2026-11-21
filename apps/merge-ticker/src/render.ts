@@ -18,9 +18,9 @@ import {
   toBarText,
 } from '@busy-bar-apps/bar-kit';
 
-import type { Checks, OpenPullRequest } from './github.ts';
+import type { Checks, OpenPullRequest, PullRequests } from './github.ts';
 import { GitHubError } from './github.ts';
-import type { TickerState } from './watch.ts';
+import type { Celebration, TickerState } from './watch.ts';
 
 export const MERGED_COLOR = PALETTE.good;
 export const CHECK_COLORS: Readonly<Record<Checks, string>> = {
@@ -61,41 +61,76 @@ export function render(
   const { pulls, celebration } = latest.value;
   const celebrating =
     celebration !== undefined &&
-    now.getTime() - celebration.noticedAt.getTime() < CELEBRATION_MS;
+    now.getTime() - celebration.noticedAt.getTime() < CELEBRATION_MS
+      ? celebration
+      : undefined;
+  const stale =
+    failure !== undefined && now.getTime() - latest.at.getTime() > STALE_MS;
+  const footer = stale
+    ? 'GitHub unreachable, showing old data'
+    : `updated ${minutesAgo(now, latest.at)}`;
+  return [
+    ...front(pulls, focusOf(pulls, celebrating)),
+    ...back(pulls, celebrating, footer),
+  ];
+}
+
+/** What the front's headline says, and the pull request it names below. */
+export interface Focus {
+  readonly headline: string;
+  readonly color: string;
+  /** Undefined when nothing is open. */
+  readonly pull: { readonly repo: string; readonly number: number } | undefined;
+}
+
+/**
+ * What most needs you: a merge being celebrated, then failing checks, then
+ * the auto-merge queue, then everything open.
+ */
+export function focusOf(
+  pulls: PullRequests,
+  celebrating: Celebration | undefined,
+): Focus {
   const failing = pulls.open.filter((pull) => pull.checks === 'failing');
   const queued = pulls.open.filter(
     (pull) => pull.autoMerge && pull.checks !== 'failing',
   );
+  if (celebrating !== undefined) {
+    return {
+      headline: 'MERGED!',
+      color: MERGED_COLOR,
+      pull: celebrating.merge,
+    };
+  }
+  if (failing[0] !== undefined) {
+    return {
+      headline: `${failing.length} FAILING`,
+      color: CHECK_COLORS.failing,
+      pull: failing[0],
+    };
+  }
+  if (queued[0] !== undefined) {
+    return {
+      headline: `${queued.length} QUEUED`,
+      color: QUEUED_COLOR,
+      pull: queued[0],
+    };
+  }
+  if (pulls.open[0] !== undefined) {
+    return {
+      headline: `${pulls.openCount} OPEN`,
+      color: PALETTE.text,
+      pull: pulls.open[0],
+    };
+  }
+  return { headline: 'NONE OPEN', color: PALETTE.idle, pull: undefined };
+}
 
+function front(pulls: PullRequests, focus: Focus): BarElements {
   const count = String(pulls.mergedToday);
   const textX = textWidth(count, 'large') + 3;
   const width = FRONT_DISPLAY.width - textX;
-  let headline: string;
-  let color: string;
-  let focus: string;
-  if (celebrating) {
-    headline = 'MERGED!';
-    color = MERGED_COLOR;
-    focus = fitReference(celebration.merge, 'tiny', width);
-  } else if (failing[0] !== undefined) {
-    headline = `${failing.length} FAILING`;
-    color = CHECK_COLORS.failing;
-    focus = fitReference(failing[0], 'tiny', width);
-  } else if (queued[0] !== undefined) {
-    headline = `${queued.length} QUEUED`;
-    color = QUEUED_COLOR;
-    focus = fitReference(queued[0], 'tiny', width);
-  } else if (pulls.open[0] !== undefined) {
-    headline = `${pulls.openCount} OPEN`;
-    color = PALETTE.text;
-    focus = fitReference(pulls.open[0], 'tiny', width);
-  } else {
-    headline = 'NONE OPEN';
-    color = PALETTE.idle;
-    focus = 'merged today';
-  }
-
-  const elements: BarElements = [
+  return [
     textElement({
       id: 'count',
       text: count,
@@ -107,21 +142,24 @@ export function render(
     }),
     textElement({
       id: 'headline',
-      text: fitText(headline, 'small', width),
+      text: fitText(focus.headline, 'small', width),
       display: 'front',
       font: 'small',
       x: textX,
       y: 0,
-      color,
+      color: focus.color,
     }),
     textElement({
       id: 'focus',
-      text: focus,
+      text:
+        focus.pull === undefined
+          ? 'merged today'
+          : fitReference(focus.pull, 'tiny', width),
       display: 'front',
       font: 'tiny',
       x: textX,
       y: SUMMARY_Y,
-      color,
+      color: focus.color,
     }),
     ...statusCells(
       pulls.open
@@ -130,16 +168,18 @@ export function render(
       { pitch: CELL_PITCH, width: CELL_PITCH - 1 },
     ),
   ];
+}
 
-  const header = celebrating
-    ? `Merged ${reference(celebration.merge)}!`
-    : `${pulls.mergedToday} merged today, ${pulls.openCount} open`;
-  const stale =
-    failure !== undefined && now.getTime() - latest.at.getTime() > STALE_MS;
-  const footer = stale
-    ? 'GitHub unreachable, showing old data'
-    : `updated ${minutesAgo(now, latest.at)}`;
-  elements.push(
+function back(
+  pulls: PullRequests,
+  celebrating: Celebration | undefined,
+  footer: string,
+): BarElements {
+  const header =
+    celebrating === undefined
+      ? `${pulls.mergedToday} merged today, ${pulls.openCount} open`
+      : `Merged ${reference(celebrating.merge)}!`;
+  return [
     textElement({
       id: 'header',
       text: fitText(header, 'small', BACK_DISPLAY.width),
@@ -158,8 +198,7 @@ export function render(
       y: FOOTER_Y,
       color: PALETTE.dim,
     }),
-  );
-  return elements;
+  ];
 }
 
 /** `name#123`: the repository without its owner, and the number. */
