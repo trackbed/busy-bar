@@ -53,6 +53,7 @@ function data(overrides: Partial<GlanceData> = {}): GlanceData {
     co2: { value: co2, at: NOW },
     rain: undefined,
     rainEnabled: true,
+    failures: { prices: undefined, co2: undefined, rain: undefined },
     ...overrides,
   };
 }
@@ -191,6 +192,54 @@ describe('render', () => {
     expect(textOf(elementsById(render(NOW, data())), 'line-4')).toBe(
       'Rain: no forecast',
     );
+  });
+
+  it('says which sources are failing instead of waiting for them', () => {
+    const failure = { error: new Error('fetch failed'), at: NOW };
+
+    const elements = elementsById(
+      render(
+        NOW,
+        data({
+          prices: undefined,
+          co2: undefined,
+          failures: { prices: failure, co2: failure, rain: failure },
+        }),
+      ),
+    );
+
+    expect(textOf(elements, 'price')).toBe('PRICE ?');
+    expect(
+      [0, 3, 4].map((index) => textOf(elements, `line-${index}`)),
+    ).toStrictEqual([
+      'Spot price DK2: unreachable',
+      'CO2: unreachable',
+      'Rain: DMI unreachable',
+    ]);
+    expect(overflowingText(elements.values())).toStrictEqual([]);
+  });
+
+  it('keeps showing what a failing source sent before', () => {
+    const failure = { error: new Error('fetch failed'), at: NOW };
+
+    const elements = elementsById(
+      render(
+        NOW,
+        data({
+          rain: rain(0, 0, 0),
+          failures: { prices: failure, co2: failure, rain: failure },
+        }),
+      ),
+    );
+
+    expect(textOf(elements, 'price')).toBe('1,10 kr');
+    expect(
+      [0, 3, 4].map((index) => textOf(elements, `line-${index}`)),
+    ).toStrictEqual([
+      'Spot price DK2: 1,10 kr/kWh',
+      'CO2: 83 g/kWh',
+      'No rain in the next 3 h',
+    ]);
   });
 
   it('keeps every text inside its display', () => {

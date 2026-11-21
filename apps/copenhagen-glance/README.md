@@ -16,7 +16,8 @@ next 24, the CO2, and the rain for the next three hours.
   [open data API](https://opendatadocs.dmi.govcloud.dk/), and turning its
   running precipitation total into rain per hour. No key needed.
 - Judging the hours ahead ([src/outlook.ts](src/outlook.ts)) and the layout
-  ([src/render.ts](src/render.ts)).
+  ([src/render.ts](src/render.ts)). A value missing because its source keeps
+  failing reads as unreachable, not as not published yet.
 - Sample frames for the app catalogue ([src/preview.ts](src/preview.ts)).
 
 ## Does Not Own

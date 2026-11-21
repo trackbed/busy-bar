@@ -52,6 +52,11 @@ await Promise.all([
         co2: co2.latest(),
         rain: rain.latest(),
         rainEnabled: settings.rain,
+        failures: {
+          prices: prices.failure(),
+          co2: co2.failure(),
+          rain: rain.failure(),
+        },
       }),
     intervalMs: 5000,
     signal,
