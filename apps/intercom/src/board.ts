@@ -174,13 +174,17 @@ export interface BoardFeed {
   readonly update: (next: Board) => void;
   /**
    * Take a failed query, such as for a key the team no longer knows: drop the
-   * board, so the screen shows why rather than an old board.
+   * board, so the screen shows why rather than an old board, and tell every
+   * listener the board is gone.
    */
   readonly fail: (error: Error) => void;
 }
 
+/** Hears each new board, and `undefined` when the board is lost. */
+export type BoardListener = (board: Board | undefined) => void;
+
 export function createBoardFeed(
-  listeners: readonly ((board: Board) => void)[],
+  listeners: readonly BoardListener[],
 ): BoardFeed {
   let board: Board | undefined;
   let failure: Error | undefined;
@@ -197,6 +201,9 @@ export function createBoardFeed(
     fail: (error) => {
       board = undefined;
       failure = error;
+      for (const listen of listeners) {
+        listen(undefined);
+      }
     },
   };
 }

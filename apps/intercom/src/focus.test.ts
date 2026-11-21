@@ -87,6 +87,39 @@ describe('createFocusDriver', () => {
     expect(start).not.toHaveBeenCalled();
   });
 
+  it('drops the plan when the board is lost', async () => {
+    const { driver, start } = setup();
+
+    driver.observe(board(FOCUS));
+    driver.observe(undefined);
+    await vi.advanceTimersByTimeAsync(60_000);
+
+    expect(start).not.toHaveBeenCalled();
+  });
+
+  it('plans again for a session still on when the board comes back', async () => {
+    const { driver, start } = setup();
+
+    driver.observe(board(FOCUS));
+    driver.observe(undefined);
+    driver.observe(board(FOCUS));
+    await vi.advanceTimersByTimeAsync(15_000);
+
+    expect(start.mock.calls).toStrictEqual([[TEAM_TIMER]]);
+  });
+
+  it('does not join a session again when the board comes back after the join', async () => {
+    const { driver, start } = setup();
+
+    driver.observe(board(FOCUS));
+    await vi.advanceTimersByTimeAsync(15_000);
+    driver.observe(undefined);
+    driver.observe(board(FOCUS));
+    await vi.advanceTimersByTimeAsync(15_000);
+
+    expect(start).toHaveBeenCalledOnce();
+  });
+
   it('joins a session that just started, but not one long under way', async () => {
     const { driver, start } = setup();
 

@@ -27,9 +27,12 @@ export interface FocusDriver {
    * Look at a new board: plan to join a session this bar has not skipped
    * when it starts, or drop the plan for one it skipped or that was called
    * off. A session that started more than {@link JOIN_WINDOW_MS} ago is
-   * left alone.
+   * left alone. A lost board (`undefined`) drops a plan that has not run
+   * yet, since this bar no longer knows the session is on; it plans again
+   * if the board comes back with it. A session this bar already tried to
+   * join is not joined again.
    */
-  readonly observe: (board: Board) => void;
+  readonly observe: (board: Board | undefined) => void;
   /** Join a session now; the bar's timer ends with the team's. */
   readonly join: (focus: Focus) => Promise<void>;
   /** Drop the plan, as the app stops. */
@@ -75,6 +78,14 @@ export function createFocusDriver(options: FocusOptions): FocusDriver {
 
   return {
     observe: (board) => {
+      if (board === undefined) {
+        // Only a session whose join has not run yet gets another try.
+        if (planned !== undefined) {
+          stop();
+          tried = new Set();
+        }
+        return;
+      }
       const { focus } = board;
       if (focus === null || focus.skipped.includes(board.me)) {
         stop();

@@ -70,6 +70,16 @@ describe('createChime', () => {
     expect(play).toHaveBeenCalledTimes(2);
   });
 
+  it('stays quiet while the board is lost, and for what it heard before', () => {
+    const { chime, play } = setup();
+
+    chime.observe(board(knockOnMe));
+    chime.observe(undefined);
+    chime.observe(board(knockOnMe));
+
+    expect(play.mock.calls).toStrictEqual([[SOUNDS.knock]]);
+  });
+
   it('stays quiet when sounds are off', () => {
     const { chime, play } = setup(false);
 

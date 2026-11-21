@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import type { Board, Focus, Knock, TeamBar } from './board.ts';
+import type { Board, BoardListener, Focus, Knock, TeamBar } from './board.ts';
 import {
   createBoardFeed,
   FOCUS_ROW,
@@ -167,8 +167,8 @@ describe('team focus', () => {
 
 describe('createBoardFeed', () => {
   it('keeps the latest board and hands it to every listener', () => {
-    const focus = vi.fn<(board: Board) => void>();
-    const chime = vi.fn<(board: Board) => void>();
+    const focus = vi.fn<BoardListener>();
+    const chime = vi.fn<BoardListener>();
     const feed = createBoardFeed([focus, chime]);
     const next = board();
 
@@ -179,6 +179,18 @@ describe('createBoardFeed', () => {
     expect(feed.failure()).toBeUndefined();
     expect(focus.mock.calls).toStrictEqual([[ALONE], [next]]);
     expect(chime.mock.calls).toStrictEqual([[ALONE], [next]]);
+  });
+
+  it('tells every listener when the query fails', () => {
+    const focus = vi.fn<BoardListener>();
+    const chime = vi.fn<BoardListener>();
+    const feed = createBoardFeed([focus, chime]);
+
+    feed.update(ALONE);
+    feed.fail(new Error('Unknown key'));
+
+    expect(focus.mock.calls).toStrictEqual([[ALONE], [undefined]]);
+    expect(chime.mock.calls).toStrictEqual([[ALONE], [undefined]]);
   });
 
   it('shows why the query failed instead of the last board', () => {
