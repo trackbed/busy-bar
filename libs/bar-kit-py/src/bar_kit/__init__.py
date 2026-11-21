@@ -17,6 +17,16 @@ from busylib.types import (
 from bar_kit.client import create_busy_bar
 from bar_kit.config import BarConfig, BarConfigError, load_bar_config
 from bar_kit.display import BACK_DISPLAY, FRONT_DISPLAY, DisplaySize, rgba
+from bar_kit.elements import (
+    FOOTER_Y,
+    PALETTE,
+    SUMMARY_Y,
+    Palette,
+    TextAlign,
+    solid_rectangle,
+    status_cells,
+    text_element,
+)
 from bar_kit.fonts import ELLIPSIS, fit_text, overflowing_text, text_width
 from bar_kit.input import listen_for_input
 from bar_kit.poll import Poller, PollFailure, Snapshot
@@ -35,7 +45,10 @@ __all__ = [
     "BACK_DISPLAY",
     "DEFAULT_PRIORITY",
     "ELLIPSIS",
+    "FOOTER_Y",
     "FRONT_DISPLAY",
+    "PALETTE",
+    "SUMMARY_Y",
     "BarConfig",
     "BarConfigError",
     "ButtonEvent",
@@ -46,6 +59,7 @@ __all__ = [
     "DisplaySize",
     "EncoderEvent",
     "InputEvent",
+    "Palette",
     "PollFailure",
     "Poller",
     "Preview",
@@ -56,6 +70,7 @@ __all__ = [
     "SelectorEvent",
     "SelectorPosition",
     "Snapshot",
+    "TextAlign",
     "TextElement",
     "TrackedScreen",
     "create_busy_bar",
@@ -67,6 +82,9 @@ __all__ = [
     "print_preview",
     "rgba",
     "run_bar_app",
+    "solid_rectangle",
+    "status_cells",
+    "text_element",
     "text_width",
     "to_bar_text",
     "track_screen",

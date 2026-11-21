@@ -12,6 +12,12 @@ both read the same environment variables and behave the same way.
   the async busylib client built from them (`create_busy_bar`).
 - Display sizes (`FRONT_DISPLAY`, and `BACK_DISPLAY`: the 148×80 of the
   back screen that the status bar leaves to apps) and colours (`rgba`).
+- The render vocabulary every app draws with: `text_element` (keyword-only,
+  an optional `align`), `solid_rectangle`, `status_cells` (one cell per
+  colour along the front's bottom row), the shared `PALETTE` (`bright`,
+  `text`, `dim`, `idle`, `good`, `warn`, `bad`, `info`), and the standard
+  line positions `SUMMARY_Y` (front, under the headline) and `FOOTER_Y`
+  (back, last line). The TypeScript kit gives the same elements and colours.
 - The frame loop (`run_bar_app`): draw every interval at a `priority`
   (default `DEFAULT_PRIORITY`, 50), delete the elements a frame stops drawing
   (the bar keeps them otherwise), log failed draws and keep going, clear the
@@ -71,11 +77,12 @@ both read the same environment variables and behave the same way.
 import asyncio
 
 from bar_kit import (
-    TextElement,
+    DisplayName,
     create_busy_bar,
     install_shutdown_handlers,
     load_bar_config,
     run_bar_app,
+    text_element,
 )
 
 
@@ -87,7 +94,16 @@ async def main() -> None:
         await run_bar_app(
             name="my-app",
             client=client,
-            render=lambda _now: [TextElement(id="hi", text="HI", font="normal")],
+            render=lambda _now: [
+                text_element(
+                    element_id="hi",
+                    text="HI",
+                    display=DisplayName.FRONT,
+                    font="normal",
+                    x=0,
+                    y=0,
+                )
+            ],
             interval=1.0,
             stop=stop,
         )

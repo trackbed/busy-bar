@@ -30,7 +30,12 @@ revisit this guide when it ships.
   one column left of its `x`, but busylib warns about an element at
   `x = width`, so anchor right-aligned text at `x = width - 1` and accept a
   one-column margin.
-- Colours are `#RRGGBBAA` strings. Both kits export `rgba()` to build them.
+- Colours are `#RRGGBBAA` strings. Both kits export `rgba()` to build them,
+  and a shared `PALETTE` with one colour per role (`text`, `dim`, `idle`,
+  `good`, `warn`, `bad`, `info`, `bright`). Draw with the kits' element
+  builders (`textElement`/`text_element`, `solidRectangle`, `statusCells`)
+  and their line positions (`SUMMARY_Y`, `FOOTER_Y`) rather than writing
+  element literals.
 
 ## Fonts
 

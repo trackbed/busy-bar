@@ -13,6 +13,12 @@ variables and behave the same way.
   the busy-lib client built from them (`createBusyBar`).
 - Display sizes (`FRONT_DISPLAY`, and `BACK_DISPLAY`: the 148×80 of the
   back screen that the status bar leaves to apps) and colours (`rgba`).
+- The render vocabulary every app draws with: `textElement` (named `x` and
+  `y`, an optional `align`), `solidRectangle`, `statusCells` (one cell per
+  colour along the front's bottom row), the shared `PALETTE` (`bright`,
+  `text`, `dim`, `idle`, `good`, `warn`, `bad`, `info`), and the standard
+  line positions `SUMMARY_Y` (front, under the headline) and `FOOTER_Y`
+  (back, last line). The Python kit gives the same elements and colours.
 - The frame loop (`runBarApp`): draw every interval at a `priority`
   (default `DEFAULT_PRIORITY`, 50), delete the elements a frame stops drawing
   (the bar keeps them otherwise), log failed draws and keep going, clear the
@@ -70,13 +76,21 @@ import {
   loadBarConfig,
   runBarApp,
   shutdownSignal,
+  textElement,
 } from '@busy-bar-apps/bar-kit';
 
 await runBarApp({
   name: 'my-app',
   client: createBusyBar(loadBarConfig()),
   render: () => [
-    { id: 'hi', type: 'text', text: 'HI', font: 'normal', x: 2, y: 2 },
+    textElement({
+      id: 'hi',
+      text: 'HI',
+      display: 'front',
+      font: 'normal',
+      x: 2,
+      y: 2,
+    }),
   ],
   intervalMs: 1000,
   signal: shutdownSignal(),

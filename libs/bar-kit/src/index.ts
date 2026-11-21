@@ -15,6 +15,21 @@ export type { BarConfig } from './config.ts';
 export { BarConfigError, loadBarConfig } from './config.ts';
 export type { DisplaySize } from './display.ts';
 export { BACK_DISPLAY, FRONT_DISPLAY, rgba } from './display.ts';
+export type {
+  BarDisplay,
+  SolidRectangleOptions,
+  StatusCellsOptions,
+  TextAlign,
+  TextElementOptions,
+} from './elements.ts';
+export {
+  FOOTER_Y,
+  PALETTE,
+  solidRectangle,
+  statusCells,
+  SUMMARY_Y,
+  textElement,
+} from './elements.ts';
 export type { BarFont } from './fonts.ts';
 export { ELLIPSIS, fitText, overflowingText, textWidth } from './fonts.ts';
 export type {
