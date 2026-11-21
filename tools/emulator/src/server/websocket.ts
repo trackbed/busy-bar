@@ -5,6 +5,8 @@ import { createHash } from 'node:crypto';
 import type { IncomingMessage } from 'node:http';
 import type { Duplex } from 'node:stream';
 
+import { concat } from '../formats/bytes.ts';
+
 const GUID = '258EAFA5-E914-47DA-95CA-C5AB0DC85B11';
 
 type Opcode = 'continuation' | 'text' | 'binary' | 'close' | 'ping' | 'pong';
@@ -175,7 +177,7 @@ export class WebSocketConnection {
         break;
     }
     if (frame.fin) {
-      const data = join(this.#fragments);
+      const data = concat(this.#fragments);
       this.#fragments = [];
       this.#onMessage({ type: this.#fragmentType, data });
     }
@@ -268,14 +270,4 @@ function parseFrame(
     frame: { fin: (first & 0x80) !== 0, opcode, payload },
     end: at + length,
   };
-}
-
-function join(parts: readonly Uint8Array[]): Uint8Array {
-  const out = new Uint8Array(parts.reduce((sum, part) => sum + part.length, 0));
-  let offset = 0;
-  for (const part of parts) {
-    out.set(part, offset);
-    offset += part.length;
-  }
-  return out;
 }

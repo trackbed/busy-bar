@@ -1,9 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
+import { ascii } from './bytes.ts';
 import { PCM_RATE, rawPcmSound, wavSound } from './sound.ts';
-
-const ascii = (text: string): number[] =>
-  Array.from(text, (character) => character.charCodeAt(0));
 
 function u32(value: number): number[] {
   const bytes = new Uint8Array(4);

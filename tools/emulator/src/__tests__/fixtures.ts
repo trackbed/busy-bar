@@ -3,6 +3,8 @@
 
 import { crc32, deflateRawSync, deflateSync } from 'node:zlib';
 
+import { ascii, concat } from '../formats/bytes.ts';
+
 export interface PngParts {
   readonly width: number;
   readonly height: number;
@@ -19,10 +21,7 @@ function chunk(type: string, body: Uint8Array): Uint8Array {
   const out = new Uint8Array(12 + body.length);
   const view = new DataView(out.buffer);
   view.setUint32(0, body.length);
-  out.set(
-    Array.from(type, (char) => char.charCodeAt(0)),
-    4,
-  );
+  out.set(ascii(type), 4);
   out.set(body, 8);
   view.setUint32(8 + body.length, crc32(out.subarray(4, 8 + body.length)));
   return out;
@@ -38,7 +37,7 @@ export function png(parts: PngParts): Uint8Array {
     [parts.bitDepth, parts.colorType, 0, 0, parts.interlaced ? 1 : 0],
     8,
   );
-  const chunks = [
+  return concat([
     Uint8Array.from([137, 80, 78, 71, 13, 10, 26, 10]),
     chunk('IHDR', header),
     ...(parts.palette ? [chunk('PLTE', Uint8Array.from(parts.palette))] : []),
@@ -47,16 +46,7 @@ export function png(parts: PngParts): Uint8Array {
       : []),
     chunk('IDAT', deflateSync(parts.data)),
     chunk('IEND', new Uint8Array(0)),
-  ];
-  const out = new Uint8Array(
-    chunks.reduce((sum, part) => sum + part.length, 0),
-  );
-  let offset = 0;
-  for (const part of chunks) {
-    out.set(part, offset);
-    offset += part.length;
-  }
-  return out;
+  ]);
 }
 
 export interface FileSpec {
@@ -106,14 +96,7 @@ export function zip(files: readonly FileSpec[]): Uint8Array {
   endView.setUint16(10, files.length, true);
   endView.setUint32(12, directorySize, true);
   endView.setUint32(16, offset, true);
-  const all = [...parts, ...directory, end];
-  const out = new Uint8Array(all.reduce((sum, part) => sum + part.length, 0));
-  let at = 0;
-  for (const part of all) {
-    out.set(part, at);
-    at += part.length;
-  }
-  return out;
+  return concat([...parts, ...directory, end]);
 }
 
 /** A solid 8-bit RGBA PNG of one colour. */

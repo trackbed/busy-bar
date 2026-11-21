@@ -1,6 +1,8 @@
 // A builder for fonts in LVGL's binary format, so tests can reach every
 // table variant without the firmware's font files.
 
+import { ascii, concat } from '../formats/bytes.ts';
+
 export interface GlyphSpec {
   readonly codePoint: number;
   /** Rows of `#` (ink) and `.` (none); the rows set the box size. */
@@ -221,18 +223,4 @@ function table(tag: string, body: Uint8Array): Uint8Array {
 
 function u16(value: number): number[] {
   return [value & 0xff, value >> 8];
-}
-
-function ascii(text: string): number[] {
-  return Array.from(text, (character) => character.charCodeAt(0));
-}
-
-function concat(parts: readonly Uint8Array[]): Uint8Array {
-  const out = new Uint8Array(parts.reduce((sum, part) => sum + part.length, 0));
-  let at = 0;
-  for (const part of parts) {
-    out.set(part, at);
-    at += part.length;
-  }
-  return out;
 }

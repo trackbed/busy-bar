@@ -4,6 +4,7 @@
 import type { IncomingMessage, ServerResponse } from 'node:http';
 
 import { ApiError } from '../device/api-error.ts';
+import { concat } from '../formats/bytes.ts';
 
 /** Read the whole body, refusing anything larger than `limit` bytes. */
 export async function readBody(
@@ -22,13 +23,7 @@ export async function readBody(
     }
     chunks.push(chunk);
   }
-  const body = new Uint8Array(size);
-  let offset = 0;
-  for (const chunk of chunks) {
-    body.set(chunk, offset);
-    offset += chunk.length;
-  }
-  return body;
+  return concat(chunks);
 }
 
 export function sendJson(
