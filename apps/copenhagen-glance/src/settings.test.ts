@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 
-import { COPENHAGEN, GlanceSettingsError, loadSettings } from './settings.ts';
+import { SettingsError } from '@busy-bar-apps/bar-kit';
+
+import { COPENHAGEN, loadSettings } from './settings.ts';
 
 describe('loadSettings', () => {
   it('defaults to Copenhagen with rain', () => {
@@ -41,7 +43,7 @@ describe('loadSettings', () => {
       'GLANCE_LONGITUDE must be a number from -180 to 180',
     ],
   ])('rejects %j', (env, message) => {
-    expect(() => loadSettings(env)).toThrow(GlanceSettingsError);
+    expect(() => loadSettings(env)).toThrow(SettingsError);
     expect(() => loadSettings(env)).toThrow(message);
   });
 });
