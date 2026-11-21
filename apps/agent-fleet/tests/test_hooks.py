@@ -1,7 +1,9 @@
 import pytest
 
 from agent_fleet.hooks import (
+    NOTIFICATION_LABELS,
     HookEvent,
+    Notification,
     Workspace,
     hook_settings,
     parse_hook,
@@ -86,12 +88,11 @@ def test_a_stop_without_the_task_lists_waits_for_nothing() -> None:
     assert parse_hook(payload("Stop")) == HookEvent("stop", "s1", CWD)
 
 
-def test_reads_a_notification_that_asks_for_you() -> None:
-    event = parse_hook(payload("Notification", notification_type="permission_prompt"))
+@pytest.mark.parametrize("notification", list(NOTIFICATION_LABELS))
+def test_reads_a_notification_that_asks_for_you(notification: Notification) -> None:
+    event = parse_hook(payload("Notification", notification_type=notification))
 
-    assert event == HookEvent(
-        "notification", "s1", CWD, notification="permission_prompt"
-    )
+    assert event == HookEvent("notification", "s1", CWD, notification=notification)
 
 
 @pytest.mark.parametrize("notification", ["idle_prompt", "auth_success", None])

@@ -2,7 +2,7 @@ from datetime import UTC, datetime, timedelta
 from typing import get_args
 
 from agent_fleet.fleet import NEEDS_YOU, Alert, Fleet, FleetView, Row
-from agent_fleet.hooks import EventKind, HookEvent
+from agent_fleet.hooks import EventKind, HookEvent, Notification
 
 START = datetime(2026, 10, 20, 9, 0, tzinfo=UTC)
 WORKSPACES = "/Users/me/conductor/workspaces/discera"
@@ -18,7 +18,7 @@ def event(  # noqa: PLR0913 - mirrors the event's optional fields.
     *,
     skill: str | None = None,
     waiting_on: int = 0,
-    notification: str | None = None,
+    notification: Notification | None = None,
     error: str | None = None,
 ) -> HookEvent:
     return HookEvent(

@@ -19,10 +19,21 @@ _KINDS: dict[str, EventKind] = {
     "SessionEnd": "end",
 }
 
-ASKING_NOTIFICATIONS = frozenset(
-    {"permission_prompt", "elicitation_dialog", "agent_needs_input"}
-)
+type Notification = Literal[
+    "permission_prompt", "elicitation_dialog", "agent_needs_input"
+]
 """Notifications that mean a session is blocked until you answer it."""
+
+NOTIFICATION_LABELS: Mapping[Notification, str] = {
+    "permission_prompt": "permit",
+    "elicitation_dialog": "question",
+    "agent_needs_input": "input",
+}
+"""What the board shows for each notification; the board ignores any other."""
+
+_NOTIFICATIONS: dict[str, Notification] = {
+    notification: notification for notification in NOTIFICATION_LABELS
+}
 
 _HOOK_TIMEOUT_SECONDS = 2
 _SESSION_END_TIMEOUT_SECONDS = 1
@@ -55,7 +66,7 @@ class HookEvent:
     waiting_on: int = 0
     """Background tasks and scheduled wakeups still pending at a stop."""
 
-    notification: str | None = None
+    notification: Notification | None = None
     error: str | None = None
 
 
@@ -67,8 +78,8 @@ def parse_hook(payload: object) -> HookEvent | None:
     session_id = _text(payload, "session_id")
     if kind is None or not session_id:
         return None
-    notification = _text(payload, "notification_type")
-    if kind == "notification" and notification not in ASKING_NOTIFICATIONS:
+    notification = _NOTIFICATIONS.get(_text(payload, "notification_type"))
+    if kind == "notification" and notification is None:
         return None
 
     pending = _count(payload, "background_tasks") + _count(payload, "session_crons")

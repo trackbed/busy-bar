@@ -5,7 +5,7 @@ from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from typing import Literal
 
-from agent_fleet.hooks import HookEvent, Workspace, workspace_of
+from agent_fleet.hooks import NOTIFICATION_LABELS, HookEvent, Workspace, workspace_of
 
 type State = Literal["asking", "failed", "done", "working", "background", "seen"]
 """What a session last reported. `quiet` is derived from it at drawing time."""
@@ -29,12 +29,6 @@ _ORDER: dict[Status, int] = {
     "quiet": 4,
     "background": 5,
     "seen": 6,
-}
-
-_NOTIFICATION_LABELS = {
-    "permission_prompt": "permit",
-    "elicitation_dialog": "question",
-    "agent_needs_input": "input",
 }
 
 _ERROR_LABELS = {
@@ -143,8 +137,11 @@ class Fleet:
                 session.detail = f"bg {event.waiting_on}" if event.waiting_on else ""
             case "notification":
                 state = "asking"
-                notification = event.notification or ""
-                session.detail = _NOTIFICATION_LABELS.get(notification, "asking")
+                session.detail = (
+                    "asking"
+                    if event.notification is None
+                    else NOTIFICATION_LABELS[event.notification]
+                )
             case "failure":
                 state = "failed"
                 session.detail = _ERROR_LABELS.get(event.error or "", "error")
