@@ -14,8 +14,11 @@ type Status = Literal[
     "asking", "failed", "done", "working", "quiet", "background", "seen"
 ]
 
-NEEDS_YOU: frozenset[Status] = frozenset({"asking", "failed", "done"})
+type Alert = Literal["asking", "failed", "done"]
 """Statuses that wait on you: a question, an error, or a finished turn."""
+
+NEEDS_YOU: frozenset[Status] = frozenset({"asking", "failed", "done"})
+"""The `Alert` statuses, for checking a `Status`."""
 
 # Most urgent first; the board lists sessions in this order.
 _ORDER: dict[Status, int] = {
@@ -104,7 +107,7 @@ class Fleet:
         self._sessions: dict[str, _Session] = {}
         self._selected: str | None = None
 
-    def apply(self, event: HookEvent, now: datetime) -> Status | None:
+    def apply(self, event: HookEvent, now: datetime) -> Alert | None:
         """Record an event.
 
         Returns the session's status when it has just started waiting on you,
@@ -149,8 +152,11 @@ class Fleet:
         if state != previous:
             session.state = state
             session.since = now
-            if state in NEEDS_YOU:
-                return state
+            match state:
+                case "asking" | "failed" | "done":
+                    return state
+                case _:
+                    pass
         return None
 
     def view(self, now: datetime) -> FleetView:

@@ -4,7 +4,7 @@ board uses them."""
 from collections.abc import AsyncIterator, Callable, Mapping
 from datetime import UTC, datetime, timedelta
 
-from agent_fleet.fleet import Fleet, Status
+from agent_fleet.fleet import Alert, Fleet
 from agent_fleet.hooks import parse_hook
 from bar_kit import (
     ButtonEvent,
@@ -15,7 +15,7 @@ from bar_kit import (
     StockSound,
 )
 
-SOUNDS: Mapping[Status, StockSound] = {
+SOUNDS: Mapping[Alert, StockSound] = {
     "done": "reminder",
     "asking": "event",
     "failed": "event",
@@ -66,16 +66,15 @@ class Chime:
             return not self._on_screen()
         return self.selector in _FOCUS_POSITIONS
 
-    def ring(self, status: Status) -> None:
-        """Sound the alert for `status`, unless something says not to."""
-        sound = SOUNDS.get(status)
+    def ring(self, alert: Alert) -> None:
+        """Sound `alert`, unless something says not to."""
         now = self._now()
-        if sound is None or self.muted:
+        if self.muted:
             return
         if self._last is not None and now - self._last < self._min_gap:
             return
         self._last = now
-        self._play(sound)
+        self._play(SOUNDS[alert])
 
 
 class Controls:

@@ -1,10 +1,11 @@
 from collections.abc import AsyncIterator
 from datetime import UTC, datetime, timedelta
+from typing import get_args
 
 import pytest
 
 from agent_fleet.controls import SOUNDS, Chime, Controls
-from agent_fleet.fleet import Fleet
+from agent_fleet.fleet import Alert, Fleet
 from agent_fleet.hooks import HookEvent
 from bar_kit import (
     ButtonEvent,
@@ -27,6 +28,10 @@ class Clock:
 
 def on_screen() -> bool:
     return True
+
+
+def test_every_alert_has_a_sound() -> None:
+    assert set(SOUNDS) == set(get_args(Alert.__value__))
 
 
 def test_chimes_for_a_session_that_starts_waiting_on_you() -> None:
