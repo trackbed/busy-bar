@@ -1,4 +1,4 @@
-import { mkdtemp, readFile, writeFile, mkdir } from 'node:fs/promises';
+import { mkdir, mkdtemp, readdir, readFile, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { describe, expect, it, vi } from 'vitest';
@@ -32,22 +32,51 @@ const MANIFEST: AssetManifest = {
   ],
 };
 
+/** The pinned path a fetch asks for. */
+function requestedPath(input: Parameters<typeof fetch>[0]): string {
+  const url =
+    typeof input === 'string'
+      ? input
+      : input instanceof URL
+        ? input.href
+        : input.url;
+  return url.split('/abc123/')[1] ?? '';
+}
+
 function serving(files: Readonly<Record<string, Uint8Array>>) {
   return vi.fn<typeof fetch>((input) => {
-    const url =
-      typeof input === 'string'
-        ? input
-        : input instanceof URL
-          ? input.href
-          : input.url;
-    const path = url.split('/abc123/')[1] ?? '';
-    const body = files[path];
+    const body = files[requestedPath(input)];
     return Promise.resolve(
       body === undefined
         ? new Response('missing', { status: 404 })
         : new Response(Uint8Array.from(body)),
     );
   });
+}
+
+/**
+ * Serves each file only once two syncs have both asked for it, so both
+ * write it at the same time.
+ */
+function servingBothAtOnce(files: Readonly<Record<string, Uint8Array>>) {
+  const waiting = new Map<string, () => void>();
+  return vi.fn<typeof fetch>(
+    (input) =>
+      new Promise((resolve) => {
+        const path = requestedPath(input);
+        const respond = () => {
+          resolve(new Response(Uint8Array.from(files[path] ?? [])));
+        };
+        const first = waiting.get(path);
+        if (first === undefined) {
+          waiting.set(path, respond);
+          return;
+        }
+        waiting.delete(path);
+        first();
+        respond();
+      }),
+  );
 }
 
 async function cache(): Promise<string> {
@@ -146,5 +175,82 @@ describe('syncAssets', () => {
         concurrency: 1,
       }),
     ).rejects.toThrow('Could not download assets/shared/fonts/busy_tiny.font.');
+  });
+
+  it('lets two syncs of one folder download the same files at once', async () => {
+    const dir = await cache();
+    const files = Object.fromEntries(
+      Array.from({ length: 32 }, (_, index) => [
+        `assets/shared/sounds/sound_${index}.wav`,
+        new TextEncoder().encode(`sound ${index} `.repeat(4096)),
+      ]),
+    );
+    const manifest: AssetManifest = {
+      ...MANIFEST,
+      files: Object.entries(files).map(([path, data]) => ({
+        path,
+        sha: gitBlobSha(data),
+        size: data.length,
+      })),
+    };
+    const fetch = servingBothAtOnce(files);
+
+    const roots = await Promise.all([
+      syncAssets({ manifest, cacheDir: dir, fetch }),
+      syncAssets({ manifest, cacheDir: dir, fetch }),
+    ]);
+
+    expect(fetch).toHaveBeenCalledTimes(64);
+    expect(roots[0]).toBe(roots[1]);
+    for (const [path, data] of Object.entries(files)) {
+      expect(
+        gitBlobSha(await readFile(join(dir, `firmware-abc123/${path}`))),
+      ).toBe(gitBlobSha(data));
+    }
+    expect(
+      await readdir(join(commitDir(dir, manifest), 'assets/shared/sounds')),
+    ).toHaveLength(32);
+  });
+
+  it('writes past a .partial left by a crashed run', async () => {
+    const dir = await cache();
+    const fonts = join(commitDir(dir, MANIFEST), 'assets/shared/fonts');
+    await mkdir(fonts, { recursive: true });
+    await writeFile(join(fonts, 'busy_tiny.font.partial'), 'half a fo');
+    const fetch = serving({
+      'assets/shared/fonts/busy_tiny.font': FONT,
+      'assets/shared/sounds/beep.wav': SOUND,
+    });
+
+    await syncAssets({ manifest: MANIFEST, cacheDir: dir, fetch });
+
+    expect(await readFile(join(fonts, 'busy_tiny.font'))).toStrictEqual(
+      Buffer.from(FONT),
+    );
+  });
+
+  it('reports a file it cannot save', async () => {
+    const dir = await cache();
+    // A folder where the font should go: the rename over it fails.
+    const font = join(
+      commitDir(dir, MANIFEST),
+      'assets/shared/fonts/busy_tiny.font',
+    );
+    await mkdir(join(font, 'taken'), { recursive: true });
+    const fetch = serving({
+      'assets/shared/fonts/busy_tiny.font': FONT,
+      'assets/shared/sounds/beep.wav': SOUND,
+    });
+
+    const failure = syncAssets({ manifest: MANIFEST, cacheDir: dir, fetch });
+
+    await expect(failure).rejects.toThrow(
+      new AssetSyncError('Could not save assets/shared/fonts/busy_tiny.font.'),
+    );
+    await expect(failure).rejects.toHaveProperty(
+      'cause.code',
+      expect.any(String),
+    );
+    expect(await readdir(join(font, '..'))).toStrictEqual(['busy_tiny.font']);
   });
 });
