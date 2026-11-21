@@ -6,9 +6,12 @@
 import type { ProjectGraph } from '@nx/devkit';
 import { parse } from 'smol-toml';
 
+import { isObject } from '@busy-bar-apps/json-values';
+
 import {
   normalizeDistributionName,
   requirementName,
+  requirementStrings,
 } from '../plugins/pyproject.ts';
 
 /** What a project must look like, keyed by tag. */
@@ -104,12 +107,12 @@ const PACKAGE_JSON_FIELDS = [
  */
 export function packageJsonPinProblems(path: string, source: string): string[] {
   const manifest: unknown = JSON.parse(source);
-  if (!isTable(manifest)) {
+  if (!isObject(manifest)) {
     return [`${path} is not a JSON object.`];
   }
   return PACKAGE_JSON_FIELDS.flatMap((field) => {
     const entries = manifest[field];
-    return isTable(entries)
+    return isObject(entries)
       ? Object.entries(entries).flatMap(([name, version]) =>
           typeof version === 'string' && isExactNpmVersion(version)
             ? []
@@ -143,14 +146,7 @@ export function pyprojectPinProblems(
   source: string,
   workspaceMembers: ReadonlySet<string>,
 ): string[] {
-  const document = parse(source);
-  const project = isTable(document['project']) ? document['project'] : {};
-  const requirements = [
-    ...strings(project['dependencies']),
-    ...tableValues(project['optional-dependencies']).flatMap(strings),
-    ...tableValues(document['dependency-groups']).flatMap(strings),
-  ];
-  return requirements.flatMap((requirement) => {
+  return requirementStrings(parse(source)).flatMap((requirement) => {
     const name = requirementName(requirement);
     const member =
       name !== undefined &&
@@ -162,22 +158,4 @@ export function pyprojectPinProblems(
           `${path} requires ${JSON.stringify(requirement)}; pin it with ==, such as "name==1.2.3", or name a workspace member alone.`,
         ];
   });
-}
-
-type Table = Readonly<Record<string, unknown>>;
-
-function isTable(value: unknown): value is Table {
-  return typeof value === 'object' && value !== null && !Array.isArray(value);
-}
-
-function tableValues(value: unknown): unknown[] {
-  return isTable(value) ? Object.values(value) : [];
-}
-
-// Dependency groups may also hold `{ include-group = "..." }` tables, which
-// name no distribution, so only strings count.
-function strings(value: unknown): string[] {
-  return Array.isArray(value)
-    ? value.filter((item): item is string => typeof item === 'string')
-    : [];
 }

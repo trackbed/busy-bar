@@ -34,7 +34,8 @@ Keep a local inference plugin in
 - The plugin fails the graph when a `pyproject.toml` is not a uv workspace
   member.
 
-It depends only on `@nx/devkit` and `smol-toml` and is covered by tests.
+It depends only on `@nx/devkit`, `smol-toml`, and the workspace's
+`json-values` library, and is covered by tests.
 
 ## Consequences
 

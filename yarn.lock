@@ -1355,6 +1355,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@busy-bar-apps/workspace@workspace:tools/workspace"
   dependencies:
+    "@busy-bar-apps/json-values": "workspace:0.0.1"
     "@nx/devkit": "npm:24.0.5"
     nx: "npm:24.0.5"
     smol-toml: "npm:1.9.1"
