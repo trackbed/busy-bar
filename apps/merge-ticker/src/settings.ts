@@ -1,3 +1,5 @@
+import { envSwitch, SettingsError } from '@busy-bar-apps/bar-kit';
+
 /** What the ticker needs from the environment. */
 export interface TickerSettings {
   readonly token: string;
@@ -9,7 +11,7 @@ export interface TickerSettings {
 }
 
 /** The environment does not describe a ticker that can run. */
-export class TickerSettingsError extends Error {
+class TickerSettingsError extends SettingsError {
   override readonly name = 'TickerSettingsError';
 }
 
@@ -36,16 +38,10 @@ export function loadSettings(
       );
     }
   }
-  const rawSound = env['MERGE_TICKER_SOUND']?.trim().toLowerCase() || 'on';
-  if (rawSound !== 'on' && rawSound !== 'off') {
-    throw new TickerSettingsError(
-      `MERGE_TICKER_SOUND must be on or off; got ${JSON.stringify(rawSound)}.`,
-    );
-  }
   return {
     token,
     scope: env['MERGE_TICKER_SCOPE']?.trim() ?? '',
     timeZone,
-    sound: rawSound === 'on',
+    sound: envSwitch(env, 'MERGE_TICKER_SOUND'),
   };
 }
