@@ -2,7 +2,8 @@ from pathlib import Path
 
 import pytest
 
-from claude_limits.settings import LimitsSettings, LimitsSettingsError, load_settings
+from bar_kit import SettingsError
+from claude_limits.settings import LimitsSettings, load_settings
 
 HOME = Path("/Users/me")
 
@@ -28,7 +29,5 @@ def test_keeps_an_absolute_directory() -> None:
 
 
 def test_rejects_an_unknown_sound_switch() -> None:
-    with pytest.raises(
-        LimitsSettingsError, match="CLAUDE_LIMITS_SOUND must be on or off"
-    ):
+    with pytest.raises(SettingsError, match="CLAUDE_LIMITS_SOUND must be on or off"):
         load_settings({"CLAUDE_LIMITS_SOUND": "maybe"})

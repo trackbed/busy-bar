@@ -4,13 +4,8 @@ from collections.abc import Mapping
 from dataclasses import dataclass
 from pathlib import Path
 
+from bar_kit import env_switch
 from claude_limits.rotation import DEFAULT_ROOT
-
-_SWITCHES = {"on": True, "off": False}
-
-
-class LimitsSettingsError(ValueError):
-    """The environment does not describe a board that can run."""
 
 
 @dataclass(frozen=True, slots=True)
@@ -30,9 +25,4 @@ def load_settings(
     root = Path(raw_root) if raw_root else DEFAULT_ROOT
     if root.parts and root.parts[0] == "~":
         root = (home or Path.home()).joinpath(*root.parts[1:])
-
-    raw_sound = env.get("CLAUDE_LIMITS_SOUND", "").strip().lower() or "on"
-    if raw_sound not in _SWITCHES:
-        message = f"CLAUDE_LIMITS_SOUND must be on or off; got {raw_sound!r}."
-        raise LimitsSettingsError(message)
-    return LimitsSettings(root=root, sound=_SWITCHES[raw_sound])
+    return LimitsSettings(root=root, sound=env_switch(env, "CLAUDE_LIMITS_SOUND"))
