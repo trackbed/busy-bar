@@ -1,7 +1,5 @@
-from busylib import types
-
 from agent_fleet.preview import preview
-from bar_kit import overflowing_text
+from bar_kit import TextElement, overflowing_text
 
 
 def test_heads_with_who_needs_you_then_who_is_working() -> None:
@@ -9,7 +7,7 @@ def test_heads_with_who_needs_you_then_who_is_working() -> None:
         element.text
         for scene in preview().scenes
         for element in scene.elements
-        if isinstance(element, types.TextElement) and element.id == "headline"
+        if isinstance(element, TextElement) and element.id == "headline"
     ]
 
     assert headlines == ["2 NEED YOU", "3 WORKING", "2 WORKING"]

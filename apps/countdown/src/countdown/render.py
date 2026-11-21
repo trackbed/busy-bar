@@ -2,9 +2,14 @@
 
 from datetime import datetime, timedelta
 
-from busylib import types
-
-from bar_kit import BACK_DISPLAY, FRONT_DISPLAY, rgba
+from bar_kit import (
+    BACK_DISPLAY,
+    FRONT_DISPLAY,
+    DisplayElement,
+    DisplayName,
+    TextElement,
+    rgba,
+)
 from countdown.settings import CountdownSettings
 
 REMAINING_COLOR = rgba(255, 255, 255)
@@ -33,13 +38,13 @@ def format_remaining(remaining: timedelta) -> str:
 
 def render_countdown(
     now: datetime, settings: CountdownSettings
-) -> list[types.DisplayElement]:
+) -> list[DisplayElement]:
     """Draw the time left on the front display and its label on the back."""
     done = now >= settings.target
     return [
-        types.TextElement(
+        TextElement(
             id="remaining",
-            display=types.DisplayName.FRONT,
+            display=DisplayName.FRONT,
             text=format_remaining(settings.target - now),
             font="large",
             color=DONE_COLOR if done else REMAINING_COLOR,
@@ -47,18 +52,18 @@ def render_countdown(
             x=FRONT_DISPLAY.width // 2,
             y=FRONT_DISPLAY.height // 2,
         ),
-        types.TextElement(
+        TextElement(
             id="label",
-            display=types.DisplayName.BACK,
+            display=DisplayName.BACK,
             text=settings.label,
             font="large",
             align="center",
             x=BACK_DISPLAY.width // 2,
             y=BACK_DISPLAY.height // 3,
         ),
-        types.TextElement(
+        TextElement(
             id="target",
-            display=types.DisplayName.BACK,
+            display=DisplayName.BACK,
             text=settings.target.strftime("%a %d %b %H:%M"),
             font="small",
             align="center",

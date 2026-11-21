@@ -1,6 +1,4 @@
-from busylib import types
-
-from bar_kit import overflowing_text
+from bar_kit import TextElement, overflowing_text
 from countdown.preview import preview
 
 
@@ -9,7 +7,7 @@ def test_counts_down_through_every_stage() -> None:
         element.text
         for scene in preview().scenes
         for element in scene.elements
-        if isinstance(element, types.TextElement) and element.id == "remaining"
+        if isinstance(element, TextElement) and element.id == "remaining"
     ]
 
     assert remaining == ["64d 07h", "04:33:20", "NOW"]

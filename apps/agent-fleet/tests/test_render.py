@@ -1,8 +1,6 @@
 from collections import Counter
 from datetime import UTC, datetime, timedelta
 
-from busylib import types
-
 from agent_fleet.fleet import FleetView, Row, Status
 from agent_fleet.render import (
     BRIGHT,
@@ -12,7 +10,15 @@ from agent_fleet.render import (
     format_age,
     render,
 )
-from bar_kit import BACK_DISPLAY, FRONT_DISPLAY, overflowing_text
+from bar_kit import (
+    BACK_DISPLAY,
+    FRONT_DISPLAY,
+    DisplayElement,
+    DisplayName,
+    RectangleElement,
+    TextElement,
+    overflowing_text,
+)
 
 NOW = datetime(2026, 10, 20, 9, 0, tzinfo=UTC)
 
@@ -39,14 +45,14 @@ def view_of(*rows: Row) -> FleetView:
     return FleetView(rows=rows, counts=Counter(item.status for item in rows))
 
 
-def draw(view: FleetView) -> dict[str, types.DisplayElement]:
+def draw(view: FleetView) -> dict[str, DisplayElement]:
     elements = render(NOW, view, listening="127.0.0.1:8740")
     return {element.id: element for element in elements}
 
 
-def text(elements: dict[str, types.DisplayElement], element_id: str) -> str:
+def text(elements: dict[str, DisplayElement], element_id: str) -> str:
     element = elements[element_id]
-    assert isinstance(element, types.TextElement)
+    assert isinstance(element, TextElement)
     return element.text
 
 
@@ -69,7 +75,7 @@ def test_leads_with_how_many_sessions_need_you() -> None:
     )
 
     headline = elements["headline"]
-    assert isinstance(headline, types.TextElement)
+    assert isinstance(headline, TextElement)
     assert headline.text == "2 NEED YOU"
     assert headline.color == STATUS_COLORS["asking"]
     assert text(elements, "summary") == "quebec permit"
@@ -77,7 +83,7 @@ def test_leads_with_how_many_sessions_need_you() -> None:
     assert [
         element.fill_colors[0]
         for element in elements.values()
-        if isinstance(element, types.RectangleElement)
+        if isinstance(element, RectangleElement)
     ] == [STATUS_COLORS["asking"], STATUS_COLORS["done"], STATUS_COLORS["working"]]
 
 
@@ -107,7 +113,7 @@ def test_lists_every_session_behind() -> None:
     ] == [("quebec", "done", "2m"), ("davis", "pr-fix-ci", "1h")]
     assert "row-1-marker" not in elements
     name = elements["row-0-name"]
-    assert isinstance(name, types.TextElement)
+    assert isinstance(name, TextElement)
     assert name.color == BRIGHT
 
 
@@ -144,7 +150,7 @@ def test_keeps_long_names_inside_the_displays() -> None:
         if element.x
         >= (
             FRONT_DISPLAY.width
-            if element.display == types.DisplayName.FRONT
+            if element.display == DisplayName.FRONT
             else BACK_DISPLAY.width
         )
     ] == []
@@ -174,7 +180,7 @@ def test_draws_one_cell_per_session_up_to_the_display_width() -> None:
     cells = [
         element
         for element in draw(view_of(*rows)).values()
-        if isinstance(element, types.RectangleElement)
+        if isinstance(element, RectangleElement)
     ]
 
     assert len(cells) == MAX_CELLS

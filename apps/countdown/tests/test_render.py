@@ -1,8 +1,8 @@
 from datetime import UTC, datetime, timedelta
 
 import pytest
-from busylib import types
 
+from bar_kit import DisplayElement, DisplayName, TextElement
 from countdown.render import (
     DONE_COLOR,
     REMAINING_COLOR,
@@ -30,11 +30,11 @@ def test_formats_the_time_left(remaining: timedelta, text: str) -> None:
     assert format_remaining(remaining) == text
 
 
-def texts(elements: list[types.DisplayElement]) -> dict[str, str]:
+def texts(elements: list[DisplayElement]) -> dict[str, str]:
     return {
         element.id: element.text
         for element in elements
-        if isinstance(element, types.TextElement)
+        if isinstance(element, TextElement)
     }
 
 
@@ -47,17 +47,17 @@ def test_draws_the_time_left_in_front_and_the_label_behind() -> None:
         "target": "Thu 24 Dec 17:00",
     }
     assert [element.display for element in elements] == [
-        types.DisplayName.FRONT,
-        types.DisplayName.BACK,
-        types.DisplayName.BACK,
+        DisplayName.FRONT,
+        DisplayName.BACK,
+        DisplayName.BACK,
     ]
-    assert isinstance(elements[0], types.TextElement)
+    assert isinstance(elements[0], TextElement)
     assert elements[0].color == REMAINING_COLOR
 
 
 def test_highlights_the_moment_it_reaches_zero() -> None:
     elements = render_countdown(SETTINGS.target, SETTINGS)
 
-    assert isinstance(elements[0], types.TextElement)
+    assert isinstance(elements[0], TextElement)
     assert elements[0].text == "NOW"
     assert elements[0].color == DONE_COLOR

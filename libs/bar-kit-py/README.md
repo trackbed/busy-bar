@@ -51,6 +51,11 @@ both read the same environment variables and behave the same way.
   what an app's `preview` target prints with `print_preview`, as one line of
   JSON, elements serialized the way busylib sends them
   ([tools/catalogue](../../tools/catalogue/README.md)).
+- Re-exports of busylib's element types (`TextElement`, `RectangleElement`,
+  `DisplayElement`, `DisplayName`, `DisplayFontName`) and input events
+  (`InputEvent`, `ButtonEvent`, `EncoderEvent`, `SelectorEvent`,
+  `SelectorPosition`), so apps import only `bar_kit` and never depend on
+  busylib without declaring it.
 
 ## Does Not Own
 
@@ -65,9 +70,8 @@ both read the same environment variables and behave the same way.
 ```python
 import asyncio
 
-from busylib import types
-
 from bar_kit import (
+    TextElement,
     create_busy_bar,
     install_shutdown_handlers,
     load_bar_config,
@@ -83,7 +87,7 @@ async def main() -> None:
         await run_bar_app(
             name="my-app",
             client=client,
-            render=lambda _now: [types.TextElement(id="hi", text="HI", font="normal")],
+            render=lambda _now: [TextElement(id="hi", text="HI", font="normal")],
             interval=1.0,
             stop=stop,
         )

@@ -3,10 +3,19 @@
 from datetime import datetime, timedelta
 from typing import Literal
 
-from busylib import types
-
 from agent_fleet.fleet import NEEDS_YOU, FleetView, Row, Status
-from bar_kit import BACK_DISPLAY, FRONT_DISPLAY, fit_text, rgba, text_width
+from bar_kit import (
+    BACK_DISPLAY,
+    FRONT_DISPLAY,
+    DisplayElement,
+    DisplayFontName,
+    DisplayName,
+    RectangleElement,
+    TextElement,
+    fit_text,
+    rgba,
+    text_width,
+)
 
 STATUS_COLORS: dict[Status, str] = {
     "asking": rgba(255, 60, 60),
@@ -25,8 +34,8 @@ LIGHT = rgba(200, 200, 200)
 DIM = rgba(130, 130, 130)
 FAINT = rgba(80, 80, 80)
 
-FRONT = types.DisplayName.FRONT
-BACK = types.DisplayName.BACK
+FRONT = DisplayName.FRONT
+BACK = DisplayName.BACK
 
 # Front: a headline in `small` (rows 0-8), a summary in `tiny` (rows 9-14),
 # and one cell per session on the bottom row.
@@ -70,9 +79,7 @@ def format_age(age: timedelta) -> str:
     return f"{age // _DAY}d"
 
 
-def render(
-    _now: datetime, view: FleetView, *, listening: str
-) -> list[types.DisplayElement]:
+def render(_now: datetime, view: FleetView, *, listening: str) -> list[DisplayElement]:
     """Draw the most urgent session in front and the whole list behind.
 
     `listening` is the `host:port` the hook endpoint serves, shown until the
@@ -81,9 +88,9 @@ def render(
     return [*_front(view), *_back(view, listening)]
 
 
-def _front(view: FleetView) -> list[types.DisplayElement]:
+def _front(view: FleetView) -> list[DisplayElement]:
     headline, color = _headline(view)
-    elements: list[types.DisplayElement] = [
+    elements: list[DisplayElement] = [
         _text("headline", headline, display=FRONT, font="small", y=0, color=color)
     ]
     if view.rows:
@@ -120,7 +127,7 @@ def _front(view: FleetView) -> list[types.DisplayElement]:
             )
         )
     elements += [
-        types.RectangleElement(
+        RectangleElement(
             id=f"cell-{index}",
             display=FRONT,
             x=index * CELL_PITCH,
@@ -145,7 +152,7 @@ def _headline(view: FleetView) -> tuple[str, str]:
     return ("ALL SEEN" if view.rows else "NO AGENTS"), IDLE_COLOR
 
 
-def _back(view: FleetView, listening: str) -> list[types.DisplayElement]:
+def _back(view: FleetView, listening: str) -> list[DisplayElement]:
     if not view.rows:
         hint = fit_text(f"Hooks post to {listening}", "small", BACK_DISPLAY.width)
         return [
@@ -155,7 +162,7 @@ def _back(view: FleetView, listening: str) -> list[types.DisplayElement]:
 
     count = len(view.rows)
     header = f"{view.needs_you} need you, {count} session{'' if count == 1 else 's'}"
-    elements: list[types.DisplayElement] = [
+    elements: list[DisplayElement] = [
         _text("header", header, display=BACK, font="small", y=0, color=BRIGHT)
     ]
     for slot, row in enumerate(_window(view.rows)):
@@ -170,7 +177,7 @@ def _window(rows: tuple[Row, ...]) -> tuple[Row, ...]:
     return rows[start : start + VISIBLE_ROWS]
 
 
-def _row(slot: int, row: Row) -> list[types.DisplayElement]:
+def _row(slot: int, row: Row) -> list[DisplayElement]:
     y = FIRST_ROW_Y + slot * ROW_PITCH
     if row.selected:
         color = BRIGHT
@@ -182,7 +189,7 @@ def _row(slot: int, row: Row) -> list[types.DisplayElement]:
         color = DIM
     name = fit_text(row.workspace, "small", DETAIL_X - NAME_X - COLUMN_GAP)
     detail_room = BACK_DISPLAY.width - DETAIL_X - AGE_WIDTH - COLUMN_GAP
-    elements: list[types.DisplayElement] = []
+    elements: list[DisplayElement] = []
     if row.selected:
         elements.append(
             _text(
@@ -226,14 +233,14 @@ def _text(  # noqa: PLR0913 - keyword-only, one per property of a text element.
     element_id: str,
     text: str,
     *,
-    display: types.DisplayName,
-    font: types.DisplayFontName,
+    display: DisplayName,
+    font: DisplayFontName,
     y: int,
     x: int = 0,
     color: str = LIGHT,
     align: Align = "top_left",
-) -> types.TextElement:
-    return types.TextElement(
+) -> TextElement:
+    return TextElement(
         id=element_id,
         display=display,
         text=text,

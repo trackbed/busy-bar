@@ -2,10 +2,19 @@ from datetime import timedelta
 from pathlib import Path
 
 import pytest
-from busylib import types
 from samples import NOW
 
-from bar_kit import BACK_DISPLAY, FRONT_DISPLAY, PollFailure, Snapshot, overflowing_text
+from bar_kit import (
+    BACK_DISPLAY,
+    FRONT_DISPLAY,
+    DisplayElement,
+    DisplayName,
+    PollFailure,
+    RectangleElement,
+    Snapshot,
+    TextElement,
+    overflowing_text,
+)
 from claude_limits.render import (
     BARS_WIDTH,
     BARS_X,
@@ -52,22 +61,20 @@ def draw(
     *,
     fetched_ago: timedelta = timedelta(0),
     failure: PollFailure | None = None,
-) -> dict[str, types.DisplayElement]:
+) -> dict[str, DisplayElement]:
     latest = None if value is None else Snapshot(value=value, at=NOW - fetched_ago)
     return {element.id: element for element in render(NOW, latest, failure, root=ROOT)}
 
 
-def text(elements: dict[str, types.DisplayElement], element_id: str) -> str:
+def text(elements: dict[str, DisplayElement], element_id: str) -> str:
     element = elements[element_id]
-    assert isinstance(element, types.TextElement)
+    assert isinstance(element, TextElement)
     return element.text
 
 
-def rectangle(
-    elements: dict[str, types.DisplayElement], element_id: str
-) -> types.RectangleElement:
+def rectangle(elements: dict[str, DisplayElement], element_id: str) -> RectangleElement:
     element = elements[element_id]
-    assert isinstance(element, types.RectangleElement)
+    assert isinstance(element, RectangleElement)
     return element
 
 
@@ -75,7 +82,7 @@ def test_shows_the_active_accounts_five_hour_usage_and_reset() -> None:
     elements = draw(TWO_ACCOUNTS)
 
     headline = elements["headline"]
-    assert isinstance(headline, types.TextElement)
+    assert isinstance(headline, TextElement)
     assert headline.text == "A 82%"
     assert headline.color == LEVEL_COLORS["high"]
     assert text(elements, "summary") == "reset 1h12m"
@@ -133,7 +140,7 @@ def test_warns_when_every_account_is_at_its_limit() -> None:
     )
 
     headline = elements["headline"]
-    assert isinstance(headline, types.TextElement)
+    assert isinstance(headline, TextElement)
     assert headline.text == "ALL LIMITED"
     assert headline.color == LEVEL_COLORS["limit"]
     assert text(elements, "summary") == "free in 42m"
@@ -211,7 +218,7 @@ def test_keeps_every_text_inside_its_display() -> None:
         if element.x
         >= (
             FRONT_DISPLAY.width
-            if element.display == types.DisplayName.FRONT
+            if element.display == DisplayName.FRONT
             else BACK_DISPLAY.width
         )
     ] == []

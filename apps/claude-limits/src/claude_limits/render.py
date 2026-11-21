@@ -4,13 +4,16 @@ from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Literal
 
-from busylib import types
-
 from bar_kit import (
     BACK_DISPLAY,
     FRONT_DISPLAY,
+    DisplayElement,
+    DisplayFontName,
+    DisplayName,
     PollFailure,
+    RectangleElement,
     Snapshot,
+    TextElement,
     fit_text,
     rgba,
     to_bar_text,
@@ -29,8 +32,8 @@ MARKER_COLOR = rgba(255, 255, 255)
 TEXT_COLOR = rgba(200, 200, 200)
 DIM_COLOR = rgba(110, 110, 110)
 
-FRONT = types.DisplayName.FRONT
-BACK = types.DisplayName.BACK
+FRONT = DisplayName.FRONT
+BACK = DisplayName.BACK
 
 # Front: the active account in text on the left, one pair of bars per account
 # on the right: the five-hour window (2 px) over the weekly one (1 px).
@@ -81,7 +84,7 @@ def render(
     failure: PollFailure | None,
     *,
     root: Path,
-) -> list[types.DisplayElement]:
+) -> list[DisplayElement]:
     """Draw the latest reading, or why there is none."""
     if latest is None:
         return _unavailable(failure, root)
@@ -90,7 +93,7 @@ def render(
     return [*_front(board), *_back(board, stale=stale, updated=now - latest.at)]
 
 
-def _front(board: Board) -> list[types.DisplayElement]:
+def _front(board: Board) -> list[DisplayElement]:
     active = board.active
     if board.exhausted:
         headline, color = "ALL LIMITED", LEVEL_COLORS["limit"]
@@ -104,7 +107,7 @@ def _front(board: Board) -> list[types.DisplayElement]:
         headline = f"{active.short} {format_used(usage)}"
         color = LEVEL_COLORS[usage.level]
         summary = _summary(board, usage)
-    elements: list[types.DisplayElement] = [
+    elements: list[DisplayElement] = [
         _front_text(
             "headline", fit_text(headline, "small", TEXT_WIDTH), "small", 0, color
         ),
@@ -125,9 +128,9 @@ def _summary(board: Board, usage: Usage) -> str:
     return f"reset {format_duration(usage.resets_in)}"
 
 
-def _bars(slot: int, account: AccountView) -> list[types.DisplayElement]:
+def _bars(slot: int, account: AccountView) -> list[DisplayElement]:
     y = slot * ACCOUNT_PITCH
-    elements: list[types.DisplayElement] = []
+    elements: list[DisplayElement] = []
     if account.active:
         elements.append(
             _rectangle(
@@ -172,9 +175,7 @@ def _filled_width(usage: Usage) -> int:
     return round(share * BARS_WIDTH)
 
 
-def _back(
-    board: Board, *, stale: bool, updated: timedelta
-) -> list[types.DisplayElement]:
+def _back(board: Board, *, stale: bool, updated: timedelta) -> list[DisplayElement]:
     if board.exhausted:
         header = "Every account is at its limit"
     elif board.rotating_to:
@@ -187,7 +188,7 @@ def _back(
         footer = "updated just now"
     else:
         footer = f"updated {format_duration(updated)} ago"
-    elements: list[types.DisplayElement] = [
+    elements: list[DisplayElement] = [
         _back_text("header", fit_text(header, "small", BACK_DISPLAY.width), "small", 0),
         _back_text("footer", footer, "tiny", FOOTER_Y, DIM_COLOR),
     ]
@@ -196,7 +197,7 @@ def _back(
     return elements
 
 
-def _row(slot: int, account: AccountView) -> list[types.DisplayElement]:
+def _row(slot: int, account: AccountView) -> list[DisplayElement]:
     y = FIRST_ROW_Y + slot * ROW_PITCH
     if not account.eligible:
         color = DIM_COLOR
@@ -206,7 +207,7 @@ def _row(slot: int, account: AccountView) -> list[types.DisplayElement]:
         color = TEXT_COLOR
     five_reset = account.five_hour.resets_in
     week_reset = account.seven_day.resets_in
-    elements: list[types.DisplayElement] = [
+    elements: list[DisplayElement] = [
         _back_text(
             f"row-{slot}-name",
             fit_text(account.label, "small", NAME_WIDTH),
@@ -262,7 +263,7 @@ def _row(slot: int, account: AccountView) -> list[types.DisplayElement]:
     return elements
 
 
-def _unavailable(failure: PollFailure | None, root: Path) -> list[types.DisplayElement]:
+def _unavailable(failure: PollFailure | None, root: Path) -> list[DisplayElement]:
     if failure is None:
         headline, summary = "LIMITS", "reading..."
         lines = ["Reading the rotation files"]
@@ -295,9 +296,9 @@ def _unavailable(failure: PollFailure | None, root: Path) -> list[types.DisplayE
 
 
 def _front_text(
-    element_id: str, text: str, font: types.DisplayFontName, y: int, color: str
-) -> types.TextElement:
-    return types.TextElement(
+    element_id: str, text: str, font: DisplayFontName, y: int, color: str
+) -> TextElement:
+    return TextElement(
         id=element_id, display=FRONT, text=text, font=font, color=color, x=0, y=y
     )
 
@@ -305,14 +306,14 @@ def _front_text(
 def _back_text(  # noqa: PLR0913 - keyword-only placement after the basics.
     element_id: str,
     text: str,
-    font: types.DisplayFontName,
+    font: DisplayFontName,
     y: int,
     color: str = TEXT_COLOR,
     *,
     x: int = 0,
     align: Align = "top_left",
-) -> types.TextElement:
-    return types.TextElement(
+) -> TextElement:
+    return TextElement(
         id=element_id,
         display=BACK,
         text=text,
@@ -326,8 +327,8 @@ def _back_text(  # noqa: PLR0913 - keyword-only placement after the basics.
 
 def _rectangle(  # noqa: PLR0913 - keyword-only size and colour.
     element_id: str, x: int, y: int, *, width: int, height: int, color: str
-) -> types.RectangleElement:
-    return types.RectangleElement(
+) -> RectangleElement:
+    return RectangleElement(
         id=element_id,
         display=FRONT,
         x=x,

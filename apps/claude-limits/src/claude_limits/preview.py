@@ -2,9 +2,14 @@
 
 from datetime import UTC, datetime, timedelta
 
-from busylib import types
-
-from bar_kit import Preview, PreviewScene, PreviewStep, Snapshot, print_preview
+from bar_kit import (
+    DisplayElement,
+    Preview,
+    PreviewScene,
+    PreviewStep,
+    Snapshot,
+    print_preview,
+)
 from claude_limits.render import render
 from claude_limits.rotation import DEFAULT_ROOT, Account, Rotation, Window
 
@@ -28,7 +33,7 @@ def _account(
     )
 
 
-def _draw(*accounts: Account) -> list[types.DisplayElement]:
+def _draw(*accounts: Account) -> list[DisplayElement]:
     rotation = Rotation(
         accounts=accounts,
         current="work",

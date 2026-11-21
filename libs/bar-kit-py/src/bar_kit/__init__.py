@@ -4,6 +4,16 @@ The Python counterpart of `@busy-bar-apps/bar-kit`: both kits read the same
 environment variables and expose the same frame loop.
 """
 
+from busylib.features import ButtonEvent, EncoderEvent, InputEvent, SelectorEvent
+from busylib.features.input_events import SelectorPosition
+from busylib.types import (
+    DisplayElement,
+    DisplayFontName,
+    DisplayName,
+    RectangleElement,
+    TextElement,
+)
+
 from bar_kit.client import create_busy_bar
 from bar_kit.config import BarConfig, BarConfigError, load_bar_config
 from bar_kit.display import BACK_DISPLAY, FRONT_DISPLAY, DisplaySize, rgba
@@ -28,15 +38,25 @@ __all__ = [
     "FRONT_DISPLAY",
     "BarConfig",
     "BarConfigError",
+    "ButtonEvent",
     "DisplayClient",
+    "DisplayElement",
+    "DisplayFontName",
+    "DisplayName",
     "DisplaySize",
+    "EncoderEvent",
+    "InputEvent",
     "PollFailure",
     "Poller",
     "Preview",
     "PreviewScene",
     "PreviewStep",
+    "RectangleElement",
     "Render",
+    "SelectorEvent",
+    "SelectorPosition",
     "Snapshot",
+    "TextElement",
     "TrackedScreen",
     "create_busy_bar",
     "fit_text",
