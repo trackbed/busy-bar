@@ -102,14 +102,16 @@ const SPIN: Animation = {
   sections: new Map([['tail', { start: 1, end: 2 }]]),
 };
 
-function setup(animations?: AnimationResolver) {
+/** Every animation element resolves to SPIN, at one path. */
+const SPINNING: AnimationResolver = () => ({
+  path: '/spin.anim',
+  animation: SPIN,
+});
+
+function setup() {
   const clock = { now: START };
   const onChange = vi.fn<() => void>();
-  const screen = new Screen({
-    now: () => clock.now,
-    onChange,
-    ...(animations === undefined ? {} : { animations }),
-  });
+  const screen = new Screen({ now: () => clock.now, onChange });
   return { screen, clock, onChange };
 }
 
@@ -528,11 +530,8 @@ describe('Screen', () => {
     });
 
     it('moves animations on', async () => {
-      const { screen, clock } = setup(() => ({
-        path: '/spin.anim',
-        animation: SPIN,
-      }));
-      await screen.draw(request('clock', 50, [animation('spin')]));
+      const { screen, clock } = setup();
+      await screen.draw(request('clock', 50, [animation('spin')]), SPINNING);
 
       expect(playerOf(screen, 'spin').frameIndex).toBe(0);
 
@@ -628,9 +627,9 @@ describe('Screen', () => {
         path: `/ext/${element.source.path}`,
         animation: SPIN,
       }));
-      const { screen } = setup(resolve);
+      const { screen } = setup();
       const spin = animation('spin');
-      await screen.draw(request('clock', 50, [spin, text('label')]));
+      await screen.draw(request('clock', 50, [spin, text('label')]), resolve);
       const player = playerOf(screen, 'spin');
 
       expect(resolve).toHaveBeenCalledExactlyOnceWith(spin, 'clock');
@@ -641,15 +640,12 @@ describe('Screen', () => {
     });
 
     it('keeps the player across redraws of the same file, picking the section again', async () => {
-      const { screen, clock } = setup(() => ({
-        path: '/spin.anim',
-        animation: SPIN,
-      }));
-      await screen.draw(request('clock', 50, [animation('spin')]));
+      const { screen, clock } = setup();
+      await screen.draw(request('clock', 50, [animation('spin')]), SPINNING);
       const player = playerOf(screen, 'spin');
       const play = vi.spyOn(player, 'play');
       const redrawn = animation('spin', { section: 'tail', loop: false });
-      await screen.draw(request('clock', 50, [redrawn]));
+      await screen.draw(request('clock', 50, [redrawn]), SPINNING);
 
       expect(playerOf(screen, 'spin')).toBe(player);
       expect(play).toHaveBeenCalledExactlyOnceWith(redrawn);
@@ -666,19 +662,17 @@ describe('Screen', () => {
     });
 
     it('lets the fires due before a redraw happen first', async () => {
-      const { screen, clock } = setup(() => ({
-        path: '/spin.anim',
-        animation: SPIN,
-      }));
+      const { screen, clock } = setup();
       await screen.draw(
         request('clock', 50, [
           animation('spin', { section: 'tail', loop: false }),
         ]),
+        SPINNING,
       );
       // The tail's last frame shows at 104 ms and its timer stops at 208 ms,
       // so a redraw at 250 ms finds it stopped, even with no tick between.
       clock.now = START + 250;
-      await screen.draw(request('clock', 50, [animation('spin')]));
+      await screen.draw(request('clock', 50, [animation('spin')]), SPINNING);
       clock.now = START + 1000;
       screen.tick();
       const player = playerOf(screen, 'spin');
@@ -689,16 +683,18 @@ describe('Screen', () => {
     });
 
     it('starts a new player when a redraw names another file', async () => {
-      const { screen } = setup((element) => ({
+      const { screen } = setup();
+      const resolve: AnimationResolver = (element) => ({
         path: `/ext/${element.source.path}`,
         animation: SPIN,
-      }));
-      await screen.draw(request('clock', 50, [animation('spin')]));
+      });
+      await screen.draw(request('clock', 50, [animation('spin')]), resolve);
       const first = playerOf(screen, 'spin');
       await screen.draw(
         request('clock', 50, [
           animation('spin', { source: { kind: 'path', path: 'other.anim' } }),
         ]),
+        resolve,
       );
       const second = playerOf(screen, 'spin');
 
@@ -706,7 +702,21 @@ describe('Screen', () => {
       expect(second.path).toBe('/ext/other.anim');
     });
 
-    it('resolves an animation to its source path without a resolver', async () => {
+    it('applies a held draw with the animations it was handed', async () => {
+      const { screen } = setup();
+      screen.setLoaderPriority(TIMER_PRIORITY);
+      const held = follow(
+        screen.draw(request('clock', 50, [animation('spin')]), SPINNING),
+      );
+      await vi.advanceTimersByTimeAsync(HOLD_MS - 1);
+      screen.setLoaderPriority(IDLE_PRIORITY);
+      await vi.advanceTimersByTimeAsync(0);
+
+      expect(held.outcome).toBe('drawn');
+      expect(playerOf(screen, 'spin').animation).toBe(SPIN);
+    });
+
+    it('plays nothing from its source path without loaded animations', async () => {
       const { screen } = setup();
       await screen.draw(request('clock', 50, [animation('spin')]));
       const player = playerOf(screen, 'spin');

@@ -98,7 +98,6 @@ const STOCK_ANIM: AssetSource = {
   kind: 'stock',
   path: `shared/${STOCK_ANIMATION}.anim`,
 };
-const STOCK_ANIM_PATH = `/ext/apps_assets/shared/animations/${STOCK_ANIMATION}.anim`;
 
 let fixture: AssetRoot;
 
@@ -248,13 +247,9 @@ describe('AssetLibrary', () => {
   });
 
   describe('loadAnimation', () => {
-    it('loads a stock animation from its ZIP, ready once it settles', async () => {
+    it('loads a stock animation from its ZIP', async () => {
       const library = await fixture.open();
-      const loading = library.loadAnimation(STOCK_ANIM, 'clock');
-
-      expect(library.animation(STOCK_ANIM_PATH)).toBeUndefined();
-
-      const animation = await loading;
+      const animation = await library.loadAnimation(STOCK_ANIM, 'clock');
 
       expect(animation).toMatchObject({ width: 4, height: 2, fps: 10 });
       expect(animation?.frames.map((frame) => pixel(frame))).toStrictEqual([
@@ -265,7 +260,6 @@ describe('AssetLibrary', () => {
         start: 1,
         end: 1,
       });
-      expect(library.animation(STOCK_ANIM_PATH)).toBe(animation);
     });
 
     it('shares one load per device path', async () => {
@@ -324,9 +318,6 @@ describe('AssetLibrary', () => {
         start: 1,
         end: 1,
       });
-      expect(library.animation('/ext/user_assets/clock/pulse.anim')).toBe(
-        animation,
-      );
     });
 
     it('loads nothing from a missing or unreadable upload', async () => {
@@ -341,23 +332,20 @@ describe('AssetLibrary', () => {
       ).resolves.toBeUndefined();
     });
 
-    it('drops a load overtaken by a new upload of the file', async () => {
+    it('loads a new upload afresh, leaving a load in flight with the old file', async () => {
       const library = await fixture.open();
       const source: AssetSource = { kind: 'path', path: 'pulse.anim' };
-      const path = '/ext/user_assets/clock/pulse.anim';
       const solid = (color: readonly [number, number, number]) =>
         animFile({ width: 1, height: 1, fps: 10, colors: [color] });
       library.upload('clock', 'pulse.anim', solid([255, 0, 0]));
       const stale = library.loadAnimation(source, 'clock');
       library.upload('clock', 'pulse.anim', solid([0, 255, 0]));
-      await stale;
+      const fresh = library.loadAnimation(source, 'clock');
 
-      expect(library.animation(path)).toBeUndefined();
-
-      const fresh = await library.loadAnimation(source, 'clock');
-
-      expect(pixel(fresh?.frames[0])).toStrictEqual([0, 255, 0, 255]);
-      expect(library.animation(path)).toBe(fresh);
+      expect(fresh).not.toBe(stale);
+      expect(pixel((await stale)?.frames[0])).toStrictEqual([255, 0, 0, 255]);
+      expect(pixel((await fresh)?.frames[0])).toStrictEqual([0, 255, 0, 255]);
+      expect(library.loadAnimation(source, 'clock')).toBe(fresh);
     });
   });
 
@@ -427,9 +415,6 @@ describe('AssetLibrary', () => {
 
       expect(library.image(logo, 'clock')).toBeUndefined();
       expect(library.image(logo, 'clockwork')).toBeDefined();
-      expect(
-        library.animation('/ext/user_assets/clock/pulse.anim'),
-      ).toBeUndefined();
       await expect(
         library.loadAnimation(pulse, 'clock'),
       ).resolves.toBeUndefined();

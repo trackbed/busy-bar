@@ -68,7 +68,6 @@ export class AssetLibrary {
   readonly #uploads = new Map<string, Uint8Array>();
   readonly #uploadedImages = new Map<string, Bitmap | undefined>();
   readonly #animations = new Map<string, Promise<Animation | undefined>>();
-  readonly #readyAnimations = new Map<string, Animation | undefined>();
 
   private constructor(root: string, loaded: Loaded) {
     this.#root = root;
@@ -133,7 +132,6 @@ export class AssetLibrary {
     this.#uploads.set(path, data);
     this.#uploadedImages.delete(path);
     this.#animations.delete(path);
-    this.#readyAnimations.delete(path);
   }
 
   /** Remove everything an application uploaded. */
@@ -143,7 +141,6 @@ export class AssetLibrary {
       this.#uploads,
       this.#uploadedImages,
       this.#animations,
-      this.#readyAnimations,
     ]) {
       for (const path of cache.keys()) {
         if (path.startsWith(prefix)) {
@@ -196,18 +193,8 @@ export class AssetLibrary {
     if (loading === undefined) {
       loading = this.#readAnimation(source, path).catch(() => undefined);
       this.#animations.set(path, loading);
-      void loading.then((animation) => {
-        if (this.#animations.get(path) === loading) {
-          this.#readyAnimations.set(path, animation);
-        }
-      });
     }
     return loading;
-  }
-
-  /** An animation `loadAnimation` already finished, by its device path. */
-  animation(path: string): Animation | undefined {
-    return this.#readyAnimations.get(path);
   }
 
   /** A sound for the page, or undefined when the bar would find no file. */

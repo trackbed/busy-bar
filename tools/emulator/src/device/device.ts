@@ -2,6 +2,7 @@
 // events the page and the status stream follow.
 
 import type { AssetLibrary } from '../assets/library.ts';
+import type { Animation } from '../formats/animation.ts';
 import type { Sound } from '../formats/sound.ts';
 import type { Rgba } from '../render/canvas.ts';
 import { ApiError } from './api-error.ts';
@@ -13,7 +14,7 @@ import {
   startedTimer,
   stoppedTimer,
 } from './busy-timer.ts';
-import type { AssetSource } from './elements.ts';
+import type { AnimationElement, AssetSource } from './elements.ts';
 import { devicePath, parseDrawRequest } from './elements.ts';
 import { IDLE_PRIORITY, Screen, TIMER_PRIORITY } from './screen.ts';
 
@@ -91,10 +92,6 @@ export class Device {
       onChange: () => {
         this.#emit({ type: 'changed' });
       },
-      animations: (element, application) => {
-        const path = devicePath(element.source, application, 'animations');
-        return { path, animation: assets.animation(path) };
-      },
     });
   }
 
@@ -131,18 +128,31 @@ export class Device {
   /**
    * Handle `POST /api/display/draw`: 400s throw, and a 409 after the hold.
    * Animations load before the draw applies, as the bar opens the file
-   * while it updates the element.
+   * while it updates the element; the draw shows the files it loaded, even
+   * if one is uploaded again while the draw is held.
    */
   async draw(body: unknown): Promise<void> {
     const request = parseDrawRequest(body, this.assets);
+    const loaded = new Map<string, Animation | undefined>();
     await Promise.all(
-      request.elements.flatMap((element) =>
-        element.type === 'animation'
-          ? [this.assets.loadAnimation(element.source, request.applicationName)]
-          : [],
-      ),
+      request.elements.flatMap((element) => {
+        if (element.type !== 'animation') {
+          return [];
+        }
+        const path = animationPath(element, request.applicationName);
+        return [
+          this.assets
+            .loadAnimation(element.source, request.applicationName)
+            .then((animation) => {
+              loaded.set(path, animation);
+            }),
+        ];
+      }),
     );
-    const result = await this.screen.draw(request);
+    const result = await this.screen.draw(request, (element, application) => {
+      const path = animationPath(element, application);
+      return { path, animation: loaded.get(path) };
+    });
     if (result === 'low-priority') {
       throw new ApiError(409, 'Not drawn due to low priority');
     }
@@ -288,4 +298,8 @@ export class Device {
       listener(event);
     }
   }
+}
+
+function animationPath(element: AnimationElement, application: string): string {
+  return devicePath(element.source, application, 'animations');
 }
