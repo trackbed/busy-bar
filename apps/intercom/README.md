@@ -20,7 +20,9 @@ so the whole team works, and stops, together.
   ([knocks.ts](src/convex/knocks.ts)), team focus sessions
   ([focus.ts](src/convex/focus.ts)), and the board every bar subscribes to
   ([team.ts](src/convex/team.ts)). `src/convex/_generated/` is written by
-  `convex dev`; commit it.
+  `convex dev`; commit it. The bar's process imports only
+  [presence.ts](src/convex/presence.ts), which holds the values and types
+  both sides share, and the generated `api`.
 - Reading the BUSY timer ([src/timer.ts](src/timer.ts)): the bar records a
   snapshot only when its timer changes state, so time left counts from the
   snapshot, and a timer that ran out still reports the snapshot that started

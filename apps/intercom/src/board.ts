@@ -3,9 +3,8 @@
 
 import { toBarText } from '@busy-bar-apps/bar-kit';
 
-import type { Presence } from './convex/presence.ts';
+import type { KnockStatus, Presence } from './convex/presence.ts';
 import { freeAt } from './convex/presence.ts';
-import type { KnockStatus } from './convex/schema.ts';
 
 /** One bar on the team, as `team:board` answers it. */
 export interface TeamBar {

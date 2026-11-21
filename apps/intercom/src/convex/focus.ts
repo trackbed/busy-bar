@@ -7,12 +7,7 @@ import { ConvexError, v } from 'convex/values';
 import { internal } from './_generated/api.js';
 import { internalMutation, mutation } from './_generated/server.js';
 import { requireBar } from './keys.ts';
-
-/** How long every bar has to skip a team focus before its timers start. */
-export const FOCUS_LEAD_MS = 15_000;
-
-/** A team focus is as long as the bar's own timers allow (busy_timer_common.h). */
-export const FOCUS_MINUTES = { min: 5, max: 24 * 60 } as const;
+import { FOCUS_LEAD_MS, FOCUS_MINUTES } from './presence.ts';
 
 /**
  * Start a team focus of `minutes`, after {@link FOCUS_LEAD_MS}. One runs at a

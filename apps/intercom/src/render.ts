@@ -27,7 +27,7 @@ import {
   statusAt,
   teammates,
 } from './board.ts';
-import { UNKNOWN_KEY } from './convex/keys.ts';
+import { UNKNOWN_KEY } from './convex/presence.ts';
 
 /** What the bar knows about its team at the moment of a frame. */
 export interface TeamView {
