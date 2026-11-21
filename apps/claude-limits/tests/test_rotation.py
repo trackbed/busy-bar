@@ -122,8 +122,10 @@ def test_reads_an_empty_account_list_when_the_config_has_none(
 
 
 def test_names_the_folder_when_the_tool_is_not_set_up(tmp_path: Path) -> None:
+    root = tmp_path / "conductor-claude-rotation"
+
     with pytest.raises(SetupError) as raised:
-        read_rotation(tmp_path / "conductor-claude-rotation")
+        read_rotation(root)
 
     assert raised.value.summary == "not set up"
     assert raised.value.lines == (
@@ -132,6 +134,10 @@ def test_names_the_folder_when_the_tool_is_not_set_up(tmp_path: Path) -> None:
         f"{tmp_path}/",
         "conductor-claude-rotation",
     )
+    # The log shows the cause, which keeps the path whole.
+    cause = raised.value.__cause__
+    assert isinstance(cause, FileNotFoundError)
+    assert cause.filename == str(root / "config.json")
 
 
 @pytest.mark.parametrize(

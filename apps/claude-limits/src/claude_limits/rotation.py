@@ -77,8 +77,11 @@ def read_rotation(root: Path) -> Rotation:
     writes.
     """
     config_path = root / "config.json"
-    if not config_path.is_file():
-        # The folder rarely fits on one line, so its name gets its own.
+    try:
+        config = _read_object(config_path)
+    except FileNotFoundError as error:
+        # The folder rarely fits on one line, so its name gets its own. The
+        # cause keeps the whole path for the log.
         raise SetupError(
             "not set up",
             [
@@ -87,8 +90,7 @@ def read_rotation(root: Path) -> Rotation:
                 f"{root.parent}/",
                 root.name,
             ],
-        )
-    config = _read_object(config_path)
+        ) from error
 
     state_directory = config_path.parent / _text(config, "state_directory", "state")
     state_path = state_directory / "state.json"
