@@ -58,8 +58,6 @@ export const createNodes: CreateNodes = [
   },
 ];
 
-export const createNodesV2 = createNodes;
-
 function createPythonProject(
   file: string,
   members: ReadonlySet<string>,
