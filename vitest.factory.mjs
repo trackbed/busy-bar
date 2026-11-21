@@ -5,21 +5,7 @@
 
 import { coverageConfigDefaults, defineConfig } from 'vitest/config';
 
-/**
- * @typedef {object} CoverageThresholds
- * @property {number} statements
- * @property {number} branches
- * @property {number} functions
- * @property {number} lines
- */
-
-/**
- * @typedef {object} ProjectVitestConfigOptions
- * @property {CoverageThresholds} coverageThresholds Ratchet these upward;
- *   never lower them to make a change pass.
- * @property {string[]} [coverageExclude] Extra source globs without behavior
- *   worth covering, such as a process entry point. Explain each in a comment.
- */
+/** @import { ProjectVitestConfigOptions } from './vitest.factory.d.mts' */
 
 /** @param {ProjectVitestConfigOptions} options */
 export function createProjectVitestConfig({
