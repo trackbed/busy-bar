@@ -1,6 +1,9 @@
 import { readFileSync } from 'node:fs';
 import { parse } from 'smol-toml';
 
+import type { JsonObject } from '@busy-bar-apps/json-values';
+import { isObject } from '@busy-bar-apps/json-values';
+
 /** The parts of a project's pyproject.toml that the Python plugin reads. */
 export interface PyprojectInfo {
   /** Normalized distribution name, such as `bar-kit`. */
@@ -13,8 +16,6 @@ export interface PyprojectInfo {
    */
   readonly requirements: readonly string[];
 }
-
-type Table = Record<string, unknown>;
 
 // PEP 508: a name starts and ends with a letter or digit.
 const REQUIREMENT_NAME = /^\s*([a-z\d](?:[a-z\d._-]*[a-z\d])?)/i;
@@ -55,16 +56,28 @@ export function parsePyproject(source: string, path: string): PyprojectInfo {
     name,
     moduleName:
       typeof moduleName === 'string' ? moduleName : name.replaceAll('-', '_'),
-    requirements: [
-      ...strings(project?.['dependencies']),
-      ...Object.values(
-        tableAt(project, ['optional-dependencies']) ?? {},
-      ).flatMap(strings),
-      ...Object.values(tableAt(document, ['dependency-groups']) ?? {}).flatMap(
-        strings,
-      ),
-    ].flatMap((requirement) => requirementName(requirement) ?? []),
+    requirements: requirementStrings(document).flatMap(
+      (requirement) => requirementName(requirement) ?? [],
+    ),
   };
+}
+
+/**
+ * Every requirement a parsed pyproject.toml declares: `[project].dependencies`,
+ * each `[project.optional-dependencies]` list, and each `[dependency-groups]`
+ * list. The build system's requirements are not included.
+ */
+export function requirementStrings(document: JsonObject): string[] {
+  const project = tableAt(document, ['project']);
+  return [
+    ...strings(project?.['dependencies']),
+    ...Object.values(tableAt(project, ['optional-dependencies']) ?? {}).flatMap(
+      strings,
+    ),
+    ...Object.values(tableAt(document, ['dependency-groups']) ?? {}).flatMap(
+      strings,
+    ),
+  ];
 }
 
 /** The `[tool.uv.workspace].members` of the root pyproject.toml. */
@@ -83,16 +96,15 @@ export function readWorkspaceMembers(path: string): string[] {
   ).map((member) => member.replace(/^\.\//, '').replace(/\/$/, ''));
 }
 
-function tableAt(table: Table | undefined, keys: string[]): Table | undefined {
+function tableAt(
+  table: JsonObject | undefined,
+  keys: string[],
+): JsonObject | undefined {
   let current: unknown = table;
   for (const key of keys) {
-    current = isTable(current) ? current[key] : undefined;
+    current = isObject(current) ? current[key] : undefined;
   }
-  return isTable(current) ? current : undefined;
-}
-
-function isTable(value: unknown): value is Table {
-  return typeof value === 'object' && value !== null && !Array.isArray(value);
+  return isObject(current) ? current : undefined;
 }
 
 // Dependency groups may also hold `{ include-group = "..." }` tables, which
