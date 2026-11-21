@@ -11,6 +11,12 @@ variables and behave the same way.
   (`loadBarConfig`, which throws a `BarConfigError` for an address that is
   not a host name, IP address, or URL, or for the cloud without a token) and
   the busy-lib client built from them (`createBusyBar`).
+- App settings from the environment: `envSwitch` (`on` or `off`, on when
+  unset), `envWholeNumber` (decimal digits only, between a `min` and an
+  optional `max`), and `envHttpUrl` (an absolute `http://` or `https://` URL
+  whose host is a name of letters, digits, and hyphens, a dotted IPv4
+  address, or a bracketed IPv6 address, with an optional port up to 65535). Each throws a `SettingsError` naming the
+  variable; apps' own settings errors extend it.
 - Display sizes (`FRONT_DISPLAY`, and `BACK_DISPLAY`: the 148×80 of the
   back screen that the status bar leaves to apps) and colours (`rgba`).
 - The render vocabulary every app draws with: `textElement` (named `x` and
@@ -21,8 +27,8 @@ variables and behave the same way.
   (back, last line). The Python kit gives the same elements and colours.
   For render tests, `elementsById` keys a frame by element ID, and `textOf`
   and `colorOf` read one element from it (undefined when it is missing).
-- The frame loop (`runBarApp`): draw every interval at a `priority`
-  (default `DEFAULT_PRIORITY`, 50), delete the elements a frame stops drawing
+- The frame loop (`runBarApp`): draw every interval at a `priority` from
+  `MIN_PRIORITY` to `MAX_PRIORITY` (default `DEFAULT_PRIORITY`, 50), delete the elements a frame stops drawing
   (the bar keeps them otherwise), log failed draws and keep going, clear the
   display on shutdown. Stopping aborts a draw or deletion in flight without
   logging it. `shutdownSignal` aborts on the first SIGINT or SIGTERM; a second
