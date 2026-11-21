@@ -9,6 +9,7 @@ import {
   nameOf,
   outgoingKnock,
   runningFocus,
+  screenOf,
   selectable,
   selectionOf,
   startingFocus,
@@ -162,6 +163,36 @@ describe('team focus', () => {
     expect(runningFocus(board([], focus), at(1))).toBe(focus);
     expect(runningFocus(board([], focus), at(26))).toBeUndefined();
     expect(runningFocus(board(), at(1))).toBeUndefined();
+  });
+});
+
+describe('screenOf', () => {
+  const focus: Focus = {
+    id: 'f',
+    startedBy: 'Anna',
+    startsAt: at(1),
+    endsAt: at(26),
+    cardId: '00000000-0000-4000-8000-000000000000',
+    skipped: [],
+  };
+  const waiting: Knock = { id: 'k', from: 'Anna', to: 'Me', status: 'waiting' };
+
+  it('shows a team focus counting down before a knock waiting on this bar', () => {
+    expect(screenOf(board([waiting], focus), NOW)).toStrictEqual({
+      kind: 'countdown',
+      focus,
+    });
+    expect(screenOf(board([waiting], focus), at(1))).toStrictEqual({
+      kind: 'knock',
+      knock: waiting,
+    });
+  });
+
+  it('shows the team once nothing takes over', () => {
+    expect(screenOf(board([], focus), at(1))).toStrictEqual({ kind: 'team' });
+    expect(
+      screenOf(board([], { ...focus, skipped: ['Me'] }), NOW),
+    ).toStrictEqual({ kind: 'team' });
   });
 });
 
