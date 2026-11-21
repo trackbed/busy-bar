@@ -279,6 +279,7 @@ function bgr(front: Canvas): Uint8Array {
   return out;
 }
 
+/** Whether two frames match; native, as every tick compares 16 KB. */
 function equal(a: Uint8Array, b: Uint8Array): boolean {
-  return a.length === b.length && a.every((value, index) => value === b[index]);
+  return Buffer.compare(a, b) === 0;
 }
