@@ -4,7 +4,8 @@
 // absent, as mongoose's JSON getters treat it), and the same messages, so
 // apps see the same 400s as on a real bar.
 
-import { isObject } from '@busy-bar-apps/json-values';
+import type { JsonObject } from '@busy-bar-apps/json-values';
+import { isObject, stringAt } from '@busy-bar-apps/json-values';
 
 import type { Bitmap } from '../formats/png.ts';
 import { parseXpm, XpmError } from '../formats/xpm.ts';
@@ -197,8 +198,6 @@ export function atoll(text: string): number {
   const match = /^\s*([+-]?\d+)/u.exec(text);
   return match === null ? 0 : Number.parseInt(match[1] ?? '0', 10);
 }
-
-type Json = Readonly<Record<string, unknown>>;
 
 /**
  * Validate a draw request body. An invalid element rejects the whole
@@ -441,10 +440,10 @@ function quoted(choices: readonly string[]): string {
  * type counts as absent. Errors carry the element's prefix.
  */
 class JsonFields {
-  readonly #value: Json;
+  readonly #value: JsonObject;
   readonly #at: string;
 
-  constructor(value: Json, at = '') {
+  constructor(value: JsonObject, at = '') {
     this.#value = value;
     this.#at = at;
   }
@@ -454,10 +453,13 @@ class JsonFields {
   }
 
   string(name: string): string | undefined {
-    const value = this.#value[name];
-    return typeof value === 'string' ? value : undefined;
+    return stringAt(this.#value, name);
   }
 
+  /**
+   * Not numberAt: mongoose's mg_atod reads an out-of-range number such as
+   * 1e999 as infinity, not as absent.
+   */
   number(name: string): number | undefined {
     const value = this.#value[name];
     return typeof value === 'number' ? value : undefined;

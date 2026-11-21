@@ -4,6 +4,8 @@
 
 import type { IncomingMessage, ServerResponse } from 'node:http';
 
+import { isObject, stringAt } from '@busy-bar-apps/json-values';
+
 import { ApiError } from '../device/api-error.ts';
 import type { Device, Key } from '../device/device.ts';
 import { KEYS } from '../device/device.ts';
@@ -206,11 +208,12 @@ async function clear(
     } catch {
       throw new ApiError(400, 'body contains malformed JSON');
     }
-    if (typeof body !== 'object' || body === null || Array.isArray(body)) {
+    if (!isObject(body)) {
       throw new ApiError(400, 'body JSON must be an object');
     }
+    // Present with the wrong type is a 400 here, unlike absent.
     if ('element_ids' in body) {
-      const list: unknown = body.element_ids;
+      const list = body['element_ids'];
       if (
         !Array.isArray(list) ||
         !list.every((id: unknown) => typeof id === 'string')
@@ -220,10 +223,10 @@ async function clear(
       ids = list.filter((id: unknown) => typeof id === 'string');
     }
     if ('application_name' in body) {
-      if (typeof body.application_name !== 'string') {
+      fromBody = stringAt(body, 'application_name');
+      if (fromBody === undefined) {
         throw new ApiError(400, 'application_name must be a string');
       }
-      fromBody = body.application_name;
     }
   }
   // The bar reads the query value into a 64-byte buffer; an empty or longer
@@ -273,20 +276,14 @@ async function play(
   context: ApiContext,
   response: ServerResponse,
 ): Promise<void> {
-  const body = lenientJson(await readBody(request, MAX_JSON_BYTES));
-  const field = (name: string): string | undefined => {
-    const value: unknown =
-      typeof body === 'object' && body !== null && name in body
-        ? Reflect.get(body, name)
-        : undefined;
-    return typeof value === 'string' ? value : undefined;
-  };
-  const application = field('application_name');
+  const json = lenientJson(await readBody(request, MAX_JSON_BYTES));
+  const body = isObject(json) ? json : {};
+  const application = stringAt(body, 'application_name');
   if (application === undefined) {
     throw new ApiError(400, 'Missing application_name');
   }
-  const path = field('path');
-  const stock = field('stock_path');
+  const path = stringAt(body, 'path');
+  const stock = stringAt(body, 'stock_path');
   if (path !== undefined && stock !== undefined) {
     throw new ApiError(400, 'Both path and stock_path are defined');
   }
