@@ -2,6 +2,7 @@
 // events the page and the status stream follow.
 
 import type { AssetLibrary } from '../assets/library.ts';
+import type { Animation } from '../formats/animation.ts';
 import type { Sound } from '../formats/sound.ts';
 import type { Rgba } from '../render/canvas.ts';
 import { ApiError } from './api-error.ts';
@@ -9,11 +10,11 @@ import type { BusySnapshot } from './busy-timer.ts';
 import {
   INITIAL_SNAPSHOT,
   parseBusySnapshot,
+  screenHold,
   startedTimer,
   stoppedTimer,
-  stopsAt,
 } from './busy-timer.ts';
-import type { AssetSource } from './elements.ts';
+import type { AnimationElement, AssetSource } from './elements.ts';
 import { devicePath, parseDrawRequest } from './elements.ts';
 import { IDLE_PRIORITY, Screen, TIMER_PRIORITY } from './screen.ts';
 
@@ -91,10 +92,6 @@ export class Device {
       onChange: () => {
         this.#emit({ type: 'changed' });
       },
-      animations: (element, application) => {
-        const path = devicePath(element.source, application, 'animations');
-        return { path, animation: assets.animation(path) };
-      },
     });
   }
 
@@ -110,7 +107,7 @@ export class Device {
     return this.#name;
   }
 
-  /** Whether the BUSY timer works, rests, or is paused. */
+  /** Whether the BUSY timer holds the screen: it works, rests, or is paused. */
   get timerRunning(): boolean {
     return this.#timerRunning;
   }
@@ -131,18 +128,31 @@ export class Device {
   /**
    * Handle `POST /api/display/draw`: 400s throw, and a 409 after the hold.
    * Animations load before the draw applies, as the bar opens the file
-   * while it updates the element.
+   * while it updates the element; the draw shows the files it loaded, even
+   * if one is uploaded again while the draw is held.
    */
   async draw(body: unknown): Promise<void> {
     const request = parseDrawRequest(body, this.assets);
+    const loaded = new Map<string, Animation | undefined>();
     await Promise.all(
-      request.elements.flatMap((element) =>
-        element.type === 'animation'
-          ? [this.assets.loadAnimation(element.source, request.applicationName)]
-          : [],
-      ),
+      request.elements.flatMap((element) => {
+        if (element.type !== 'animation') {
+          return [];
+        }
+        const path = animationPath(element, request.applicationName);
+        return [
+          this.assets
+            .loadAnimation(element.source, request.applicationName)
+            .then((animation) => {
+              loaded.set(path, animation);
+            }),
+        ];
+      }),
     );
-    const result = await this.screen.draw(request);
+    const result = await this.screen.draw(request, (element, application) => {
+      const path = animationPath(element, application);
+      return { path, animation: loaded.get(path) };
+    });
     if (result === 'low-priority') {
       throw new ApiError(409, 'Not drawn due to low priority');
     }
@@ -260,22 +270,21 @@ export class Device {
   }
 
   /**
-   * Run the timer from `snapshot`. While it runs (or is paused) the
-   * firmware's loader holds the screen above every app priority; a timer
-   * that runs out frees it without recording a new snapshot.
+   * Run the timer from `snapshot`. While it holds the screen the firmware's
+   * loader sits above every app priority; a timer that runs out frees it
+   * without recording a new snapshot.
    */
   #applyTimer(snapshot: BusySnapshot): void {
     this.#timer = snapshot;
     clearTimeout(this.#timerEnd);
-    const end = stopsAt(snapshot);
-    const running = end === undefined || end > this.#now();
-    if (running && end !== undefined) {
+    const hold = screenHold(snapshot, this.#now());
+    if (hold.kind === 'until') {
       // A timer may run for a day; it must not keep the process alive.
       this.#timerEnd = setTimeout(() => {
         this.#setTimerRunning(false);
-      }, end - this.#now()).unref();
+      }, hold.at - this.#now()).unref();
     }
-    this.#setTimerRunning(running);
+    this.#setTimerRunning(hold.kind !== 'free');
   }
 
   #setTimerRunning(running: boolean): void {
@@ -289,4 +298,8 @@ export class Device {
       listener(event);
     }
   }
+}
+
+function animationPath(element: AnimationElement, application: string): string {
+  return devicePath(element.source, application, 'animations');
 }

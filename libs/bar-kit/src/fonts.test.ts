@@ -2,6 +2,14 @@ import { readFileSync } from 'node:fs';
 import type { TextElement } from '@busy-app/busy-lib';
 import { describe, expect, it } from 'vitest';
 
+import {
+  arrayAt,
+  isObject,
+  numberAt,
+  objectAt,
+  stringAt,
+} from '@busy-bar-apps/json-values';
+
 import { UNMEASURABLE } from './__tests__/contract.ts';
 import type { BarFont } from './fonts.ts';
 import { ELLIPSIS, fitText, overflowingText, textWidth } from './fonts.ts';
@@ -21,12 +29,6 @@ const PRINTABLE = Array.from({ length: 95 }, (_, index) =>
   String.fromCharCode(32 + index),
 );
 
-type Json = Readonly<Record<string, unknown>>;
-
-function isJson(value: unknown): value is Json {
-  return typeof value === 'object' && value !== null && !Array.isArray(value);
-}
-
 function fontOf(name: unknown): BarFont {
   const font = FONTS.find((candidate) => candidate === name);
   if (font === undefined) {
@@ -43,28 +45,27 @@ const contract: unknown = JSON.parse(
   ),
 );
 if (
-  !isJson(contract) ||
-  !isJson(contract['advances']) ||
+  !isObject(contract) ||
+  !isObject(contract['advances']) ||
   !Array.isArray(contract['samples'])
 ) {
   throw new TypeError('bar-kit-text-widths.json has an unexpected shape.');
 }
-const advances = contract['advances'];
-const samples = contract['samples'].map((sample: unknown) => {
-  if (
-    !isJson(sample) ||
-    typeof sample['text'] !== 'string' ||
-    typeof sample['width'] !== 'number'
-  ) {
-    throw new TypeError(`Malformed sample ${JSON.stringify(sample)}.`);
+const advances = objectAt(contract, 'advances');
+const samples = arrayAt(contract, 'samples').map((value) => {
+  const sample = isObject(value) ? value : {};
+  const text = stringAt(sample, 'text');
+  const width = numberAt(sample, 'width');
+  if (text === undefined || width === undefined) {
+    throw new TypeError(`Malformed sample ${JSON.stringify(value)}.`);
   }
-  return [sample['text'], fontOf(sample['font']), sample['width']] as const;
+  return [text, fontOf(sample['font']), width] as const;
 });
 
 /** Each printable character of `font` and its advance, from the file. */
 function expectedAdvances(font: BarFont): Record<string, number> {
   const groups = advances[font];
-  if (!isJson(groups)) {
+  if (!isObject(groups)) {
     throw new TypeError(`bar-kit-text-widths.json has no ${font} font.`);
   }
   return Object.fromEntries(

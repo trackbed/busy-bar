@@ -3,6 +3,8 @@
 
 import { crc32, deflateSync, inflateSync } from 'node:zlib';
 
+import { ascii, concat } from './bytes.ts';
+
 /** An image as 8-bit RGBA, rows top to bottom. */
 export interface Bitmap {
   readonly width: number;
@@ -338,20 +340,8 @@ function chunk(type: string, body: Uint8Array): Uint8Array {
   const out = new Uint8Array(12 + body.length);
   const view = new DataView(out.buffer);
   view.setUint32(0, body.length);
-  for (let i = 0; i < 4; i += 1) {
-    out[4 + i] = type.charCodeAt(i);
-  }
+  out.set(ascii(type), 4);
   out.set(body, 8);
   view.setUint32(8 + body.length, crc32(out.subarray(4, 8 + body.length)));
-  return out;
-}
-
-function concat(parts: readonly Uint8Array[]): Uint8Array {
-  const out = new Uint8Array(parts.reduce((sum, part) => sum + part.length, 0));
-  let offset = 0;
-  for (const part of parts) {
-    out.set(part, offset);
-    offset += part.length;
-  }
   return out;
 }

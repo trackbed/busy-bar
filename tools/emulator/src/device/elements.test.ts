@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import type { Rgba } from '../render/canvas.ts';
+import { WHITE } from '../render/canvas.ts';
 import { ApiError } from './api-error.ts';
 import type { DrawRequest, Element, ImageCheck } from './elements.ts';
 import {
@@ -11,7 +12,6 @@ import {
   isSanePath,
   MAX_ELEMENTS,
   parseDrawRequest,
-  WHITE,
 } from './elements.ts';
 
 type Json = Readonly<Record<string, unknown>>;

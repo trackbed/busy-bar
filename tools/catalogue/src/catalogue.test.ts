@@ -1,5 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 
+import { ApiError } from '@busy-bar-apps/emulator';
+
 import { BACK_PNG, FRONT_PNG } from './__tests__/fixtures.ts';
 import type { AppProject } from './apps.ts';
 import type { DrawScene } from './catalogue.ts';
@@ -59,12 +61,19 @@ describe('catalogueApp', () => {
 
   it('names the scene the bar would refuse', async () => {
     const draw = (): Promise<never> =>
-      Promise.reject(new Error('Elements array is empty'));
+      Promise.reject(new ApiError(400, 'Elements array is empty'));
 
     await expect(catalogueApp(PROJECT, PREVIEW, draw, NOW)).rejects.toThrow(
       new CatalogueError(
         'clock: the bar would refuse scene "Morning": Elements array is empty',
       ),
     );
+  });
+
+  it('passes on a failure that is not the bar refusing', async () => {
+    const fault = new TypeError('Cannot read properties of undefined');
+    const draw = (): Promise<never> => Promise.reject(fault);
+
+    await expect(catalogueApp(PROJECT, PREVIEW, draw, NOW)).rejects.toBe(fault);
   });
 });

@@ -3,6 +3,8 @@
 // `loca`, `glyf` and an optional `kern` table, each starting with its
 // length and a four-letter tag. Glyph metrics follow lv_font_fmt_txt.c.
 
+import { BitReader } from './bytes.ts';
+
 /** The file is not a font this decoder reads. */
 export class FontError extends Error {
   override readonly name = 'FontError';
@@ -180,7 +182,14 @@ export function readFont(bytes: Uint8Array): Font {
   const glyphs = offsets.map((offset, id) =>
     id === 0
       ? EMPTY_GLYPH
-      : readGlyph(new BitReader(bytes, glyfTable.start + offset), header),
+      : readGlyph(
+          new BitReader(
+            bytes,
+            { from: (glyfTable.start + offset) * 8, to: bytes.length * 8 },
+            () => new FontError('A glyph runs past the end of the file.'),
+          ),
+          header,
+        ),
   );
   // The fourth table after the head, when there is one, holds kerning.
   const kerning =
@@ -333,35 +342,6 @@ function readKerning(view: DataView, start: number, idFormat: number): Kerning {
     pairs.set(pairKey(id(pair), id(pair + idBytes)), view.getInt8(values + i));
   }
   return pairs;
-}
-
-/** Reads a big-endian bit stream, most significant bit first. */
-class BitReader {
-  readonly #bytes: Uint8Array;
-  #bit: number;
-
-  constructor(bytes: Uint8Array, byteOffset: number) {
-    this.#bytes = bytes;
-    this.#bit = byteOffset * 8;
-  }
-
-  read(count: number): number {
-    let value = 0;
-    for (let i = 0; i < count; i += 1) {
-      const byte = this.#bytes[this.#bit >> 3];
-      if (byte === undefined) {
-        throw new FontError('A glyph runs past the end of the file.');
-      }
-      value = value * 2 + ((byte >> (7 - (this.#bit & 7))) & 1);
-      this.#bit += 1;
-    }
-    return value;
-  }
-
-  readSigned(count: number): number {
-    const value = this.read(count);
-    return count > 0 && value >= 2 ** (count - 1) ? value - 2 ** count : value;
-  }
 }
 
 function u16(view: DataView, offset: number): number {

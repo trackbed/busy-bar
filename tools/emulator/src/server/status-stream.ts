@@ -8,6 +8,8 @@
 import type { IncomingMessage } from 'node:http';
 import type { Duplex } from 'node:stream';
 
+import { isObject } from '@busy-bar-apps/json-values';
+
 import type { Device } from '../device/device.ts';
 import { encodeRle } from '../formats/rle.ts';
 import {
@@ -131,13 +133,13 @@ export class StatusStream {
     } catch {
       return;
     }
-    if (typeof body !== 'object' || body === null) {
+    if (!isObject(body)) {
       return;
     }
-    if ('enable' in body && typeof body.enable === 'boolean') {
-      client.enabled = body.enable;
+    if (typeof body['enable'] === 'boolean') {
+      client.enabled = body['enable'];
     }
-    if ('send' in body && body.send === 'all' && client.enabled) {
+    if (body['send'] === 'all' && client.enabled) {
       client.connection.send('binary', this.#snapshot());
     }
   }

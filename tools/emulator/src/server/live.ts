@@ -44,8 +44,11 @@ export class LiveChannel {
   }
 }
 
+/** The events the page listens for. */
+type LiveEventType = 'frame' | 'state' | 'sound' | 'silence' | 'led' | 'input';
+
 export interface LiveEvent {
-  readonly type: string;
+  readonly type: LiveEventType;
   readonly data: unknown;
 }
 

@@ -27,6 +27,12 @@ export type AnimationResolver = (
   application: string,
 ) => { readonly path: string; readonly animation: Animation | undefined };
 
+/** Without loaded animations, an element plays nothing from its source path. */
+const UNLOADED: AnimationResolver = (element) => ({
+  path: element.source.path,
+  animation: undefined,
+});
+
 /** The loader priority while no built-in app has the screen. */
 export const IDLE_PRIORITY = 9;
 /** The loader priority while the BUSY timer runs or is paused: no draw passes. */
@@ -40,6 +46,7 @@ export type DrawResult = 'drawn' | 'low-priority';
 
 interface Held {
   readonly request: DrawRequest;
+  readonly animations: AnimationResolver;
   readonly resolve: (result: DrawResult) => void;
   readonly reject: (error: unknown) => void;
   readonly timer: ReturnType<typeof setTimeout>;
@@ -49,7 +56,6 @@ interface Held {
 export class Screen {
   readonly #now: () => number;
   readonly #onChange: () => void;
-  readonly #animations: AnimationResolver;
   #owner: { readonly app: string; readonly priority: number } | undefined;
   readonly #elements = new Map<string, PlacedElement>();
   #loaderPriority = IDLE_PRIORITY;
@@ -59,14 +65,10 @@ export class Screen {
     options: {
       readonly now?: () => number;
       readonly onChange?: () => void;
-      readonly animations?: AnimationResolver;
     } = {},
   ) {
     this.#now = options.now ?? Date.now;
     this.#onChange = options.onChange ?? (() => undefined);
-    this.#animations =
-      options.animations ??
-      ((element) => ({ path: element.source.path, animation: undefined }));
   }
 
   /** The app that has the canvas, while it is open. */
@@ -86,14 +88,19 @@ export class Screen {
   /**
    * Try a validated draw. Resolves `drawn`, or `low-priority` when the
    * screen stays taken for `HOLD_MS` (or a newer refused draw bumps this
-   * one). Rejects with `ApiError` for the canvas stage's 400s.
+   * one). Rejects with `ApiError` for the canvas stage's 400s. `animations`
+   * resolves each animation element to the file the draw loaded for it, so
+   * a held draw shows what it loaded even if the file changes meanwhile.
    */
-  draw(request: DrawRequest): Promise<DrawResult> {
+  draw(
+    request: DrawRequest,
+    animations: AnimationResolver = UNLOADED,
+  ): Promise<DrawResult> {
     if (this.#accepts(request)) {
       // The executor runs at once, so the draw applies before this returns;
       // an error it throws rejects the promise.
       return new Promise((resolve) => {
-        this.#apply(request);
+        this.#apply(request, animations);
         resolve('drawn');
       });
     }
@@ -106,7 +113,7 @@ export class Screen {
         this.#held = undefined;
         resolve('low-priority');
       }, HOLD_MS);
-      this.#held = { request, resolve, reject, timer };
+      this.#held = { request, animations, resolve, reject, timer };
     });
   }
 
@@ -185,7 +192,7 @@ export class Screen {
     clearTimeout(held.timer);
     this.#held = undefined;
     try {
-      this.#apply(held.request);
+      this.#apply(held.request, held.animations);
       held.resolve('drawn');
     } catch (error) {
       held.reject(error);
@@ -208,7 +215,7 @@ export class Screen {
    * Apply a draw element by element, like canvas_update_all: a bad element
    * stops the draw, but the ones before it stay on screen.
    */
-  #apply(request: DrawRequest): void {
+  #apply(request: DrawRequest, animations: AnimationResolver): void {
     const now = this.#now();
     const nowSeconds = Math.floor(now / 1000);
     // A display_until runs for whole seconds from the draw, as the bar's
@@ -264,8 +271,8 @@ export class Screen {
           element.type === 'animation'
             ? this.#player(
                 existing?.player,
+                animations(element, request.applicationName),
                 element,
-                request.applicationName,
                 now,
               )
             : undefined,
@@ -285,11 +292,11 @@ export class Screen {
   /** Keep playing a file the element already shows; load anything else. */
   #player(
     current: AnimationPlayer | undefined,
+    file: ReturnType<AnimationResolver>,
     element: AnimationElement,
-    application: string,
     now: number,
   ): AnimationPlayer {
-    const { path, animation } = this.#animations(element, application);
+    const { path, animation } = file;
     if (current?.path === path) {
       // The bar's timer keeps firing between ticks: catch up before the
       // new section is picked, or a timer that stopped would play on.

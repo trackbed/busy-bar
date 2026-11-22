@@ -161,4 +161,13 @@ describe('LiveChannel', () => {
       ': connected\n\nevent: state\ndata: {"elements":2}\n\n',
     );
   });
+
+  it('sends only the events the page listens for', () => {
+    const channel = new LiveChannel();
+
+    // @ts-expect-error -- the page listens for 'frame', not 'frames'.
+    channel.send({ type: 'frames', data: null });
+
+    expect(channel.size).toBe(0);
+  });
 });

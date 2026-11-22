@@ -207,6 +207,13 @@ describe('readAnimation', () => {
       ],
       'does not hold an object',
     ],
+    [
+      [
+        { name: 'a/frame_0.png', data: solidPng(1, 1, [0, 0, 0, 255]) },
+        { name: 'a/meta.json', data: json([{ fps: 30 }]) },
+      ],
+      'does not hold an object',
+    ],
   ])('rejects archives it cannot play (%#)', (files, message) => {
     expect(() => readAnimation(zip(files))).toThrow(AnimationError);
     expect(() => readAnimation(zip(files))).toThrow(message);

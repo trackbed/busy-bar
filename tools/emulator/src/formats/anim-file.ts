@@ -5,7 +5,7 @@
 
 import type { Animation, Section } from './animation.ts';
 import { AnimationError } from './animation.ts';
-import { byteAt } from './bytes.ts';
+import { BitReader, byteAt } from './bytes.ts';
 import type { Bitmap } from './png.ts';
 import { decodeRle } from './rle.ts';
 
@@ -156,7 +156,11 @@ function readMask(
     case 3: {
       // Alternating runs, the first absent (2) or present (3): three bits,
       // or seven followed by an eight-bit length.
-      const reader = new BitReader(data, bits);
+      const reader = new BitReader(
+        data,
+        { from: 0, to: bits },
+        () => new AnimationError('A mask run is cut short.'),
+      );
       const present: number[] = [];
       let pixel = 0;
       let on = encoding === 3;
@@ -292,33 +296,4 @@ function toRgba(bgra: Uint8Array, width: number, height: number): Bitmap {
     rgba[at + 3] = byteAt(bgra, at + 3);
   }
   return { width, height, rgba };
-}
-
-/** Reads exactly `bits` bits, most significant first. */
-class BitReader {
-  readonly #data: Uint8Array;
-  readonly #bits: number;
-  #at = 0;
-
-  constructor(data: Uint8Array, bits: number) {
-    this.#data = data;
-    this.#bits = bits;
-  }
-
-  get done(): boolean {
-    return this.#at >= this.#bits;
-  }
-
-  read(count: number): number {
-    if (this.#at + count > this.#bits) {
-      throw new AnimationError('A mask run is cut short.');
-    }
-    let value = 0;
-    for (let i = 0; i < count; i += 1) {
-      const byte = byteAt(this.#data, this.#at >> 3);
-      value = value * 2 + ((byte >> (7 - (this.#at & 7))) & 1);
-      this.#at += 1;
-    }
-    return value;
-  }
 }

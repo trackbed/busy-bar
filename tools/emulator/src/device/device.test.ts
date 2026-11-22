@@ -11,6 +11,7 @@ import {
   vi,
 } from 'vitest';
 
+import { animFile } from '../__tests__/anim-fixture.ts';
 import type { AssetRoot } from '../__tests__/asset-root.ts';
 import {
   assetRoot,
@@ -185,6 +186,43 @@ describe('Device', () => {
 
       expect(player?.animation).toBeUndefined();
       expect(player?.frameIndex).toBe(-1);
+    });
+
+    it('draws the animation it loaded when the file is uploaded again while held', async () => {
+      const { device, clock } = await setup();
+      // One raw BGR888 frame that fills the pixel with `red`.
+      const pulse = (red: number) =>
+        animFile({
+          width: 1,
+          height: 1,
+          color: 0,
+          frames: [{ mask: 1, pixels: 0, data: [0, 0, red] }],
+        });
+      const draw = () =>
+        device.draw(
+          body({
+            elements: [{ id: 'pulse', type: 'animation', path: 'pulse.anim' }],
+          }),
+        );
+      device.assets.upload('clock', 'pulse.anim', pulse(255));
+      vi.useFakeTimers();
+      device.setTimerRunning(true);
+      const held = settle(draw());
+      await vi.advanceTimersByTimeAsync(0);
+      device.assets.upload('clock', 'pulse.anim', pulse(128));
+      device.setTimerRunning(false);
+
+      expect(await held).toBe('drawn');
+      const player = device.screen.elements()[0]?.player;
+      expect(player?.animation?.frames).toHaveLength(1);
+      expect(Array.from(player?.frame?.rgba ?? [])).toStrictEqual([
+        255, 0, 0, 255,
+      ]);
+
+      clock.now += 1000;
+      await draw();
+
+      expect(device.screen.elements()[0]?.player?.frame).toBeDefined();
     });
 
     it('answers 409 when another app keeps the screen through the hold', async () => {
@@ -569,6 +607,35 @@ describe('Device', () => {
       vi.advanceTimersByTime(60_000);
 
       expect(device.timerRunning).toBe(true);
+    });
+
+    it('frees the screen at once for a stopped timer stamped ahead', async () => {
+      const { device } = await setup();
+      device.setBusySnapshot(simple(START, 60_000));
+      device.setBusySnapshot({
+        snapshot: { type: 'NOT_STARTED' },
+        snapshot_timestamp_ms: START + 30_000,
+      });
+
+      expect(device.timerRunning).toBe(false);
+      expect(device.screen.loaderPriority).toBe(IDLE_PRIORITY);
+      // Drawn at once: a refused draw would wait out the hold.
+      await device.draw(body());
+      expect(device.screen.owner).toStrictEqual({ app: 'clock', priority: 50 });
+    });
+
+    it('counts a timer stamped ahead of the clock from now', async () => {
+      vi.useFakeTimers();
+      const { device } = await setup();
+      device.setBusySnapshot(simple(START + 30_000, 60_000));
+
+      vi.advanceTimersByTime(59_999);
+
+      expect(device.timerRunning).toBe(true);
+
+      vi.advanceTimersByTime(1);
+
+      expect(device.timerRunning).toBe(false);
     });
 
     it('forgets the end of a timer that a new snapshot replaced', async () => {

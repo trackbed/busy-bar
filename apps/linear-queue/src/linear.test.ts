@@ -1,5 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 
+import { objectAt } from '@busy-bar-apps/json-values';
+
 import type { QueueScope } from './linear.ts';
 import {
   fetchQueue,
@@ -36,10 +38,10 @@ function variablesOf(
   call: number,
 ): unknown {
   const body = fetch.mock.calls[call]?.[1]?.body;
-  const parsed: unknown = JSON.parse(typeof body === 'string' ? body : '{}');
-  return typeof parsed === 'object' && parsed !== null && 'variables' in parsed
-    ? parsed.variables
-    : undefined;
+  return objectAt(
+    JSON.parse(typeof body === 'string' ? body : '{}'),
+    'variables',
+  );
 }
 
 describe('queueFilters', () => {

@@ -15,14 +15,14 @@ import type { PlacedElement } from '../device/screen.ts';
 import type { Font } from '../formats/font.ts';
 import type { Bitmap } from '../formats/png.ts';
 import type { Box, Rgba } from './canvas.ts';
-import { BLACK, Canvas, intersect, OPA_MIN } from './canvas.ts';
+import { BLACK, Canvas, intersect, OPA_MIN, WHITE } from './canvas.ts';
+import type { DisplayName } from './display.ts';
+import { DISPLAY_SIZES, STATUS_BAR_WIDTH } from './display.ts';
 import type { TextLayout } from './text.ts';
 import { drawText, layoutText, scrollOffset } from './text.ts';
 
-const FRONT_SIZE = { width: 72, height: 16 } as const;
-const BACK_SIZE = { width: 160, height: 80 } as const;
-/** The back display's status bar takes its rightmost columns from apps. */
-const STATUS_BAR_WIDTH = 12;
+const FRONT_SIZE = DISPLAY_SIZES.front;
+const BACK_SIZE = DISPLAY_SIZES.back;
 const BACK_APP_WIDTH = BACK_SIZE.width - STATUS_BAR_WIDTH;
 
 /** What drawing needs from the asset store. */
@@ -47,8 +47,6 @@ export interface Frames {
   readonly back: Canvas;
 }
 
-const WHITE: Rgba = { r: 255, g: 255, b: 255, a: 255 };
-
 /** Draws scenes; keeps text layouts between frames. */
 export class SceneRenderer {
   readonly #assets: SceneAssets;
@@ -63,7 +61,7 @@ export class SceneRenderer {
     const back = new Canvas(BACK_SIZE.width, BACK_SIZE.height, 'l8');
     const { application } = scene;
     if (application !== undefined) {
-      const placed = (display: 'front' | 'back'): PlacedElement[] =>
+      const placed = (display: DisplayName): PlacedElement[] =>
         scene.elements.filter((item) => item.element.display === display);
       front.fill(BLACK);
       for (const item of placed('front')) {

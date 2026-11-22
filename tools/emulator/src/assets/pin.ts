@@ -2,6 +2,13 @@
 // commit. Run by `nx run emulator:pin-firmware` when moving to a newer
 // firmware; the result is committed as firmware-assets.json.
 
+import {
+  arrayAt,
+  isObject,
+  numberAt,
+  stringAt,
+} from '@busy-bar-apps/json-values';
+
 import type { AssetManifest, PinnedFile } from './sync.ts';
 
 export const FIRMWARE_REPOSITORY = 'busy-app/busybar-firmware';
@@ -54,31 +61,22 @@ export function parseTree(body: unknown): {
   readonly truncated: boolean;
   readonly entries: TreeEntry[];
 } {
-  if (
-    typeof body !== 'object' ||
-    body === null ||
-    !('tree' in body) ||
-    !Array.isArray(body.tree)
-  ) {
+  if (!isObject(body) || !Array.isArray(body['tree'])) {
     throw new Error('GitHub sent no tree.');
   }
-  const truncated = 'truncated' in body && body.truncated === true;
-  const entries = body.tree.flatMap((entry: unknown): TreeEntry[] => {
-    if (typeof entry !== 'object' || entry === null) {
+  const truncated = body['truncated'] === true;
+  const entries = arrayAt(body, 'tree').flatMap((entry): TreeEntry[] => {
+    if (!isObject(entry)) {
       return [];
     }
-    const path = 'path' in entry ? entry.path : undefined;
-    const type = 'type' in entry ? entry.type : undefined;
-    const sha = 'sha' in entry ? entry.sha : undefined;
-    const size = 'size' in entry ? entry.size : undefined;
-    if (
-      typeof path !== 'string' ||
-      typeof type !== 'string' ||
-      typeof sha !== 'string'
-    ) {
+    const path = stringAt(entry, 'path');
+    const type = stringAt(entry, 'type');
+    const sha = stringAt(entry, 'sha');
+    const size = numberAt(entry, 'size');
+    if (path === undefined || type === undefined || sha === undefined) {
       return [];
     }
-    return [{ path, type, sha, ...(typeof size === 'number' ? { size } : {}) }];
+    return [{ path, type, sha, ...(size === undefined ? {} : { size }) }];
   });
   return { truncated, entries };
 }

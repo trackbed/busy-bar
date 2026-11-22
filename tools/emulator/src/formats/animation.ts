@@ -5,6 +5,13 @@
 // and stores the rest losslessly, so applying the same reduction here gives
 // the frames the bar shows.
 
+import {
+  arrayAt,
+  isObject,
+  numberAt,
+  stringAt,
+} from '@busy-bar-apps/json-values';
+
 import type { Bitmap } from './png.ts';
 import { decodePng } from './png.ts';
 import { readZip } from './zip.ts';
@@ -114,30 +121,24 @@ function readMeta(
   } catch (error) {
     throw new AnimationError('meta.json is not valid JSON.', { cause: error });
   }
-  if (typeof meta !== 'object' || meta === null) {
+  if (!isObject(meta)) {
     throw new AnimationError('meta.json does not hold an object.');
   }
-  const fps =
-    'fps' in meta && typeof meta.fps === 'number' && meta.fps > 0
-      ? meta.fps
-      : DEFAULT_FPS;
+  const fps = numberAt(meta, 'fps') ?? 0;
   const colorMode =
-    COLOR_MODES.find(
-      (mode) => 'color_mode' in meta && meta.color_mode === mode,
-    ) ?? 'argb8888';
-  const list: readonly unknown[] =
-    'sections' in meta && Array.isArray(meta.sections) ? meta.sections : [];
-  for (const item of list) {
-    if (typeof item !== 'object' || item === null) {
+    COLOR_MODES.find((mode) => stringAt(meta, 'color_mode') === mode) ??
+    'argb8888';
+  for (const item of arrayAt(meta, 'sections')) {
+    if (!isObject(item)) {
       continue;
     }
-    const name = 'name' in item ? item.name : undefined;
-    const start = 'start' in item ? item.start : undefined;
-    const end = 'end' in item ? item.end : undefined;
+    const name = stringAt(item, 'name');
+    const start = numberAt(item, 'start');
+    const end = numberAt(item, 'end');
     if (
-      typeof name === 'string' &&
-      typeof start === 'number' &&
-      typeof end === 'number' &&
+      name !== undefined &&
+      start !== undefined &&
+      end !== undefined &&
       start >= 0 &&
       start <= end &&
       end < frameCount
@@ -145,5 +146,5 @@ function readMeta(
       sections.set(name, { start, end });
     }
   }
-  return { fps, colorMode, sections };
+  return { fps: fps > 0 ? fps : DEFAULT_FPS, colorMode, sections };
 }

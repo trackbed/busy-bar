@@ -4,9 +4,9 @@ import type { BusySnapshot } from './busy-timer.ts';
 import {
   DEFAULT_SETTINGS,
   parseBusySnapshot,
+  screenHold,
   startedTimer,
   stoppedTimer,
-  stopsAt,
 } from './busy-timer.ts';
 
 const NOW = 1_761_480_000_000;
@@ -223,26 +223,91 @@ describe('parseBusySnapshot', () => {
   });
 });
 
-describe('stopsAt', () => {
-  it('has a stopped timer stop at its snapshot', () => {
-    expect(stopsAt(stoppedTimer(NOW, DEFAULT_SETTINGS))).toBe(NOW);
+describe('screenHold', () => {
+  const until = (at: number) => ({ kind: 'until', at });
+  const free = { kind: 'free' };
+  const held = { kind: 'held' };
+  const stamped = (body: { readonly snapshot: object }, at: number) =>
+    parsed({ ...body, snapshot_timestamp_ms: at });
+  const notStarted = {
+    snapshot: { type: 'NOT_STARTED', busy_bar_settings: SETTINGS },
+  };
+  const infinite = (paused: boolean) => ({
+    snapshot: {
+      type: 'INFINITE',
+      card_id: CARD,
+      is_paused: paused,
+      busy_bar_settings: SETTINGS,
+    },
   });
 
-  it('never stops an infinite or a paused timer', () => {
-    expect(stopsAt(startedTimer(NOW, DEFAULT_SETTINGS))).toBeUndefined();
-    expect(stopsAt(parsed(simple({ is_paused: true })))).toBeUndefined();
-    expect(stopsAt(parsed(interval({ is_paused: true })))).toBeUndefined();
-  });
-
-  it('stops a simple timer when its time left runs out', () => {
-    expect(stopsAt(parsed(simple()))).toBe(NOW + 25 * MINUTE);
-  });
-
-  it('stops an interval timer after its last work interval', () => {
-    // 20 + 5 + 20 + 5 + 20 minutes.
-    expect(stopsAt(parsed(interval()))).toBe(NOW + 70 * MINUTE);
+  // Stamped two minutes ago, now, and 30 s ahead of the bar's clock. A
+  // timer stamped ahead counts from now, as busy_timer_update does.
+  const PAST = NOW - 2 * MINUTE;
+  const AHEAD = NOW + 30_000;
+  it.each([
+    ['NOT_STARTED', notStarted, [free, free, free]],
+    ['INFINITE', infinite(false), [held, held, held]],
+    ['paused INFINITE', infinite(true), [held, held, held]],
+    [
+      'SIMPLE',
+      simple(),
+      [
+        until(PAST + 25 * MINUTE),
+        until(NOW + 25 * MINUTE),
+        until(NOW + 25 * MINUTE),
+      ],
+    ],
+    ['paused SIMPLE', simple({ is_paused: true }), [held, held, held]],
+    [
+      'INTERVAL with autostart',
+      interval(),
+      [
+        until(PAST + 70 * MINUTE),
+        until(NOW + 70 * MINUTE),
+        until(NOW + 70 * MINUTE),
+      ],
+    ],
+    [
+      'paused INTERVAL with autostart',
+      interval({ is_paused: true }),
+      [held, held, held],
+    ],
+    ['INTERVAL without autostart', interval({}, false), [held, held, held]],
+    [
+      'paused INTERVAL without autostart',
+      interval({ is_paused: true }, false),
+      [held, held, held],
+    ],
+  ])('holds the screen for a %s timer', (_name, body, expected) => {
     expect(
-      stopsAt(
+      [PAST, NOW, AHEAD].map((at) => screenHold(stamped(body, at), NOW)),
+    ).toStrictEqual(expected);
+  });
+
+  it('never holds the screen for a stopped timer stamped ahead', () => {
+    expect(
+      screenHold(stoppedTimer(NOW + 30_000, DEFAULT_SETTINGS), NOW),
+    ).toStrictEqual(free);
+  });
+
+  it('holds the screen for the infinite timer the switch starts', () => {
+    expect(screenHold(startedTimer(NOW, DEFAULT_SETTINGS), NOW)).toStrictEqual(
+      held,
+    );
+  });
+
+  it('frees the screen once a timer has run out', () => {
+    expect(screenHold(parsed(simple()), NOW + 25 * MINUTE)).toStrictEqual(free);
+    expect(screenHold(parsed(interval()), NOW + 70 * MINUTE)).toStrictEqual(
+      free,
+    );
+  });
+
+  it('holds an interval timer until its last work interval ends', () => {
+    // 5 + 20 minutes after the third interval's last 2.
+    expect(
+      screenHold(
         parsed(
           interval({
             current_interval: 3,
@@ -250,24 +315,28 @@ describe('stopsAt', () => {
             current_interval_time_left_ms: 2 * MINUTE,
           }),
         ),
+        NOW,
       ),
-    ).toBe(NOW + 22 * MINUTE);
+    ).toStrictEqual(until(NOW + 22 * MINUTE));
   });
 
-  it('stops at the end of the last interval without autostart', () => {
+  it('holds the last interval without autostart until it ends', () => {
     expect(
-      stopsAt(
+      screenHold(
         parsed(
           interval(
             { current_interval: 4, current_interval_time_left_ms: MINUTE },
             false,
           ),
         ),
+        NOW,
       ),
-    ).toBe(NOW + MINUTE);
+    ).toStrictEqual(until(NOW + MINUTE));
   });
 
-  it('waits at a new interval for START without autostart', () => {
-    expect(stopsAt(parsed(interval({}, false)))).toBeUndefined();
+  it('keeps holding an interval that waits for START after running out', () => {
+    expect(
+      screenHold(parsed(interval({}, false)), NOW + 3 * 60 * MINUTE),
+    ).toStrictEqual(held);
   });
 });

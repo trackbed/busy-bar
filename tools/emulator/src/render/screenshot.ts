@@ -3,6 +3,7 @@
 
 import { encodePng } from '../formats/png.ts';
 import type { Canvas } from './canvas.ts';
+import type { DisplayName } from './display.ts';
 
 /**
  * A PNG of one display, `scale` times its size: the front as RGB, the
@@ -10,7 +11,7 @@ import type { Canvas } from './canvas.ts';
  */
 export function screenshotPng(
   canvas: Canvas,
-  display: 'front' | 'back',
+  display: DisplayName,
   scale: number,
 ): Uint8Array {
   const width = canvas.width * scale;

@@ -4,6 +4,8 @@
 // counts, and section offsets follow from the spec unless a test overrides
 // them to break the file.
 
+import { ascii, concat } from '../formats/bytes.ts';
+
 export interface AnimFrameSpec {
   /** The mask encoding, stored in the encoding byte's high nibble. */
   readonly mask: number;
@@ -136,19 +138,5 @@ function sectionRecord(
   view.setUint32(4, record.end, true);
   view.setUint32(8, frameOffset, true);
   out.set(name, 12);
-  return out;
-}
-
-function ascii(text: string): number[] {
-  return Array.from(text, (character) => character.charCodeAt(0));
-}
-
-function concat(parts: readonly Uint8Array[]): Uint8Array {
-  const out = new Uint8Array(parts.reduce((sum, part) => sum + part.length, 0));
-  let at = 0;
-  for (const part of parts) {
-    out.set(part, at);
-    at += part.length;
-  }
   return out;
 }

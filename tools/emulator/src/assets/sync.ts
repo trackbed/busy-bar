@@ -3,8 +3,8 @@
 // so the repository records only their paths and hashes, never the files
 // (docs/adr/0004-firmware-emulator.md).
 
-import { createHash } from 'node:crypto';
-import { mkdir, readFile, rename, writeFile } from 'node:fs/promises';
+import { createHash, randomUUID } from 'node:crypto';
+import { mkdir, readFile, rename, rm, writeFile } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
 
 /** One firmware file, as Git records it at the pinned commit. */
@@ -83,6 +83,11 @@ export function rawUrl(manifest: AssetManifest, path: string): string {
   return `https://raw.githubusercontent.com/${manifest.repository}/${manifest.commit}/${path}`;
 }
 
+/**
+ * Make sure one file is in the cache. Every process that syncs the folder
+ * may download the same file at once, so each writes its own temp file and
+ * renames it over the target; the file's hash decides the outcome.
+ */
 async function ensureFile(
   root: string,
   manifest: AssetManifest,
@@ -90,8 +95,7 @@ async function ensureFile(
   fetchImpl: typeof fetch,
 ): Promise<void> {
   const target = join(root, file.path);
-  const existing = await readFile(target).catch(() => undefined);
-  if (existing !== undefined && gitBlobSha(existing) === file.sha) {
+  if (await matches(target, file)) {
     return;
   }
   let response: Response;
@@ -114,8 +118,24 @@ async function ensureFile(
       `${file.path} does not match its pinned hash (got ${sha}, expected ${file.sha}).`,
     );
   }
-  await mkdir(dirname(target), { recursive: true });
-  const partial = `${target}.partial`;
-  await writeFile(partial, data);
-  await rename(partial, target);
+  const partial = `${target}.${process.pid}.${randomUUID()}.partial`;
+  try {
+    await mkdir(dirname(target), { recursive: true });
+    await writeFile(partial, data);
+    await rename(partial, target);
+  } catch (error) {
+    await rm(partial, { force: true });
+    // Another writer may have put the same file in place first.
+    if (!(await matches(target, file))) {
+      throw new AssetSyncError(`Could not save ${file.path}.`, {
+        cause: error,
+      });
+    }
+  }
+}
+
+/** Whether `target` holds the pinned file. */
+async function matches(target: string, file: PinnedFile): Promise<boolean> {
+  const existing = await readFile(target).catch(() => undefined);
+  return existing !== undefined && gitBlobSha(existing) === file.sha;
 }

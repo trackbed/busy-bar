@@ -5,7 +5,8 @@
 // timer starts, pauses, resumes, skips, or stops, so a timer that runs out
 // keeps reporting the snapshot that started it.
 
-import { isObject } from '@busy-bar-apps/json-values';
+import type { JsonObject } from '@busy-bar-apps/json-values';
+import { isObject, stringAt } from '@busy-bar-apps/json-values';
 
 export interface BusyBarSettings {
   readonly theme: string;
@@ -129,32 +130,47 @@ export function parseBusySnapshot(
 }
 
 /**
- * When a timer that runs from `snapshot` goes idle by itself, as
- * busy_timer_update steps it: undefined when it never does, because it is
- * paused, has no end, or waits at a new interval for START.
+ * Whether the timer holds the screen: `free` once it is idle, `held` while
+ * it has no end of its own, or held `until` the moment it goes idle.
  */
-export function stopsAt(snapshot: BusySnapshot): number | undefined {
+export type ScreenHold =
+  | { readonly kind: 'free' }
+  | { readonly kind: 'held' }
+  | { readonly kind: 'until'; readonly at: number };
+
+const FREE: ScreenHold = { kind: 'free' };
+const HELD: ScreenHold = { kind: 'held' };
+
+/**
+ * How a timer run from `snapshot` holds the screen at `now`, as
+ * busy_timer_apply_snapshot and busy_timer_update step it. The loader holds
+ * the screen while the timer works, rests, or is paused; NOT_STARTED is
+ * idle at once. A timer stamped ahead of the bar's clock counts from now,
+ * as busy_timer_update does for a peer whose clock runs ahead. It never
+ * goes idle by itself while paused, without an end, or waiting at a new
+ * interval for START.
+ */
+export function screenHold(snapshot: BusySnapshot, now: number): ScreenHold {
   const timer = snapshot.snapshot;
-  const at = snapshot.snapshot_timestamp_ms;
+  const start = Math.min(snapshot.snapshot_timestamp_ms, now);
   switch (timer.type) {
     case 'NOT_STARTED':
-      return at;
+      return FREE;
     case 'INFINITE':
-      return undefined;
+      return HELD;
     case 'SIMPLE':
-      return timer.is_paused ? undefined : at + timer.time_left_ms;
+      return timer.is_paused
+        ? HELD
+        : holdUntil(start + timer.time_left_ms, now);
     case 'INTERVAL': {
       if (timer.is_paused) {
-        return undefined;
+        return HELD;
       }
       const settings = timer.interval_settings;
       const last = settings.interval_work_cycles_count * 2 - 2;
-      let end = at + timer.current_interval_time_left_ms;
-      if (timer.current_interval >= last) {
-        return end;
-      }
-      if (!settings.is_autostart_enabled) {
-        return undefined;
+      let end = start + timer.current_interval_time_left_ms;
+      if (timer.current_interval < last && !settings.is_autostart_enabled) {
+        return HELD;
       }
       for (let index = timer.current_interval + 1; index <= last; index += 1) {
         end +=
@@ -162,12 +178,16 @@ export function stopsAt(snapshot: BusySnapshot): number | undefined {
             ? settings.interval_work_ms
             : settings.interval_rest_ms;
       }
-      return end;
+      return holdUntil(end, now);
     }
   }
 }
 
-function parseTimer(json: Record<string, unknown>): BusyTimerState | undefined {
+function holdUntil(end: number, now: number): ScreenHold {
+  return end > now ? { kind: 'until', at: end } : FREE;
+}
+
+function parseTimer(json: JsonObject): BusyTimerState | undefined {
   const settings = parseSettings(json['busy_bar_settings']);
   switch (json['type']) {
     case 'NOT_STARTED':
@@ -200,7 +220,7 @@ function parseTimer(json: Record<string, unknown>): BusyTimerState | undefined {
 }
 
 function parseInterval(
-  json: Record<string, unknown>,
+  json: JsonObject,
   settings: BusyBarSettings,
 ): BusyTimerState | undefined {
   const common = parseCommon(json);
@@ -261,12 +281,12 @@ function parseIntervalSettings(json: unknown): IntervalSettings | undefined {
 
 /** `card_id` and `is_paused`; the card is a UUID, of either case. */
 function parseCommon(
-  json: Record<string, unknown>,
+  json: JsonObject,
 ): { readonly card_id: string; readonly is_paused: boolean } | undefined {
-  const card = json['card_id'];
+  const card = stringAt(json, 'card_id');
   const paused = json['is_paused'];
   if (
-    typeof card !== 'string' ||
+    card === undefined ||
     !/^[\da-f]{8}-[\da-f]{4}-[\da-f]{4}-[\da-f]{4}-[\da-f]{12}$/iu.test(card) ||
     typeof paused !== 'boolean'
   ) {
@@ -277,18 +297,23 @@ function parseCommon(
 
 /** Settings that do not parse fall back to the defaults, as on the bar. */
 function parseSettings(json: unknown): BusyBarSettings {
+  if (!isObject(json)) {
+    return DEFAULT_SETTINGS;
+  }
+  const theme = stringAt(json, 'theme');
+  const workOnly = json['show_work_phase_only'];
+  const smartHome = json['trigger_smart_home'];
   if (
-    !isObject(json) ||
-    typeof json['theme'] !== 'string' ||
-    typeof json['show_work_phase_only'] !== 'boolean' ||
-    typeof json['trigger_smart_home'] !== 'boolean'
+    theme === undefined ||
+    typeof workOnly !== 'boolean' ||
+    typeof smartHome !== 'boolean'
   ) {
     return DEFAULT_SETTINGS;
   }
   return {
-    theme: json['theme'].slice(0, THEME_LENGTH),
-    show_work_phase_only: json['show_work_phase_only'],
-    trigger_smart_home: json['trigger_smart_home'],
+    theme: theme.slice(0, THEME_LENGTH),
+    show_work_phase_only: workOnly,
+    trigger_smart_home: smartHome,
   };
 }
 
