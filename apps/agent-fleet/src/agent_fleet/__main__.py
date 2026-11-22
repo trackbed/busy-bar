@@ -17,6 +17,7 @@ from agent_fleet.render import render
 from agent_fleet.server import start_hook_server
 from agent_fleet.settings import FleetSettings, load_settings
 from bar_kit import (
+    Speaker,
     create_busy_bar,
     install_shutdown_handlers,
     listen_for_input,
@@ -38,11 +39,8 @@ async def main(settings: FleetSettings) -> None:
     # reference instead of binding the context manager's result.
     async with client:
         screen = track_screen(client)
-
-        async def play(sound: str) -> object:
-            return await client.audio_play(stock_path=sound, application_name=NAME)
-
-        chime = Chime(play, enabled=settings.sound, on_screen=screen.on_screen)
+        speaker = Speaker(client, name=NAME, enabled=settings.sound, stop=stop)
+        chime = Chime(speaker.play, on_screen=screen.on_screen)
         controls = Controls(fleet, chime, on_screen=screen.on_screen)
 
         server = await start_hook_server(

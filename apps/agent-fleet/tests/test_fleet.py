@@ -1,7 +1,8 @@
 from datetime import UTC, datetime, timedelta
+from typing import get_args
 
-from agent_fleet.fleet import Fleet, FleetView, Row
-from agent_fleet.hooks import EventKind, HookEvent
+from agent_fleet.fleet import NEEDS_YOU, Alert, Fleet, FleetView, Row
+from agent_fleet.hooks import EventKind, HookEvent, Notification
 
 START = datetime(2026, 10, 20, 9, 0, tzinfo=UTC)
 WORKSPACES = "/Users/me/conductor/workspaces/discera"
@@ -17,7 +18,7 @@ def event(  # noqa: PLR0913 - mirrors the event's optional fields.
     *,
     skill: str | None = None,
     waiting_on: int = 0,
-    notification: str | None = None,
+    notification: Notification | None = None,
     error: str | None = None,
 ) -> HookEvent:
     return HookEvent(
@@ -33,6 +34,10 @@ def event(  # noqa: PLR0913 - mirrors the event's optional fields.
 
 def statuses(view: FleetView) -> list[tuple[str, str, str]]:
     return [(row.workspace, row.status, row.detail) for row in view.rows]
+
+
+def test_the_statuses_that_need_you_are_the_alerts() -> None:
+    assert set(get_args(Alert.__value__)) == NEEDS_YOU
 
 
 def test_a_prompt_starts_a_working_session_named_after_its_workspace() -> None:

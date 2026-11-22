@@ -3,7 +3,7 @@
 from datetime import UTC, datetime, timedelta
 
 from agent_fleet.fleet import Fleet
-from agent_fleet.hooks import EventKind, HookEvent
+from agent_fleet.hooks import EventKind, HookEvent, Notification
 from agent_fleet.render import render
 from agent_fleet.settings import DEFAULT_HOST, DEFAULT_PORT
 from bar_kit import DisplayElement, Preview, PreviewScene, PreviewStep, print_preview
@@ -19,7 +19,7 @@ def _event(
     *,
     skill: str | None = None,
     waiting_on: int = 0,
-    notification: str | None = None,
+    notification: Notification | None = None,
 ) -> HookEvent:
     return HookEvent(
         kind,

@@ -6,6 +6,7 @@ environment variables and expose the same frame loop.
 
 from busylib.features import ButtonEvent, EncoderEvent, InputEvent, SelectorEvent
 from busylib.features.input_events import SelectorPosition
+from busylib.features.notification import STOCK_SOUNDS
 from busylib.types import (
     DisplayElement,
     DisplayFontName,
@@ -14,6 +15,7 @@ from busylib.types import (
     TextElement,
 )
 
+from bar_kit._clock import utc_now
 from bar_kit.client import create_busy_bar
 from bar_kit.config import BarConfig, BarConfigError, load_bar_config
 from bar_kit.display import BACK_DISPLAY, FRONT_DISPLAY, DisplaySize, rgba
@@ -45,6 +47,7 @@ from bar_kit.run import (
     run_bar_app,
 )
 from bar_kit.screen import TrackedScreen, track_screen
+from bar_kit.speaker import AudioClient, Speaker, StockSound
 from bar_kit.text import to_bar_text
 
 __all__ = [
@@ -56,7 +59,9 @@ __all__ = [
     "MAX_PRIORITY",
     "MIN_PRIORITY",
     "PALETTE",
+    "STOCK_SOUNDS",
     "SUMMARY_Y",
+    "AudioClient",
     "BarConfig",
     "BarConfigError",
     "ButtonEvent",
@@ -79,6 +84,8 @@ __all__ = [
     "SelectorPosition",
     "SettingsError",
     "Snapshot",
+    "Speaker",
+    "StockSound",
     "TextAlign",
     "TextElement",
     "TrackedScreen",
@@ -103,4 +110,5 @@ __all__ = [
     "text_width",
     "to_bar_text",
     "track_screen",
+    "utc_now",
 ]

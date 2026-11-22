@@ -1,21 +1,19 @@
+import type { StockSound } from '@busy-bar-apps/bar-kit';
+
 import type { Board } from './board.ts';
 import { incomingKnock, outgoingKnock, startingFocus } from './board.ts';
 
-/** Sounds every bar ships (busylib's `features.notification`). */
-export const SOUNDS = {
-  focus: 'shared/sounds/calendar_event_starts.snd',
-  knock: 'shared/sounds/calendar_event_starts.snd',
-  answer: 'shared/sounds/calendar_reminder_ends.snd',
-} as const;
+/** The stock sound each event plays. */
+const SOUNDS: Readonly<Record<'focus' | 'knock' | 'answer', StockSound>> = {
+  focus: 'event',
+  knock: 'event',
+  answer: 'reminder',
+};
 
 export interface ChimeOptions {
-  /** Names the app in log messages. */
-  readonly name: string;
-  readonly enabled: boolean;
-  /** Play a stock sound, such as busy-lib's `AudioPlay`. */
-  readonly play: (sound: string) => Promise<unknown>;
+  /** Starts a sound and returns at once, such as bar-kit's `Speaker.play`. */
+  readonly play: (sound: StockSound) => void;
   readonly now?: () => number;
-  readonly log?: Pick<Console, 'warn'>;
 }
 
 /**
@@ -32,7 +30,7 @@ export interface Chime {
 }
 
 export function createChime(options: ChimeOptions): Chime {
-  const { name, enabled, play, now = Date.now, log = console } = options;
+  const { play, now = Date.now } = options;
   const heard = new Set<string>();
 
   return {
@@ -48,7 +46,7 @@ export function createChime(options: ChimeOptions): Chime {
           : `${outgoing.id}:${outgoing.status}`;
       const starting = startingFocus(board, now());
       const focus = starting === undefined ? undefined : `focus:${starting.id}`;
-      let sound: string | undefined;
+      let sound: StockSound | undefined;
       if (focus !== undefined && !heard.has(focus)) {
         heard.add(focus);
         sound = SOUNDS.focus;
@@ -74,10 +72,8 @@ export function createChime(options: ChimeOptions): Chime {
           heard.delete(id);
         }
       }
-      if (enabled && sound !== undefined) {
-        play(sound).catch((error: unknown) => {
-          log.warn(`[${name}] Playing ${sound} failed:`, error);
-        });
+      if (sound !== undefined) {
+        play(sound);
       }
     },
   };

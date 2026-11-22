@@ -3,7 +3,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { focusFrom } from './__tests__/fixtures.ts';
 import type { Board, Knock } from './board.ts';
 import type { ChimeOptions } from './chime.ts';
-import { createChime, SOUNDS } from './chime.ts';
+import { createChime } from './chime.ts';
 
 const NOW = Date.parse('2026-10-27T09:00:00Z');
 
@@ -13,14 +13,9 @@ function board(...knocks: Knock[]): Board {
 
 const FOCUS = focusFrom(NOW + 15_000);
 
-function setup(enabled = true) {
-  const play = vi.fn<ChimeOptions['play']>(() => Promise.resolve());
-  const log = { warn: vi.fn<Console['warn']>() };
-  return {
-    play,
-    log,
-    chime: createChime({ name: 'test', enabled, play, now: () => NOW, log }),
-  };
+function setup() {
+  const play = vi.fn<ChimeOptions['play']>();
+  return { play, chime: createChime({ play, now: () => NOW }) };
 }
 
 const knockOnMe: Knock = {
@@ -38,7 +33,7 @@ describe('createChime', () => {
     chime.observe(board(knockOnMe));
     chime.observe(board(knockOnMe, { ...knockOnMe, id: 'in2' }));
 
-    expect(play.mock.calls).toStrictEqual([[SOUNDS.knock]]);
+    expect(play.mock.calls).toStrictEqual([['event']]);
   });
 
   it('rings once for each answer to the knock this bar sent', () => {
@@ -51,7 +46,7 @@ describe('createChime', () => {
     chime.observe(board());
     chime.observe(board({ ...mine, id: 'out2', status: 'expired' }));
 
-    expect(play.mock.calls).toStrictEqual([[SOUNDS.answer], [SOUNDS.answer]]);
+    expect(play.mock.calls).toStrictEqual([['reminder'], ['reminder']]);
   });
 
   it('forgets the knocks a board stops showing', () => {
@@ -71,29 +66,7 @@ describe('createChime', () => {
     chime.observe(undefined);
     chime.observe(board(knockOnMe));
 
-    expect(play.mock.calls).toStrictEqual([[SOUNDS.knock]]);
-  });
-
-  it('stays quiet when sounds are off', () => {
-    const { chime, play } = setup(false);
-
-    chime.observe(board(knockOnMe));
-
-    expect(play).not.toHaveBeenCalled();
-  });
-
-  it('logs a sound the bar cannot play', async () => {
-    const { chime, play, log } = setup();
-    play.mockRejectedValueOnce(new Error('404'));
-
-    chime.observe(board(knockOnMe));
-
-    await vi.waitFor(() => {
-      expect(log.warn).toHaveBeenCalledExactlyOnceWith(
-        `[test] Playing ${SOUNDS.knock} failed:`,
-        new Error('404'),
-      );
-    });
+    expect(play.mock.calls).toStrictEqual([['event']]);
   });
 
   it('rings once as a team focus starts to count down, before a knock', () => {
@@ -104,7 +77,7 @@ describe('createChime', () => {
     chime.observe(both);
     chime.observe(board(knockOnMe));
 
-    expect(play.mock.calls).toStrictEqual([[SOUNDS.focus], [SOUNDS.knock]]);
+    expect(play.mock.calls).toStrictEqual([['event'], ['event']]);
   });
 
   it('stays quiet for a team focus already running or skipped', () => {
