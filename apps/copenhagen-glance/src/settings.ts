@@ -1,3 +1,5 @@
+import { envSwitch, SettingsError } from '@busy-bar-apps/bar-kit';
+
 import type { PriceArea } from './energi.ts';
 
 /** What the glance needs from the environment. */
@@ -10,7 +12,7 @@ export interface GlanceSettings {
 }
 
 /** The environment does not describe a glance that can run. */
-export class GlanceSettingsError extends Error {
+class GlanceSettingsError extends SettingsError {
   override readonly name = 'GlanceSettingsError';
 }
 
@@ -30,17 +32,11 @@ export function loadSettings(
       `GLANCE_PRICE_AREA must be DK1 (west of the Great Belt) or DK2 (east); got ${JSON.stringify(area)}.`,
     );
   }
-  const rawRain = env['GLANCE_RAIN']?.trim().toLowerCase() || 'on';
-  if (rawRain !== 'on' && rawRain !== 'off') {
-    throw new GlanceSettingsError(
-      `GLANCE_RAIN must be on or off; got ${JSON.stringify(rawRain)}.`,
-    );
-  }
   return {
     area,
     latitude: coordinate(env, 'GLANCE_LATITUDE', COPENHAGEN.latitude, 90),
     longitude: coordinate(env, 'GLANCE_LONGITUDE', COPENHAGEN.longitude, 180),
-    rain: rawRain === 'on',
+    rain: envSwitch(env, 'GLANCE_RAIN'),
   };
 }
 

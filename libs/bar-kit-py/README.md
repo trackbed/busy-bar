@@ -10,6 +10,13 @@ both read the same environment variables and behave the same way.
   (`load_bar_config`, which raises a `BarConfigError` for an address that is
   not a host name, IP address, or URL, or for the cloud without a token) and
   the async busylib client built from them (`create_busy_bar`).
+- App settings from the environment: `env_switch` (`on` or `off`, on when
+  unset), `env_whole_number` (decimal digits only, between a `minimum` and an
+  optional `maximum`), and `env_http_url` (an absolute `http://` or
+  `https://` URL whose host is a name of letters, digits, and hyphens, a
+  dotted IPv4 address, or a bracketed IPv6 address, with an optional port up
+  to 65535). Each raises a `SettingsError`
+  naming the variable; apps' own settings errors extend it.
 - Display sizes (`FRONT_DISPLAY`, and `BACK_DISPLAY`: the 148×80 of the
   back screen that the status bar leaves to apps) and colours (`rgba`).
 - The render vocabulary every app draws with: `text_element` (keyword-only,
@@ -21,8 +28,8 @@ both read the same environment variables and behave the same way.
   For render tests, `elements_by_id` keys a frame by element ID, and
   `text_of` and `color_of` read one element from it (None when it is
   missing).
-- The frame loop (`run_bar_app`): draw every interval at a `priority`
-  (default `DEFAULT_PRIORITY`, 50), delete the elements a frame stops drawing
+- The frame loop (`run_bar_app`): draw every interval at a `priority` from
+  `MIN_PRIORITY` to `MAX_PRIORITY` (default `DEFAULT_PRIORITY`, 50), delete the elements a frame stops drawing
   (the bar keeps them otherwise), log failed draws and keep going, clear the
   display on shutdown. Setting `stop` cancels a draw or deletion in flight
   without logging it. `install_shutdown_handlers` sets `stop` on the first

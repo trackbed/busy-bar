@@ -82,11 +82,13 @@ These apply to every task. Break one only when the user names a concrete reason.
   `preview` module (`src/preview.ts`, `src/<module>/preview.py`) feeds the
   catalogue sample frames from its own render function.
 - `libs/bar-kit/` (TypeScript) and `libs/bar-kit-py/` (Python): connection
-  settings (`BUSYBAR_ADDR`, `BUSYBAR_TOKEN`), display sizes, `rgba()`, the
-  render vocabulary (`textElement` / `text_element`, `solidRectangle`,
-  `statusCells`, the role `PALETTE`, `SUMMARY_Y`, `FOOTER_Y`), the
-  frame loop (`runBarApp` / `run_bar_app`), background polling
-  (`createPoller` / `Poller`), the bar's buttons and wheel
+  settings (`BUSYBAR_ADDR`, `BUSYBAR_TOKEN`), readers for an app's own
+  settings that throw one `SettingsError` (`envSwitch` / `env_switch`,
+  `envWholeNumber` / `env_whole_number`, `envHttpUrl` / `env_http_url`),
+  display sizes, `rgba()`, the render vocabulary (`textElement` /
+  `text_element`, `solidRectangle`, `statusCells`, the role `PALETTE`,
+  `SUMMARY_Y`, `FOOTER_Y`), the frame loop (`runBarApp` / `run_bar_app`),
+  background polling (`createPoller` / `Poller`), the bar's buttons and wheel
   (`listenForInput` / `listen_for_input`), whether the app's frames reach
   the screen (`trackScreen` / `track_screen`), and text that fits the bitmap
   fonts (`toBarText` / `to_bar_text`, `textWidth` / `text_width`,

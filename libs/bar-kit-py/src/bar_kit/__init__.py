@@ -30,12 +30,15 @@ from bar_kit.elements import (
     text_element,
     text_of,
 )
+from bar_kit.env import SettingsError, env_http_url, env_switch, env_whole_number
 from bar_kit.fonts import ELLIPSIS, fit_text, overflowing_text, text_width
 from bar_kit.input import listen_for_input
 from bar_kit.poll import Poller, PollFailure, Snapshot
 from bar_kit.preview import Preview, PreviewScene, PreviewStep, print_preview
 from bar_kit.run import (
     DEFAULT_PRIORITY,
+    MAX_PRIORITY,
+    MIN_PRIORITY,
     DisplayClient,
     Render,
     install_shutdown_handlers,
@@ -50,6 +53,8 @@ __all__ = [
     "ELLIPSIS",
     "FOOTER_Y",
     "FRONT_DISPLAY",
+    "MAX_PRIORITY",
+    "MIN_PRIORITY",
     "PALETTE",
     "SUMMARY_Y",
     "BarConfig",
@@ -72,6 +77,7 @@ __all__ = [
     "Render",
     "SelectorEvent",
     "SelectorPosition",
+    "SettingsError",
     "Snapshot",
     "TextAlign",
     "TextElement",
@@ -79,6 +85,9 @@ __all__ = [
     "color_of",
     "create_busy_bar",
     "elements_by_id",
+    "env_http_url",
+    "env_switch",
+    "env_whole_number",
     "fit_text",
     "install_shutdown_handlers",
     "listen_for_input",

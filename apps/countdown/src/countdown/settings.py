@@ -4,10 +4,12 @@ from collections.abc import Mapping
 from dataclasses import dataclass
 from datetime import datetime
 
+from bar_kit import SettingsError
+
 DEFAULT_LABEL = "COUNTDOWN"
 
 
-class CountdownSettingsError(ValueError):
+class CountdownSettingsError(SettingsError):
     """The environment does not describe a countdown."""
 
 

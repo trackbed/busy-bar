@@ -19,8 +19,11 @@ logger = logging.getLogger(__name__)
 DEFAULT_PRIORITY = 50
 """The bar's default draw priority."""
 
-_MIN_PRIORITY = 1
-_MAX_PRIORITY = 100
+MIN_PRIORITY = 1
+"""The lowest draw priority the bar accepts."""
+
+MAX_PRIORITY = 100
+"""The highest draw priority the bar accepts."""
 
 type Render = Callable[[datetime], Sequence[types.DisplayElement]]
 """Map the current time to the elements to draw. Keep it pure."""
@@ -66,8 +69,11 @@ async def run_bar_app(  # noqa: PLR0913 - keyword-only settings, one per concern
     hold for up to 1.5 seconds. An exception raised by `render` is a bug: it
     clears the display and propagates.
     """
-    if not _MIN_PRIORITY <= priority <= _MAX_PRIORITY:
-        message = f"Draw priority must be an integer from 1 to 100; got {priority}."
+    if not MIN_PRIORITY <= priority <= MAX_PRIORITY:
+        message = (
+            f"Draw priority must be an integer from {MIN_PRIORITY} to "
+            f"{MAX_PRIORITY}; got {priority}."
+        )
         raise ValueError(message)
 
     # IDs that may still be displayed, including deletions awaiting a retry.

@@ -55,6 +55,12 @@ export interface RunBarAppOptions {
 /** The bar's default draw priority. */
 export const DEFAULT_PRIORITY = 50;
 
+/** The lowest draw priority the bar accepts. */
+export const MIN_PRIORITY = 1;
+
+/** The highest draw priority the bar accepts. */
+export const MAX_PRIORITY = 100;
+
 /**
  * Draw a frame every `intervalMs` until `signal` aborts, then clear the
  * display. The bar merges each draw into what the app already shows, by
@@ -75,9 +81,13 @@ export async function runBarApp(options: RunBarAppOptions): Promise<void> {
     log = console,
   } = options;
 
-  if (!Number.isInteger(priority) || priority < 1 || priority > 100) {
+  if (
+    !Number.isInteger(priority) ||
+    priority < MIN_PRIORITY ||
+    priority > MAX_PRIORITY
+  ) {
     throw new RangeError(
-      `Draw priority must be an integer from 1 to 100; got ${priority}.`,
+      `Draw priority must be an integer from ${MIN_PRIORITY} to ${MAX_PRIORITY}; got ${priority}.`,
     );
   }
 

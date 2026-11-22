@@ -33,6 +33,8 @@ export {
   textElement,
   textOf,
 } from './elements.ts';
+export type { WholeNumberOptions } from './env.ts';
+export { envHttpUrl, envSwitch, envWholeNumber, SettingsError } from './env.ts';
 export type { BarFont } from './fonts.ts';
 export { ELLIPSIS, fitText, overflowingText, textWidth } from './fonts.ts';
 export type {
@@ -51,6 +53,12 @@ export type {
   RunBarAppOptions,
   SignalSource,
 } from './run-bar-app.ts';
-export { DEFAULT_PRIORITY, runBarApp, shutdownSignal } from './run-bar-app.ts';
+export {
+  DEFAULT_PRIORITY,
+  MAX_PRIORITY,
+  MIN_PRIORITY,
+  runBarApp,
+  shutdownSignal,
+} from './run-bar-app.ts';
 export type { TrackedScreen } from './screen.ts';
 export { trackScreen } from './screen.ts';

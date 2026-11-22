@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 
-import { loadSettings, TickerSettingsError } from './settings.ts';
+import { SettingsError } from '@busy-bar-apps/bar-kit';
+
+import { loadSettings } from './settings.ts';
 
 describe('loadSettings', () => {
   it('needs only a token', () => {
@@ -39,7 +41,7 @@ describe('loadSettings', () => {
     [{ GITHUB_TOKEN: 't', MERGE_TICKER_SOUND: 'constructor' }, 'on or off'],
     [{ GITHUB_TOKEN: 't', MERGE_TICKER_SOUND: '__proto__' }, 'on or off'],
   ])('rejects %j', (env, message) => {
-    expect(() => loadSettings(env)).toThrow(TickerSettingsError);
+    expect(() => loadSettings(env)).toThrow(SettingsError);
     expect(() => loadSettings(env)).toThrow(message);
   });
 });
