@@ -1,5 +1,4 @@
 from datetime import timedelta
-from pathlib import Path
 
 import pytest
 from samples import NOW
@@ -11,6 +10,7 @@ from bar_kit import (
     DisplayName,
     PollFailure,
     RectangleElement,
+    SetupError,
     Snapshot,
     TextElement,
     elements_by_id,
@@ -25,9 +25,7 @@ from claude_limits.render import (
     format_duration,
     render,
 )
-from claude_limits.rotation import Account, Rotation, RotationNotSetUpError, Window
-
-ROOT = Path("/Users/me/.local/share/conductor-claude-rotation")
+from claude_limits.rotation import Account, Rotation, Window
 
 
 def window(used: float, resets_in: float) -> Window:
@@ -65,7 +63,7 @@ def draw(
     failure: PollFailure | None = None,
 ) -> dict[str, DisplayElement]:
     latest = None if value is None else Snapshot(value=value, at=NOW - fetched_ago)
-    return elements_by_id(render(NOW, latest, failure, root=ROOT))
+    return elements_by_id(render(NOW, latest, failure))
 
 
 def rectangle(elements: dict[str, DisplayElement], element_id: str) -> RectangleElement:
@@ -162,7 +160,11 @@ def test_says_when_the_files_have_been_unreadable_for_a_while() -> None:
 
     assert text_of(recent, "footer") == "updated 1m ago"
     assert text_of(draw(TWO_ACCOUNTS), "footer") == "updated just now"
-    assert text_of(old, "footer") == "files unreadable, showing old data"
+    assert text_of(old, "footer") == "Files unreachable, showing old data"
+    assert (
+        text_of(draw(TWO_ACCOUNTS, fetched_ago=timedelta(minutes=65)), "footer")
+        == "updated 1h ago"
+    )
 
 
 @pytest.mark.parametrize(
@@ -170,14 +172,12 @@ def test_says_when_the_files_have_been_unreadable_for_a_while() -> None:
     [
         (None, "LIMITS", ["Reading the rotation files"]),
         (
-            PollFailure(error=RotationNotSetUpError("missing"), at=NOW),
-            "NO ROTATION",
-            [
-                "conductor-claude-rotation has no",
-                "config.json in",
-                "/Users/me/.local/share/",
-                "conductor-claude-rotation",
-            ],
+            PollFailure(
+                error=SetupError("not set up", ["Set up the rotation tool."]),
+                at=NOW,
+            ),
+            "LIMITS ?",
+            ["Set up the rotation tool."],
         ),
         (
             PollFailure(error=ValueError("config.json is not valid JSON."), at=NOW),

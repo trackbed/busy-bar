@@ -1,5 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 
+import { SetupError } from '@busy-bar-apps/bar-kit';
+
 import {
   fetchPullRequests,
   GITHUB_GRAPHQL_URL,
@@ -222,23 +224,36 @@ describe('fetchPullRequests', () => {
     });
   });
 
-  it('rejects with the status when GitHub refuses the request', async () => {
-    const fetch = vi.fn<typeof globalThis.fetch>(() =>
-      Promise.resolve(
-        new Response('nope', { status: 401, statusText: 'Unauthorized' }),
-      ),
-    );
-
-    const failed = fetchPullRequests({
+  function refusing(status: number, statusText: string) {
+    return fetchPullRequests({
       token: 'expired',
       scope: '',
       startOfDay: 'T',
       signal: new AbortController().signal,
-      fetch,
+      fetch: vi.fn<typeof globalThis.fetch>(() =>
+        Promise.resolve(new Response('nope', { status, statusText })),
+      ),
     });
+  }
 
-    await expect(failed).rejects.toThrow('GitHub answered 401 Unauthorized');
-    await expect(failed).rejects.toMatchObject({ status: 401 });
+  it('names the token to fix when GitHub rejects it', async () => {
+    const failed = refusing(401, 'Unauthorized');
+
+    await expect(failed).rejects.toBeInstanceOf(SetupError);
+    await expect(failed).rejects.toMatchObject({
+      summary: 'token rejected',
+      lines: [
+        'GitHub rejected GITHUB_TOKEN.',
+        'Try GITHUB_TOKEN=$(gh auth token).',
+      ],
+      cause: new GitHubError('GitHub answered 401 Unauthorized'),
+    });
+  });
+
+  it('rejects with the status when GitHub fails', async () => {
+    await expect(refusing(502, 'Bad Gateway')).rejects.toStrictEqual(
+      new GitHubError('GitHub answered 502 Bad Gateway'),
+    );
   });
 });
 

@@ -107,6 +107,10 @@ describe('fetching', () => {
 
     await expect(
       fetchPrices('DK2', new AbortController().signal, fetch),
-    ).rejects.toThrow('Energi Data Service answered 503 Service Unavailable');
+    ).rejects.toStrictEqual(
+      new EnergiDataError(
+        'Energi Data Service answered 503 Service Unavailable',
+      ),
+    );
   });
 });

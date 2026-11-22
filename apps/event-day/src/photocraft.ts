@@ -25,7 +25,7 @@ export interface BoothStatus {
   /** Portraits on the wall, counted up to {@link GALLERY_LIMIT}. */
   readonly photos: number | undefined;
   readonly latestPhotoAt: Date | undefined;
-  /** What went wrong, for `error`. */
+  /** What went wrong, for `error`: a few words, short enough for a back row. */
   readonly problem: string | undefined;
 }
 
@@ -54,11 +54,19 @@ interface BoothMemory {
   last: BoothStatus | undefined;
 }
 
+/** PhotoCraft could not be read or answered unexpectedly. */
+export class PhotoCraftError extends Error {
+  override readonly name = 'PhotoCraftError';
+}
+
 export interface PhotoCraftOptions {
+  /** Names the app in log messages. */
+  readonly name: string;
   /** The PhotoCraft app URL; both routes live under its `/api`. */
   readonly appUrl: string;
   readonly fetch?: typeof fetch;
   readonly now?: () => Date;
+  readonly log?: Pick<Console, 'warn'>;
 }
 
 /**
@@ -68,36 +76,46 @@ export interface PhotoCraftOptions {
  * the live wall itself uses.
  */
 export class PhotoCraft {
+  readonly #name: string;
   readonly #appUrl: string;
   readonly #fetch: typeof fetch;
   readonly #now: () => Date;
+  readonly #log: Pick<Console, 'warn'>;
   readonly #memory = new Map<string, BoothMemory>();
 
   constructor(options: PhotoCraftOptions) {
+    this.#name = options.name;
     this.#appUrl = options.appUrl.replace(/\/+$/u, '');
     this.#fetch = options.fetch ?? fetch;
     this.#now = options.now ?? (() => new Date());
+    this.#log = options.log ?? console;
   }
 
-  /** The booth's state now. Never rejects; failures become `error`. */
+  /**
+   * The booth's state now. Rejects only when `signal` aborts: a failure is
+   * logged and becomes `error`, with what went wrong as its `problem`.
+   */
   async status(booth: BoothRef, signal: AbortSignal): Promise<BoothStatus> {
     const memory = this.#remember(booth);
+    let status: BoothStatus;
     try {
-      const status = await this.#read(booth, memory, signal);
-      memory.last = status;
-      return status;
+      status = await this.#read(booth, memory, signal);
     } catch (error) {
       if (signal.aborted) {
         throw error;
       }
-      const status = blank(
+      this.#log.warn(
+        `[${this.#name}] Reading PhotoCraft booth ${key(booth)} failed:`,
+        error,
+      );
+      status = blank(
         booth,
         'error',
         error instanceof Error ? error.message : String(error),
       );
-      memory.last = status;
-      return status;
     }
+    memory.last = status;
+    return status;
   }
 
   async #read(
@@ -154,13 +172,13 @@ export class PhotoCraft {
       }
       case 429: {
         memory.retryMintAt = now + retryAfter(body);
-        return (
-          memory.last ??
-          blank(booth, 'error', 'PhotoCraft is rate limiting tokens')
-        );
+        if (memory.last === undefined) {
+          throw new PhotoCraftError('rate limited');
+        }
+        return memory.last;
       }
       default: {
-        return blank(booth, 'error', `PhotoCraft answered ${response.status}`);
+        throw new PhotoCraftError(`answered ${response.status}`);
       }
     }
   }
@@ -172,7 +190,7 @@ export class PhotoCraft {
   ): Promise<BoothStatus> {
     const token = memory.token;
     if (token === undefined) {
-      return blank(booth, 'error', 'PhotoCraft sent no wall token');
+      throw new PhotoCraftError('no wall token');
     }
     const query = new URLSearchParams({
       boothId: token.boothId,
@@ -197,39 +215,29 @@ export class PhotoCraft {
       return memory.last ?? blank(booth, 'off');
     }
     if (!response.ok) {
-      return blank(booth, 'error', `PhotoCraft answered ${response.status}`);
+      throw new PhotoCraftError(`answered ${response.status}`);
     }
-    const body: unknown = await response.json();
-    if (!isObject(body)) {
-      return blank(booth, 'error', 'PhotoCraft sent something unexpected');
-    }
-    const version = stringAt(body, 'galleryVersion');
-    if (body['unchanged'] === true && memory.gallery !== undefined) {
-      memory.gallery = { version, status: memory.gallery.status };
+    const gallery = readGallery(await response.json());
+    if (gallery.unchanged && memory.gallery !== undefined) {
+      memory.gallery = {
+        version: gallery.version,
+        status: memory.gallery.status,
+      };
       return memory.gallery.status;
     }
-    const times = arrayAt(body, 'images').flatMap((image) => {
-      const createdAt = isObject(image)
-        ? stringAt(image, 'createdAt')
-        : undefined;
-      const time = createdAt === undefined ? Number.NaN : Date.parse(createdAt);
-      return Number.isNaN(time) ? [] : [time];
-    });
     const status: BoothStatus = {
       booth,
       state: 'live',
-      photos: arrayAt(body, 'images').length,
-      latestPhotoAt:
-        times.length === 0 ? undefined : new Date(Math.max(...times)),
+      photos: gallery.photos,
+      latestPhotoAt: gallery.latestPhotoAt,
       problem: undefined,
     };
-    memory.gallery = { version, status };
+    memory.gallery = { version: gallery.version, status };
     return status;
   }
 
   #remember(booth: BoothRef): BoothMemory {
-    const key = `${booth.eventSlug}/${booth.boothSlug}`;
-    let memory = this.#memory.get(key);
+    let memory = this.#memory.get(key(booth));
     if (memory === undefined) {
       memory = {
         token: undefined,
@@ -237,7 +245,7 @@ export class PhotoCraft {
         gallery: undefined,
         last: undefined,
       };
-      this.#memory.set(key, memory);
+      this.#memory.set(key(booth), memory);
     }
     return memory;
   }
@@ -255,11 +263,45 @@ function readToken(body: unknown): WallToken | undefined {
     : { token, boothId, expiresAt };
 }
 
+/** What one gallery read says, before it becomes a {@link BoothStatus}. */
+interface Gallery {
+  readonly version: string | undefined;
+  /** PhotoCraft has nothing newer than the `galleryVersion` the app sent. */
+  readonly unchanged: boolean;
+  readonly photos: number;
+  readonly latestPhotoAt: Date | undefined;
+}
+
+function readGallery(body: unknown): Gallery {
+  if (!isObject(body)) {
+    throw new PhotoCraftError('unexpected answer');
+  }
+  const images = arrayAt(body, 'images');
+  const times = images.flatMap((image) => {
+    const createdAt = isObject(image)
+      ? stringAt(image, 'createdAt')
+      : undefined;
+    const time = createdAt === undefined ? Number.NaN : Date.parse(createdAt);
+    return Number.isNaN(time) ? [] : [time];
+  });
+  return {
+    version: stringAt(body, 'galleryVersion'),
+    unchanged: body['unchanged'] === true,
+    photos: images.length,
+    latestPhotoAt:
+      times.length === 0 ? undefined : new Date(Math.max(...times)),
+  };
+}
+
 /** PhotoCraft says `Too many requests. Try again in N seconds.` */
 function retryAfter(body: unknown): number {
   const message = isObject(body) ? (stringAt(body, 'error') ?? '') : '';
   const seconds = /in (\d+) seconds?/u.exec(message)?.[1];
   return seconds === undefined ? RATE_LIMIT_RETRY_MS : Number(seconds) * 1000;
+}
+
+function key(booth: BoothRef): string {
+  return `${booth.eventSlug}/${booth.boothSlug}`;
 }
 
 function blank(

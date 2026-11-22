@@ -48,6 +48,27 @@ function frame(
     co2: { value: { at: read, gramsPerKwh }, at: read },
     rain: { value: forecast, at: read },
     rainEnabled: true,
+    failures: { prices: undefined, co2: undefined, rain: undefined },
+  });
+}
+
+/** A frame with no price or CO2 yet, because Energi Data Service fails. */
+function outage(now: string): BarElements {
+  const at = new Date(now);
+  const failure = {
+    error: new Error('Energi Data Service answered 503 Service Unavailable'),
+    at,
+  };
+  return render(at, {
+    area: 'DK2',
+    prices: undefined,
+    co2: undefined,
+    rain: {
+      value: rain('2026-10-21T08:00:00Z', 0, 0, 0),
+      at: new Date(at.getTime() - 3 * 60_000),
+    },
+    rainEnabled: true,
+    failures: { prices: failure, co2: failure, rain: undefined },
   });
 }
 
@@ -67,7 +88,7 @@ export function preview(): Preview {
       },
       {
         label: 'Draws',
-        text: 'The price in kr/kWh beside the CO2 in g/kWh, or RAIN when 0.2 mm or more is due this hour, over 18 bars for the hours ahead.',
+        text: 'The price in kr/kWh beside the CO2 in g/kWh, or RAIN when 0.2 mm or more is due this hour, over 18 bars for the hours ahead. A source that cannot be reached says so behind instead of reading as not published yet.',
       },
     ],
     scenes: [
@@ -100,6 +121,12 @@ export function preview(): Preview {
           164,
           rain('2026-10-21T16:00:00Z', 1.4, 0.8, 0.1),
         ),
+      },
+      {
+        title: 'Energi Data Service down',
+        caption:
+          'Energi Data Service has not answered since the app started, so the price reads PRICE ? and the back says it is unreachable; DMI still sends the rain.',
+        elements: outage('2026-10-21T08:05:00Z'),
       },
     ],
   };

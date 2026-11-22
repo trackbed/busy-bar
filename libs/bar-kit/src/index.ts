@@ -37,6 +37,7 @@ export type { WholeNumberOptions } from './env.ts';
 export { envHttpUrl, envSwitch, envWholeNumber, SettingsError } from './env.ts';
 export type { BarFont } from './fonts.ts';
 export { ELLIPSIS, fitText, overflowingText, textWidth } from './fonts.ts';
+export { formatAge, freshnessLine } from './freshness.ts';
 export type {
   InputEvent,
   ListenForInputOptions,
@@ -62,6 +63,7 @@ export {
 } from './run-bar-app.ts';
 export type { TrackedScreen } from './screen.ts';
 export { trackScreen } from './screen.ts';
+export { SetupError } from './setup-error.ts';
 export type {
   BarAudioClient,
   Speaker,

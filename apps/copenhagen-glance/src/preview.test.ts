@@ -8,14 +8,17 @@ import { LEVEL_COLORS } from './render.ts';
 describe('preview', () => {
   const elements = preview().scenes.flatMap((scene) => scene.elements);
 
-  it('shows a cheap, a middling, then a dear price', () => {
-    expect(
-      elements.flatMap((element) =>
-        element.type === 'text' && element.id === 'price'
-          ? [element.color]
-          : [],
-      ),
-    ).toEqual([LEVEL_COLORS.low, LEVEL_COLORS.mid, LEVEL_COLORS.high]);
+  it('shows a cheap, a middling, then a dear price, then none', () => {
+    const prices = elements.flatMap((element) =>
+      element.type === 'text' && element.id === 'price' ? [element] : [],
+    );
+
+    expect(prices.slice(0, 3).map((price) => price.color)).toEqual([
+      LEVEL_COLORS.low,
+      LEVEL_COLORS.mid,
+      LEVEL_COLORS.high,
+    ]);
+    expect(prices[3]?.text).toBe('PRICE ?');
   });
 
   it('shows the CO2 until rain is due this hour', () => {

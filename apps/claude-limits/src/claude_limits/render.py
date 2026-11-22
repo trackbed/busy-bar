@@ -1,7 +1,7 @@
 """What the limits board draws."""
 
+from collections.abc import Sequence
 from datetime import datetime, timedelta
-from pathlib import Path
 
 from bar_kit import (
     BACK_DISPLAY,
@@ -12,15 +12,17 @@ from bar_kit import (
     DisplayElement,
     DisplayName,
     PollFailure,
+    SetupError,
     Snapshot,
     fit_text,
+    freshness_line,
     rgba,
     solid_rectangle,
     text_element,
     to_bar_text,
 )
 from claude_limits.board import AccountView, Board, Level, Usage, board_at
-from claude_limits.rotation import Rotation, RotationNotSetUpError
+from claude_limits.rotation import Rotation
 
 LEVEL_COLORS: dict[Level, str] = {
     "ok": PALETTE.good,
@@ -76,15 +78,13 @@ def render(
     now: datetime,
     latest: Snapshot[Rotation] | None,
     failure: PollFailure | None,
-    *,
-    root: Path,
 ) -> list[DisplayElement]:
     """Draw the latest reading, or why there is none."""
     if latest is None:
-        return _unavailable(failure, root)
+        return _unavailable(failure)
     board = board_at(latest.value, now)
-    stale = failure is not None and now - latest.at > STALE_AFTER
-    return [*_front(board), *_back(board, stale=stale, updated=now - latest.at)]
+    footer = freshness_line("Files", latest, failure, now, STALE_AFTER)
+    return [*_front(board), *_back(board, footer)]
 
 
 def _front(board: Board) -> list[DisplayElement]:
@@ -189,19 +189,13 @@ def _filled_width(usage: Usage) -> int:
     return round(share * BARS_WIDTH)
 
 
-def _back(board: Board, *, stale: bool, updated: timedelta) -> list[DisplayElement]:
+def _back(board: Board, footer: str) -> list[DisplayElement]:
     if board.exhausted:
         header = "Every account is at its limit"
     elif board.rotating_to:
         header = f"Rotating to {board.rotating_to}"
     else:
         header = "Claude accounts: 5h and week"
-    if stale:
-        footer = "files unreadable, showing old data"
-    elif updated < timedelta(minutes=1):
-        footer = "updated just now"
-    else:
-        footer = f"updated {format_duration(updated)} ago"
     elements: list[DisplayElement] = [
         text_element(
             element_id="header",
@@ -307,19 +301,14 @@ def _row(slot: int, account: AccountView) -> list[DisplayElement]:
     return elements
 
 
-def _unavailable(failure: PollFailure | None, root: Path) -> list[DisplayElement]:
+def _unavailable(failure: PollFailure | None) -> list[DisplayElement]:
+    lines: Sequence[str]
     if failure is None:
         headline, summary = "LIMITS", "reading..."
         lines = ["Reading the rotation files"]
-    elif isinstance(failure.error, RotationNotSetUpError):
-        headline, summary = "NO ROTATION", "not set up"
-        # The folder rarely fits on one line, so its name gets its own.
-        lines = [
-            "conductor-claude-rotation has no",
-            "config.json in",
-            f"{root.parent}/",
-            root.name,
-        ]
+    elif isinstance(failure.error, SetupError):
+        headline, summary = "LIMITS ?", failure.error.summary
+        lines = failure.error.lines
     else:
         headline, summary = "LIMITS ?", "unreadable"
         lines = ["Cannot read the rotation files:", str(failure.error)]

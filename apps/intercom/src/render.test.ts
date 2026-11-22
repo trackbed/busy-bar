@@ -1,13 +1,11 @@
-import { ConvexError } from 'convex/values';
 import { describe, expect, it } from 'vitest';
 
 import type { BarElements } from '@busy-bar-apps/bar-kit';
-import { colorOf, elementsById } from '@busy-bar-apps/bar-kit';
+import { colorOf, elementsById, SetupError } from '@busy-bar-apps/bar-kit';
 
 import { bar, focusFrom } from './__tests__/fixtures.ts';
 import type { Board, Focus, Knock, TeamBar } from './board.ts';
 import { FOCUS_ROW } from './board.ts';
-import { UNKNOWN_KEY } from './convex/presence.ts';
 import type { TeamView } from './render.ts';
 import {
   FOCUS_COLOR,
@@ -317,10 +315,12 @@ describe('render', () => {
       });
     });
 
-    it('asks for a key the team knows', () => {
+    it('says what to fix for a setup error', () => {
       expect(
-        texts(render(NOW, empty(new ConvexError(UNKNOWN_KEY)))),
-      ).toMatchObject({ summary: 'unknown key' });
+        texts(
+          render(NOW, empty(new SetupError('unknown key', ['Ask for a key.']))),
+        ),
+      ).toMatchObject({ summary: 'unknown key', 'line-0': 'Ask for a key.' });
     });
 
     it('shows any other failure', () => {

@@ -9,7 +9,7 @@ describe('preview', () => {
   const { scenes } = preview();
   const elements = scenes.flatMap((scene) => scene.elements);
 
-  it('heads each scene with live booths, a quiet one, then the leaderboard', () => {
+  it('heads each scene with live booths, a quiet one, a down one, then the leaderboard', () => {
     expect(
       scenes.map((scene) =>
         scene.elements.flatMap((element) =>
@@ -21,6 +21,7 @@ describe('preview', () => {
     ).toEqual([
       [['3/3 LIVE 444', VIEW_COLORS.live]],
       [['3/3 LIVE 475', VIEW_COLORS.quiet]],
+      [['2/3 LIVE 275', VIEW_COLORS.error]],
       [['LIVE 37', VIEW_COLORS.live]],
     ]);
   });

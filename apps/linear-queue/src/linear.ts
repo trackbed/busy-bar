@@ -1,3 +1,4 @@
+import { SetupError } from '@busy-bar-apps/bar-kit';
 import {
   arrayAt,
   isObject,
@@ -35,12 +36,6 @@ export interface QueueScope {
 /** Linear refused the request or answered with errors. */
 export class LinearError extends Error {
   override readonly name = 'LinearError';
-  readonly status: number | undefined;
-
-  constructor(message: string, status?: number) {
-    super(message);
-    this.status = status;
-  }
 }
 
 const PAGE_SIZE = 250;
@@ -108,10 +103,21 @@ export async function fetchQueue(
       signal,
     });
     if (!response.ok) {
-      throw new LinearError(
+      const refusal = new LinearError(
         `Linear answered ${response.status} ${response.statusText}`.trim(),
-        response.status,
       );
+      // Linear answers 400 to a team key it does not know, too.
+      if (response.status === 401 || response.status === 400) {
+        throw new SetupError(
+          'key rejected',
+          [
+            'Linear rejected the request.',
+            'Check LINEAR_API_KEY and the team key.',
+          ],
+          { cause: refusal },
+        );
+      }
+      throw refusal;
     }
     return response.json();
   };

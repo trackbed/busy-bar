@@ -100,21 +100,26 @@ describe('createEventFetch', () => {
   type Options = Parameters<typeof createEventFetch>[0];
 
   function setup(overrides: Partial<Options> = {}) {
+    const log = { warn: vi.fn<Console['warn']>() };
     const play = vi.fn<(sound: StockSound) => void>();
     let statuses = [booth('a', 'live', 1)];
     const fetch = createEventFetch({
-      booths: [{ eventSlug: 'summit-2026', boothSlug: 'a' }],
-      boothStatus: () => Promise.resolve(statuses[0] ?? booth('a', 'error')),
+      name: 'test',
+      photoCraft: {
+        booths: [{ eventSlug: 'summit-2026', boothSlug: 'a' }],
+        status: () => Promise.resolve(statuses[0] ?? booth('a', 'error')),
+      },
       challenge: () => Promise.resolve(LEADERBOARD),
       quietMs: QUIET_MS,
       play,
       now: () => NOW,
+      log,
       ...overrides,
     });
     const next = (state: BoothStatus): void => {
       statuses = [state];
     };
-    return { fetch, play, next };
+    return { fetch, play, log, next };
   }
 
   it('reads every booth and the leaderboard into one snapshot', async () => {
@@ -127,9 +132,10 @@ describe('createEventFetch', () => {
     });
   });
 
-  it('shows why the leaderboard failed and keeps the booths', async () => {
-    const { fetch } = setup({
-      challenge: () => Promise.reject(new Error('token expired')),
+  it('logs and shows why the leaderboard failed and keeps the booths', async () => {
+    const failure = new Error('token expired');
+    const { fetch, log } = setup({
+      challenge: () => Promise.reject(failure),
     });
 
     expect(await fetch(SIGNAL)).toStrictEqual({
@@ -137,6 +143,10 @@ describe('createEventFetch', () => {
       challenge: undefined,
       challengeProblem: 'token expired',
     });
+    expect(log.warn).toHaveBeenCalledWith(
+      '[test] Reading the challenge leaderboard failed:',
+      failure,
+    );
   });
 
   it('gives up on the leaderboard with the poll when it is aborted', async () => {
@@ -161,10 +171,10 @@ describe('createEventFetch', () => {
     });
   });
 
-  it('fails the poll for booths without a PhotoCraft URL', async () => {
-    const { fetch } = setup({ boothStatus: undefined });
+  it('reads no booths when PhotoCraft is not set up', async () => {
+    const { fetch } = setup({ photoCraft: undefined });
 
-    await expect(fetch(SIGNAL)).rejects.toThrow('No PhotoCraft URL');
+    expect(await fetch(SIGNAL)).toMatchObject({ booths: [] });
   });
 
   it('plays the sound for a booth that goes down or quiet', async () => {

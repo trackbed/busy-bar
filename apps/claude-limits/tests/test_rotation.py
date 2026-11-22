@@ -4,10 +4,10 @@ from pathlib import Path
 import pytest
 from samples import EPOCH_NOW, NOW, WriteJson, usage_window
 
+from bar_kit import SetupError
 from claude_limits.rotation import (
     Account,
     Rotation,
-    RotationNotSetUpError,
     Window,
     read_rotation,
 )
@@ -121,11 +121,23 @@ def test_reads_an_empty_account_list_when_the_config_has_none(
     assert read_rotation(tmp_path).accounts == ()
 
 
-def test_says_when_the_tool_is_not_set_up(tmp_path: Path) -> None:
-    with pytest.raises(
-        RotationNotSetUpError, match="No conductor-claude-rotation config"
-    ):
-        read_rotation(tmp_path)
+def test_names_the_folder_when_the_tool_is_not_set_up(tmp_path: Path) -> None:
+    root = tmp_path / "conductor-claude-rotation"
+
+    with pytest.raises(SetupError) as raised:
+        read_rotation(root)
+
+    assert raised.value.summary == "not set up"
+    assert raised.value.lines == (
+        "conductor-claude-rotation has no",
+        "config.json in",
+        f"{tmp_path}/",
+        "conductor-claude-rotation",
+    )
+    # The log shows the cause, which keeps the path whole.
+    cause = raised.value.__cause__
+    assert isinstance(cause, FileNotFoundError)
+    assert cause.filename == str(root / "config.json")
 
 
 @pytest.mark.parametrize(

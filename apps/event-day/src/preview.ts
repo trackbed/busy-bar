@@ -34,7 +34,6 @@ function draw(now: Date, value: EventSnapshot): BarElements {
   return render(
     now,
     { value, at: new Date(now.getTime() - 20_000) },
-    undefined,
     { quietMs: QUIET_MS },
   );
 }
@@ -43,6 +42,7 @@ function draw(now: Date, value: EventSnapshot): BarElements {
 // one to four lines) plus a few seconds, so it picks a known second line.
 const BUSY_AT = new Date('2026-10-21T10:00:00Z');
 const QUIET_AT = new Date('2026-10-21T14:20:04Z');
+const DOWN_AT = new Date('2026-10-21T15:00:00Z');
 const CHALLENGE_AT = new Date('2026-10-21T16:00:00Z');
 
 /** Sample frames for the app catalogue: `nx run event-day:preview`. */
@@ -61,7 +61,7 @@ export function preview(): Preview {
       },
       {
         label: 'Draws',
-        text: 'Live booths and their portrait count on the front in the colour of the worst booth, each booth in turn below, one cell per booth along the bottom, and every booth and the challenge on the back.',
+        text: 'Live booths and their portrait count on the front in the colour of the worst booth, each booth in turn below, one cell per booth along the bottom, and every booth and the challenge on the back, with what went wrong for one that cannot be read.',
       },
       {
         label: 'Alerts',
@@ -94,6 +94,26 @@ export function preview(): Preview {
             booth('entrance', QUIET_AT, 200, 1),
           ],
           challenge: undefined,
+          challengeProblem: undefined,
+        }),
+      },
+      {
+        title: 'One cannot be read',
+        caption:
+          'PhotoCraft answered the entrance booth with a server error, so its cell and the headline turn red and its row behind says what went wrong.',
+        elements: draw(DOWN_AT, {
+          booths: [
+            booth('main-stage', DOWN_AT, 171, 2),
+            booth('lounge', DOWN_AT, 104, 4),
+            {
+              booth: { eventSlug: 'summit-2026', boothSlug: 'entrance' },
+              state: 'error',
+              photos: undefined,
+              latestPhotoAt: undefined,
+              problem: 'answered 502',
+            },
+          ],
+          challenge: CHALLENGE,
           challengeProblem: undefined,
         }),
       },

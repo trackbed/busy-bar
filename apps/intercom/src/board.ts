@@ -1,10 +1,12 @@
 // Reading the team's board: who the teammates are, what their timers say
 // now, which knocks concern this bar, and the team focus.
 
-import { toBarText } from '@busy-bar-apps/bar-kit';
+import { ConvexError } from 'convex/values';
+
+import { SetupError, toBarText } from '@busy-bar-apps/bar-kit';
 
 import type { KnockStatus, Presence } from './convex/presence.ts';
-import { freeAt } from './convex/presence.ts';
+import { freeAt, UNKNOWN_KEY } from './convex/presence.ts';
 
 /** One bar on the team, as `team:board` answers it. */
 export interface TeamBar {
@@ -194,9 +196,9 @@ export interface BoardFeed {
   /** Take a new board, clear any failure, and hand it to every listener. */
   readonly update: (next: Board) => void;
   /**
-   * Take a failed query, such as for a key the team no longer knows: drop the
-   * board, so the screen shows why rather than an old board, and tell every
-   * listener the board is gone.
+   * Take a failed query: drop the board, so the screen shows why rather than
+   * an old board, and tell every listener the board is gone. A key the team
+   * does not know becomes a `SetupError` that asks for one.
    */
   readonly fail: (error: Error) => void;
 }
@@ -221,7 +223,18 @@ export function createBoardFeed(
     },
     fail: (error) => {
       board = undefined;
-      failure = error;
+      failure =
+        error instanceof ConvexError && error.data === UNKNOWN_KEY
+          ? new SetupError(
+              'unknown key',
+              [
+                'The team does not know this',
+                "bar's INTERCOM_KEY. Ask the",
+                'deployment owner for one.',
+              ],
+              { cause: error },
+            )
+          : error;
       for (const listen of listeners) {
         listen(undefined);
       }

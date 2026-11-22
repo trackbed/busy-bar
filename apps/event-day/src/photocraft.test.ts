@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 
 import { bodyOf } from './__tests__/fixtures.ts';
 import type { BoothRef } from './photocraft.ts';
-import { GALLERY_LIMIT, PhotoCraft } from './photocraft.ts';
+import { GALLERY_LIMIT, PhotoCraft, PhotoCraftError } from './photocraft.ts';
 
 const APP = 'https://photos.example.com/';
 const BOOTH: BoothRef = { eventSlug: 'summit-2026', boothSlug: 'main-booth' };
@@ -38,14 +38,18 @@ function photoCraft({
     return Promise.resolve(new Response(body, { status: reply.status }));
   });
   let now = NOW;
+  const log = { warn: vi.fn<Console['warn']>() };
   const client = new PhotoCraft({
+    name: 'test',
     appUrl: APP,
     fetch,
     now: () => new Date(now),
+    log,
   });
   return {
     client,
     calls,
+    log,
     advance: (ms: number) => {
       now += ms;
     },
@@ -222,7 +226,7 @@ describe('PhotoCraft', () => {
 
     expect(limited).toMatchObject({
       state: 'error',
-      problem: 'PhotoCraft is rate limiting tokens',
+      problem: 'rate limited',
     });
     expect(calls).toHaveLength(1);
     advance(1000);
@@ -279,39 +283,43 @@ describe('PhotoCraft', () => {
   });
 
   it.each([
-    [{ tokens: [{ status: 500 }] }, 'PhotoCraft answered 500'],
-    [
-      { tokens: [{ status: 200, body: { token: 'x' } }] },
-      'PhotoCraft sent no wall token',
-    ],
-    [
-      { tokens: [TOKEN], galleries: [{ status: 502 }] },
-      'PhotoCraft answered 502',
-    ],
+    [{ tokens: [{ status: 500 }] }, 'answered 500'],
+    [{ tokens: [{ status: 200, body: { token: 'x' } }] }, 'no wall token'],
+    [{ tokens: [TOKEN], galleries: [{ status: 502 }] }, 'answered 502'],
     [
       { tokens: [TOKEN], galleries: [{ status: 200, body: [] }] },
-      'PhotoCraft sent something unexpected',
+      'unexpected answer',
     ],
-  ])('reports what went wrong (%#)', async (replies, problem) => {
-    const { client } = photoCraft(replies);
+  ])('reports and logs what went wrong (%#)', async (replies, problem) => {
+    const { client, log } = photoCraft(replies);
 
     expect(await client.status(BOOTH, signal)).toMatchObject({
       state: 'error',
       problem,
     });
+    expect(log.warn).toHaveBeenCalledWith(
+      '[test] Reading PhotoCraft booth summit-2026/main-booth failed:',
+      new PhotoCraftError(problem),
+    );
   });
 
   it('turns a network failure into an error status', async () => {
-    const fetch = vi.fn<typeof globalThis.fetch>(() =>
-      Promise.reject(new TypeError('fetch failed')),
-    );
+    const failure = new TypeError('fetch failed');
+    const fetch = vi.fn<typeof globalThis.fetch>(() => Promise.reject(failure));
+    const log = { warn: vi.fn<Console['warn']>() };
 
-    const status = await new PhotoCraft({ appUrl: APP, fetch }).status(
-      BOOTH,
-      signal,
-    );
+    const status = await new PhotoCraft({
+      name: 'test',
+      appUrl: APP,
+      fetch,
+      log,
+    }).status(BOOTH, signal);
 
     expect(status).toMatchObject({ state: 'error', problem: 'fetch failed' });
+    expect(log.warn).toHaveBeenCalledWith(
+      '[test] Reading PhotoCraft booth summit-2026/main-booth failed:',
+      failure,
+    );
   });
 
   it('lets an abort through', async () => {
@@ -321,8 +329,14 @@ describe('PhotoCraft', () => {
       return Promise.reject(new DOMException('aborted', 'AbortError'));
     });
 
+    const log = { warn: vi.fn<Console['warn']>() };
+
     await expect(
-      new PhotoCraft({ appUrl: APP, fetch }).status(BOOTH, controller.signal),
+      new PhotoCraft({ name: 'test', appUrl: APP, fetch, log }).status(
+        BOOTH,
+        controller.signal,
+      ),
     ).rejects.toThrow('aborted');
+    expect(log.warn).not.toHaveBeenCalled();
   });
 });

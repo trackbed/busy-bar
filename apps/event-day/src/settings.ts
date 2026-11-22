@@ -12,8 +12,10 @@ import type { BoothRef } from './photocraft.ts';
 
 /** What the event-day board needs from the environment. */
 export interface EventSettings {
-  readonly photoCraftUrl: string | undefined;
-  readonly booths: readonly BoothRef[];
+  /** The PhotoCraft app URL and the booths to read there; unset without booths. */
+  readonly photoCraft:
+    | { readonly url: string; readonly booths: readonly BoothRef[] }
+    | undefined;
   readonly quietMinutes: number;
   readonly challenge:
     | { readonly convexUrl: string; readonly token: string }
@@ -68,8 +70,10 @@ export function loadSettings(env: Env): EventSettings {
   }
 
   return {
-    photoCraftUrl,
-    booths,
+    photoCraft:
+      photoCraftUrl === undefined || booths.length === 0
+        ? undefined
+        : { url: photoCraftUrl, booths },
     quietMinutes: envWholeNumber(env, 'EVENT_DAY_QUIET_MINUTES', {
       fallback: DEFAULT_QUIET_MINUTES,
       min: 1,

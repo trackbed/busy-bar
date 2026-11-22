@@ -1,4 +1,8 @@
-import type { BarElements, Snapshot } from '@busy-bar-apps/bar-kit';
+import type {
+  BarElements,
+  PollFailure,
+  Snapshot,
+} from '@busy-bar-apps/bar-kit';
 import {
   BACK_DISPLAY,
   fitText,
@@ -43,15 +47,23 @@ export interface GlanceData {
   /** Undefined while rain is off or before DMI first answers. */
   readonly rain: Snapshot<readonly RainHour[]> | undefined;
   readonly rainEnabled: boolean;
+  /** How the latest fetch of each source failed, if it did. */
+  readonly failures: {
+    readonly prices: PollFailure | undefined;
+    readonly co2: PollFailure | undefined;
+    readonly rain: PollFailure | undefined;
+  };
 }
 
 /**
  * The spot price now and over the next 18 hours in front, with the grid's
- * CO2, or rain when it is coming. The details are listed behind.
+ * CO2, or rain when it is coming. The details are listed behind. A value that
+ * is missing because its source is failing says so, rather than reading as
+ * not published yet.
  */
 export function render(now: Date, data: GlanceData): BarElements {
   const glance = glanceAt(data, now);
-  return [...front(glance), ...back(glance, data, now)];
+  return [...front(glance, data.failures.prices), ...back(glance, data, now)];
 }
 
 /** What the glance shows at a moment: the readings still worth drawing. */
@@ -85,12 +97,15 @@ export function glanceAt(data: GlanceData, now: Date): Glance {
   return { outlook, co2, rain, raining };
 }
 
-function front({ outlook, co2, raining }: Glance): BarElements {
+function front(
+  { outlook, co2, raining }: Glance,
+  pricesFailure: PollFailure | undefined,
+): BarElements {
   const elements: BarElements = [
     outlook === undefined
       ? textElement({
           id: 'price',
-          text: 'NO PRICE',
+          text: pricesFailure === undefined ? 'NO PRICE' : 'PRICE ?',
           display: 'front',
           font: 'small',
           x: 0,
@@ -165,16 +180,17 @@ function back(
   data: GlanceData,
   now: Date,
 ): BarElements {
+  const { failures } = data;
   const lines = [
     outlook === undefined
-      ? `Spot price ${data.area}: not published yet`
+      ? `Spot price ${data.area}: ${failures.prices === undefined ? 'not published yet' : 'unreachable'}`
       : `Spot price ${data.area}: ${kroner(outlook.current.kronerPerKwh)} kr/kWh`,
     windowLine('Cheapest hour', outlook?.cheapest, now),
     windowLine('Dearest hour', outlook?.dearest, now),
     co2 === undefined
-      ? 'CO2: no reading'
+      ? `CO2: ${failures.co2 === undefined ? 'no reading' : 'unreachable'}`
       : `CO2: ${Math.round(co2.gramsPerKwh)} g/kWh`,
-    rainLine(data.rainEnabled, rain),
+    rainLine(data.rainEnabled, rain, failures.rain),
   ];
   return [
     ...lines.map((line, index) =>
@@ -220,12 +236,15 @@ function windowLine(
 function rainLine(
   enabled: boolean,
   rain: readonly number[] | undefined,
+  failure: PollFailure | undefined,
 ): string {
   if (!enabled) {
     return 'Rain: off';
   }
   if (rain === undefined) {
-    return 'Rain: no forecast';
+    return failure === undefined
+      ? 'Rain: no forecast'
+      : 'Rain: DMI unreachable';
   }
   if (rain.every((millimetres) => millimetres < RAIN_THRESHOLD_MM)) {
     return `No rain in the next ${rain.length} h`;

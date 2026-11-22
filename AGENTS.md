@@ -88,7 +88,8 @@ These apply to every task. Break one only when the user names a concrete reason.
   display sizes, `rgba()`, the render vocabulary (`textElement` /
   `text_element`, `solidRectangle`, `statusCells`, the role `PALETTE`,
   `SUMMARY_Y`, `FOOTER_Y`), the frame loop (`runBarApp` / `run_bar_app`),
-  background polling (`createPoller` / `Poller`), the bar's buttons and wheel
+  background polling (`createPoller` / `Poller`) and its footer
+  (`freshnessLine` / `freshness_line`), the bar's buttons and wheel
   (`listenForInput` / `listen_for_input`), whether the app's frames reach
   the screen (`trackScreen` / `track_screen`), and text that fits the bitmap
   fonts (`toBarText` / `to_bar_text`, `textWidth` / `text_width`,

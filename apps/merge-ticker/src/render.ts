@@ -10,7 +10,9 @@ import {
   FOOTER_Y,
   FRONT_DISPLAY,
   PALETTE,
+  freshnessLine,
   rgba,
+  SetupError,
   statusCells,
   SUMMARY_Y,
   textElement,
@@ -19,7 +21,6 @@ import {
 } from '@busy-bar-apps/bar-kit';
 
 import type { Checks, OpenPullRequest, PullRequests } from './github.ts';
-import { GitHubError } from './github.ts';
 import type { Celebration, TickerState } from './watch.ts';
 
 export const MERGED_COLOR = PALETTE.good;
@@ -64,11 +65,7 @@ export function render(
     now.getTime() - celebration.noticedAt.getTime() < CELEBRATION_MS
       ? celebration
       : undefined;
-  const stale =
-    failure !== undefined && now.getTime() - latest.at.getTime() > STALE_MS;
-  const footer = stale
-    ? 'GitHub unreachable, showing old data'
-    : `updated ${minutesAgo(now, latest.at)}`;
+  const footer = freshnessLine('GitHub', latest, failure, now, STALE_MS);
   return [
     ...front(pulls, focusOf(pulls, celebrating)),
     ...back(pulls, celebrating, footer),
@@ -275,29 +272,15 @@ function tag(pull: OpenPullRequest): string {
   return { passing: 'ok', pending: 'wait', none: '-' }[pull.checks];
 }
 
-function minutesAgo(now: Date, then: Date): string {
-  const minutes = Math.max(
-    0,
-    Math.floor((now.getTime() - then.getTime()) / 60_000),
-  );
-  return minutes === 0 ? 'just now' : `${minutes}m ago`;
-}
-
 function unavailable(failure: PollFailure | undefined): BarElements {
   let summary: string;
   let lines: readonly string[];
   if (failure === undefined) {
     summary = 'loading';
     lines = ['Asking GitHub for your pull requests'];
-  } else if (
-    failure.error instanceof GitHubError &&
-    failure.error.status === 401
-  ) {
-    summary = 'token rejected';
-    lines = [
-      'GitHub rejected GITHUB_TOKEN.',
-      'Try GITHUB_TOKEN=$(gh auth token).',
-    ];
+  } else if (failure.error instanceof SetupError) {
+    summary = failure.error.summary;
+    lines = failure.error.lines;
   } else {
     summary = 'unreachable';
     lines = ['Cannot reach GitHub:', failure.error.message];

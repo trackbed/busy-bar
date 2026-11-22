@@ -9,7 +9,9 @@ import {
   FOOTER_Y,
   FRONT_DISPLAY,
   PALETTE,
+  freshnessLine,
   rgba,
+  SetupError,
   solidRectangle,
   SUMMARY_Y,
   textElement,
@@ -17,7 +19,6 @@ import {
 } from '@busy-bar-apps/bar-kit';
 
 import type { QueueCounts, QueueScope } from './linear.ts';
-import { LinearError } from './linear.ts';
 
 export const READY_COLORS = {
   plenty: PALETTE.good,
@@ -89,11 +90,7 @@ export function render(
     ...strip(counts),
   ];
 
-  const stale =
-    failure !== undefined && now.getTime() - latest.at.getTime() > STALE_MS;
-  const footer = stale
-    ? 'Linear unreachable, showing old data'
-    : updated(now, latest.at);
+  const footer = freshnessLine('Linear', latest, failure, now, STALE_MS);
   const rows: readonly (readonly [string, number])[] = [
     [
       view.scope.label === undefined
@@ -198,29 +195,15 @@ function strip(counts: QueueCounts): BarElements {
   return elements;
 }
 
-function updated(now: Date, then: Date): string {
-  const minutes = Math.max(
-    0,
-    Math.floor((now.getTime() - then.getTime()) / 60_000),
-  );
-  return minutes === 0 ? 'updated just now' : `updated ${minutes}m ago`;
-}
-
 function unavailable(failure: PollFailure | undefined): BarElements {
   let summary: string;
   let lines: readonly string[];
   if (failure === undefined) {
     summary = 'loading';
     lines = ['Counting the Linear queue'];
-  } else if (
-    failure.error instanceof LinearError &&
-    (failure.error.status === 401 || failure.error.status === 400)
-  ) {
-    summary = 'key rejected';
-    lines = [
-      'Linear rejected the request.',
-      'Check LINEAR_API_KEY and the team key.',
-    ];
+  } else if (failure.error instanceof SetupError) {
+    summary = failure.error.summary;
+    lines = failure.error.lines;
   } else {
     summary = 'unreachable';
     lines = ['Cannot reach Linear:', failure.error.message];

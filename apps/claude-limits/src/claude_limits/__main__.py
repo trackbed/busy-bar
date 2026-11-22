@@ -36,9 +36,7 @@ async def main() -> None:
             run_bar_app(
                 name=NAME,
                 client=client,
-                render=lambda now: render(
-                    now, poller.latest, poller.failure, root=settings.root
-                ),
+                render=lambda now: render(now, poller.latest, poller.failure),
                 interval=1.0,
                 stop=stop,
             ),
