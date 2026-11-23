@@ -1291,7 +1291,7 @@ __metadata:
   dependencies:
     "@busy-bar-apps/bar-kit": "workspace:0.0.1"
     convex: "npm:1.47.0"
-    convex-test: "npm:0.0.62"
+    convex-test: "npm:0.0.71"
   languageName: unknown
   linkType: soft
 
@@ -4055,12 +4055,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"convex-test@npm:0.0.62":
-  version: 0.0.62
-  resolution: "convex-test@npm:0.0.62"
+"convex-test@npm:0.0.71":
+  version: 0.0.71
+  resolution: "convex-test@npm:0.0.71"
   peerDependencies:
     convex: ^1.43.0
-  checksum: 10c0/3e43a16f00aea030888cfe9a014a1f5ce23fc9773d1f98c4a7389de08aa6f8f6a99cc0590120b870300d38c57c0d0a0b401b823267fedf8605296929d90d2bce
+  checksum: 10c0/f2e2349cbea97dfda8cdfbb06f27813fa8176884b5c17347f3beef02b00efe1c48b01a3d78aaa9418ba8e49611858b54e247042a48cf43e5ee43b1192a91220e
   languageName: node
   linkType: hard
 
