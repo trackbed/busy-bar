@@ -8,8 +8,8 @@
   },
   "dependencies": {
     "@busy-bar-apps/json-values": "workspace:0.0.1",
-    "@nx/devkit": "24.0.5",
-    "nx": "24.0.5",
+    "@nx/devkit": "24.0.6",
+    "nx": "24.0.6",
     "smol-toml": "1.9.1"
   },
   "generators": "./generators.json"
