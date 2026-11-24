@@ -6,6 +6,32 @@ you, names the most urgent one, and draws one cell per session along the
 bottom row. The back display lists every session: its workspace, what it is
 doing (the skill it runs, when it runs one), and for how long.
 
+## Trackbed Showtime and review progress
+
+Set `TRACKBED_BUSY_BAR_DIR` to the same absolute directory in the Trackbed
+workspaces running Showtime and review convergence. Run Showtime to populate
+the repository board. Start this app against the resulting file, for example:
+
+```sh
+AGENT_FLEET_SHOWTIME="$HOME/.local/state/trackbed/bar/showtime-trackbed+skills.json" NX_DAEMON=false yarn nx run agent-fleet:start
+```
+
+In this view the bar reads local files and needs no Claude Code hooks. The
+front pairs a large count with the highest-priority state, starting with
+workspaces that need you, then merge-ready workspaces and work in progress.
+Use the wheel to expand a workspace on the back. Its name and reason fill
+the highlighted row. OK adds a local seen mark until the reason clears. START opens
+that workspace's review detail and returns to the board on the next press.
+A fresh transition into a blocker can chime. Startup and identical passes are
+quiet, and the usual focus-mode and sound settings apply.
+
+Review detail puts the round number on the front. On the back, the work item
+sits above a strip that highlights the current review, fix, or verify phase.
+A completed or blocked review shows its outcome across the strip. Below it
+are the round, fix cycles, and last completed gate.
+The last line dates the observation. After 15 minutes a board shows STALE and
+an unfinished review shows LAST REVIEW. See the [snapshot contract](../../docs/adr/0006-trackbed-snapshots.md).
+
 ## Owns
 
 - The hook endpoint ([src/agent_fleet/server.py](src/agent_fleet/server.py)):
@@ -18,6 +44,9 @@ doing (the skill it runs, when it runs one), and for how long.
   layout ([src/agent_fleet/render.py](src/agent_fleet/render.py)), and the
   wheel, buttons, and chime
   ([src/agent_fleet/controls.py](src/agent_fleet/controls.py)).
+- The Showtime view: reading the board and review snapshots
+  ([src/agent_fleet/showtime.py](src/agent_fleet/showtime.py)) and their
+  layout ([src/agent_fleet/render_showtime.py](src/agent_fleet/render_showtime.py)).
 - Sample frames for the app catalogue ([src/agent_fleet/preview.py](src/agent_fleet/preview.py)).
 
 ## Does Not Own
@@ -96,6 +125,7 @@ input.
 | `AGENT_FLEET_PORT`          | `8740`      | Port the hooks post to; rerun `--print-hooks` after changing it |
 | `AGENT_FLEET_SOUND`         | `on`        | `off` silences the chime                                        |
 | `AGENT_FLEET_QUIET_MINUTES` | `15`        | Silence after which a working session looks stuck               |
+| `AGENT_FLEET_SHOWTIME`      | (none)      | A Trackbed Showtime snapshot; shows it instead, with no hooks   |
 
 Set `BUSYBAR_ADDR` and `BUSYBAR_TOKEN` for a bar that is not on USB.
 

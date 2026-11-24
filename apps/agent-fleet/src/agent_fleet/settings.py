@@ -3,6 +3,7 @@
 from collections.abc import Mapping
 from dataclasses import dataclass
 from datetime import timedelta
+from pathlib import Path
 
 from bar_kit import env_switch, env_whole_number
 
@@ -29,6 +30,8 @@ class FleetSettings:
     """How long a working session may go without an event before it looks
     stuck."""
 
+    showtime: Path | None = None
+
     @property
     def url(self) -> str:
         """The URL Claude Code's hooks post to."""
@@ -44,8 +47,10 @@ def load_settings(env: Mapping[str, str]) -> FleetSettings:
     quiet = env_whole_number(
         env, "AGENT_FLEET_QUIET_MINUTES", fallback=DEFAULT_QUIET_MINUTES, minimum=1
     )
+    path = env.get("AGENT_FLEET_SHOWTIME", "").strip()
     return FleetSettings(
         host=host,
+        showtime=Path(path).expanduser() if path else None,
         port=port,
         sound=env_switch(env, "AGENT_FLEET_SOUND"),
         quiet_after=timedelta(minutes=quiet),

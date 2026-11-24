@@ -6,6 +6,7 @@ from datetime import datetime, timedelta
 
 from agent_fleet.fleet import Alert, Fleet
 from agent_fleet.hooks import parse_hook
+from agent_fleet.showtime import Showtime
 from bar_kit import (
     ButtonEvent,
     EncoderEvent,
@@ -83,6 +84,10 @@ class Controls:
     holds the screen the wheel and buttons belong to it and the board ignores
     them. Moving the selector to a focus position mutes the chime. A hook
     updates its session and chimes when the session starts waiting on you.
+
+    With `showtime`, the input drives that board instead: the wheel moves the
+    highlight, OK marks the highlighted workspace as seen, START opens or
+    closes its review detail, and BACK does nothing. No hooks arrive then.
     """
 
     def __init__(
@@ -91,9 +96,11 @@ class Controls:
         chime: Chime,
         *,
         on_screen: Callable[[], bool],
+        showtime: Showtime | None = None,
         now: Callable[[], datetime] = utc_now,
     ) -> None:
         """Ask `on_screen`, such as bar_kit's `track_screen`, before any input."""
+        self._showtime = showtime
         self._fleet = fleet
         self._chime = chime
         self._on_screen = on_screen
@@ -105,6 +112,15 @@ class Controls:
             self._chime.selector = event.position
             return
         if not self._on_screen():
+            return
+        if self._showtime is not None:
+            match event:
+                case EncoderEvent(delta=delta):
+                    self._showtime.move(delta)
+                case ButtonEvent(button="ok", action="press"):
+                    self._showtime.acknowledge()
+                case ButtonEvent(button="start", action="press"):
+                    self._showtime.toggle()
             return
         match event:
             case EncoderEvent(delta=delta):

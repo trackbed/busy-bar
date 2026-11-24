@@ -10,7 +10,7 @@ def test_heads_with_who_needs_you_then_who_is_working() -> None:
         if isinstance(element, TextElement) and element.id == "headline"
     ]
 
-    assert headlines == ["2 NEED YOU", "3 WORKING", "2 WORKING"]
+    assert headlines == ["2 NEED YOU", "3 WORKING", "2 WORKING", "NEEDS ME", "VERIFY"]
 
 
 def test_fits_every_text_on_its_display() -> None:
