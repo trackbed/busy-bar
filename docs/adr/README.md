@@ -10,6 +10,7 @@ what it costs, and when to reconsider it. This table is the only list.
 | [0003](0003-typescript-from-source.md) | Accepted | 2026-10-19 | Run TypeScript from source; type-check with TypeScript 7                |
 | [0004](0004-firmware-emulator.md)      | Accepted | 2026-10-20 | Emulate the bar from its firmware source; download assets, never vendor |
 | [0005](0005-convex-between-bars.md)    | Accepted | 2026-10-26 | Share state between bars through a Convex deployment per team           |
+| [0006](0006-trackbed-snapshots.md)     | Accepted | 2026-11-24 | Read Trackbed observations from local snapshots                         |
 
 ## Adding an ADR
 
