@@ -8,6 +8,26 @@ A new merge takes over the display for 15 seconds with a sound, and newly
 failing checks play a sound too. The back display lists the open pull
 requests.
 
+## Incoming Trackbed review requests
+
+Set `TRACKBED_BUSY_BAR_DIR` in the Trackbed environment and run
+`trackbed:pr:review-queue`. Point merge-ticker at the resulting file:
+
+```sh
+MERGE_TICKER_INCOMING="$HOME/.local/state/trackbed/bar/incoming-trackbed+skills.json" NX_DAEMON=false yarn nx run merge-ticker:start
+```
+
+Use `incoming-all.json` for a queue produced with `--all-repos`. This view
+reads the local snapshot every five seconds and runs without a GitHub token.
+The front shows the total request count beside the number ready. On the
+back, ready PRs have a highlighted label and appear first, oldest wait
+first. Each wait has a bar scaled to the longest wait in the whole queue.
+Drafts, blocked requests, and requests with cautions are labeled.
+A tilde marks a wait estimated from when the PR opened. Long lists page every
+eight seconds. The footer shows the observation age. A successful empty queue
+shows CLEAR and an observation aged 15 minutes shows STALE. Rerun the skill
+to refresh it. See the [snapshot contract](../../docs/adr/0006-trackbed-snapshots.md).
+
 ## Owns
 
 - The GitHub query and its parsing ([src/github.ts](src/github.ts)): one
@@ -16,6 +36,9 @@ requests.
 - Each poll ([src/watch.ts](src/watch.ts)): noticing merges and newly
   failing checks, and the sound that announces them.
 - The layout ([src/render.ts](src/render.ts)).
+- The incoming review view: reading and ordering the Trackbed snapshot
+  ([src/incoming.ts](src/incoming.ts)) and its layout
+  ([src/render-incoming.ts](src/render-incoming.ts)).
 - Sample frames for the app catalogue ([src/preview.ts](src/preview.ts)).
 
 ## Does Not Own
@@ -39,12 +62,13 @@ requests.
 GITHUB_TOKEN=$(gh auth token) NX_DAEMON=false yarn nx run merge-ticker:start
 ```
 
-| Variable                 | Default    | What it does                                        |
-| ------------------------ | ---------- | --------------------------------------------------- |
-| `GITHUB_TOKEN`           | (required) | A token that can read your pull requests and checks |
-| `MERGE_TICKER_SCOPE`     | (none)     | Extra search qualifiers, such as `org:consensusaps` |
-| `MERGE_TICKER_TIME_ZONE` | system     | IANA zone that decides when "today" starts          |
-| `MERGE_TICKER_SOUND`     | `on`       | `off` silences merges and failures                  |
+| Variable                 | Default    | What it does                                                  |
+| ------------------------ | ---------- | ------------------------------------------------------------- |
+| `GITHUB_TOKEN`           | (required) | A token that can read your pull requests and checks           |
+| `MERGE_TICKER_SCOPE`     | (none)     | Extra search qualifiers, such as `org:consensusaps`           |
+| `MERGE_TICKER_TIME_ZONE` | system     | IANA zone that decides when "today" starts                    |
+| `MERGE_TICKER_SOUND`     | `on`       | `off` silences merges and failures                            |
+| `MERGE_TICKER_INCOMING`  | (none)     | A Trackbed incoming snapshot; shows it instead, with no token |
 
 Keep the token out of `.env.example`; put it in the gitignored `.env.local` or
 the shell.

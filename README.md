@@ -15,7 +15,7 @@ for its language.
 | [`apps/event-day`](apps/event-day/README.md)                 | TypeScript | PhotoCraft booths and ChallengeCraft on event days  |
 | [`apps/intercom`](apps/intercom/README.md)                   | TypeScript | Who on the team is free, and knocks, through Convex |
 | [`apps/linear-queue`](apps/linear-queue/README.md)           | TypeScript | A Linear team's ready, active, and review queue     |
-| [`apps/merge-ticker`](apps/merge-ticker/README.md)           | TypeScript | Today's merges, failing checks, auto-merge queue    |
+| [`apps/merge-ticker`](apps/merge-ticker/README.md)           | TypeScript | Your merges and PRs, or incoming review requests    |
 | [`libs/bar-kit`](libs/bar-kit/README.md)                     | TypeScript | Connection settings, display helpers, frame loop    |
 | [`libs/bar-kit-py`](libs/bar-kit-py/README.md)               | Python     | The same kit for Python apps                        |
 | [`libs/json-values`](libs/json-values/README.md)             | TypeScript | Narrowing untrusted JSON from APIs, without casts   |

@@ -14,7 +14,7 @@ describe('preview', () => {
           ? [element.text]
           : [],
       ),
-    ).toEqual(['1 FAILING', '2 QUEUED', 'MERGED!']);
+    ).toEqual(['1 FAILING', '2 QUEUED', 'MERGED!', 'TO REVIEW']);
   });
 
   it('fits every text on its display', () => {

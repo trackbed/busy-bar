@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import { SettingsError } from '@busy-bar-apps/bar-kit';
 
-import { loadSettings } from './settings.ts';
+import { loadIncomingPath, loadSettings } from './settings.ts';
 
 describe('loadSettings', () => {
   it('needs only a token', () => {
@@ -43,5 +43,18 @@ describe('loadSettings', () => {
   ])('rejects %j', (env, message) => {
     expect(() => loadSettings(env)).toThrow(SettingsError);
     expect(() => loadSettings(env)).toThrow(message);
+  });
+});
+
+describe('loadIncomingPath', () => {
+  it('reads the trimmed snapshot path', () => {
+    expect(
+      loadIncomingPath({ MERGE_TICKER_INCOMING: ' /tmp/incoming-all.json ' }),
+    ).toBe('/tmp/incoming-all.json');
+  });
+
+  it('selects the GitHub view when unset or blank', () => {
+    expect(loadIncomingPath({})).toBeUndefined();
+    expect(loadIncomingPath({ MERGE_TICKER_INCOMING: '  ' })).toBeUndefined();
   });
 });

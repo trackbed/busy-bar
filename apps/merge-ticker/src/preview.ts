@@ -2,6 +2,7 @@ import type { BarElements, Preview } from '@busy-bar-apps/bar-kit';
 import { printPreview } from '@busy-bar-apps/bar-kit';
 
 import type { MergedPullRequest, OpenPullRequest } from './github.ts';
+import { renderIncoming } from './render-incoming.ts';
 import { render } from './render.ts';
 import type { TickerState } from './watch.ts';
 
@@ -73,6 +74,10 @@ export function preview(): Preview {
       "Your open GitHub pull requests and today's merges, led by whichever pull request needs you.",
     steps: [
       {
+        label: 'Incoming reviews',
+        text: 'MERGE_TICKER_INCOMING reads a local Trackbed queue snapshot. Ready requests lead, oldest first. The bar under each wait shows its length relative to the longest wait in the queue.',
+      },
+      {
         label: 'Reads',
         text: 'Your open pull requests and those merged since midnight, in one GitHub GraphQL request a minute with GITHUB_TOKEN.',
       },
@@ -123,6 +128,45 @@ export function preview(): Preview {
             merge: RATE_LIMITS,
             noticedAt: new Date('2026-10-21T08:29:56Z'),
           }),
+        ),
+      },
+      {
+        title: 'Incoming reviews',
+        caption:
+          'Two requests are ready. The longest wait belongs to #418. The tilde marks an estimate from when a PR opened.',
+        elements: renderIncoming(
+          NOW,
+          {
+            scope: 'trackbed/skills',
+            observed: READ_AT,
+            requests: [
+              {
+                pr: 'trackbed/skills#418',
+                state: 'ready',
+                waiting: new Date('2026-10-21T02:00:00Z'),
+                estimate: false,
+              },
+              {
+                pr: 'trackbed/skills#422',
+                state: 'ready',
+                waiting: new Date('2026-10-21T06:00:00Z'),
+                estimate: false,
+              },
+              {
+                pr: 'trackbed/skills#419',
+                state: 'check',
+                waiting: new Date('2026-10-21T05:15:00Z'),
+                estimate: true,
+              },
+              {
+                pr: 'trackbed/skills#423',
+                state: 'draft',
+                waiting: READ_AT,
+                estimate: false,
+              },
+            ],
+          },
+          false,
         ),
       },
     ],
