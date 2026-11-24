@@ -16,6 +16,16 @@ class TickerSettingsError extends SettingsError {
 }
 
 /**
+ * The Trackbed incoming snapshot that `MERGE_TICKER_INCOMING` names, or
+ * undefined for the GitHub view. Read it first: the incoming view needs no token.
+ */
+export function loadIncomingPath(
+  env: Readonly<Record<string, string | undefined>>,
+): string | undefined {
+  return env['MERGE_TICKER_INCOMING']?.trim() || undefined;
+}
+
+/**
  * Read `GITHUB_TOKEN` (required) and the optional `MERGE_TICKER_SCOPE`,
  * `MERGE_TICKER_TIME_ZONE`, and `MERGE_TICKER_SOUND`.
  */

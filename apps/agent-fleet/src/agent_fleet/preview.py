@@ -1,11 +1,14 @@
 """Sample frames for the app catalogue: `nx run agent-fleet:preview`."""
 
 from datetime import UTC, datetime, timedelta
+from pathlib import Path
 
 from agent_fleet.fleet import Fleet
 from agent_fleet.hooks import EventKind, HookEvent, Notification
 from agent_fleet.render import render
+from agent_fleet.render_showtime import render_showtime
 from agent_fleet.settings import DEFAULT_HOST, DEFAULT_PORT
+from agent_fleet.showtime import Board, Review, Showtime, Workspace
 from bar_kit import DisplayElement, Preview, PreviewScene, PreviewStep, print_preview
 
 START = datetime(2026, 10, 21, 9, 0, tzinfo=UTC)
@@ -80,9 +83,29 @@ def preview() -> Preview:
     """A fleet with a session to answer, a calm one, and the first after BACK."""
     seen = _busy_fleet()
     seen.acknowledge_all(NOW)
+    showtime = Showtime(Path("showtime-sample.json"))
+    showtime.board = Board(
+        "trackbed/skills",
+        NOW,
+        (
+            Workspace("quito", "quito", "needs_me", "Human review"),
+            Workspace("bern", "bern", "merge_ready", "Ready to merge"),
+            Workspace("riga", "riga", "working", "Agent working"),
+            Workspace("oslo", "oslo", "nudge", "Waiting on CI"),
+            Workspace("lima", "lima", "idle", "Idle"),
+        ),
+    )
+    board_frame = render_showtime(NOW, showtime)
+    showtime.move(2)
+    showtime.toggle()
+    showtime.review = Review("DISC-202", START, NOW, "verify", 2, 1, "Code review")
     return Preview(
         summary="Every Claude Code session you run, and which ones wait on you.",
         steps=[
+            PreviewStep(
+                label="Showtime",
+                text="AGENT_FLEET_SHOWTIME selects a local Trackbed board. The wheel expands a workspace. OK marks its alert seen. START shows its round number and highlights its last recorded review phase.",
+            ),
             PreviewStep(
                 label="Reads",
                 text="Claude Code's HTTP hooks, posted to a loopback endpoint on "
@@ -134,6 +157,16 @@ def preview() -> Preview:
                 caption="After BACK, cebu and lisbon turn grey and the headline "
                 "falls back to the sessions still working.",
                 elements=_draw(seen),
+            ),
+            PreviewScene(
+                title="Showtime board",
+                caption="The amber count singles out quito. The wheel expands a workspace to show why it needs attention.",
+                elements=board_frame,
+            ),
+            PreviewScene(
+                title="Review progress",
+                caption="Riga is verifying DISC-202 in round two after one fix cycle. VERIFY lights up on the phase strip.",
+                elements=render_showtime(NOW, showtime),
             ),
         ],
     )

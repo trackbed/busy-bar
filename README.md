@@ -9,13 +9,13 @@ for its language.
 | ------------------------------------------------------------ | ---------- | --------------------------------------------------- |
 | [`apps/clock`](apps/clock/README.md)                         | TypeScript | The time on the front display, the date on the back |
 | [`apps/countdown`](apps/countdown/README.md)                 | Python     | Days and hours left until an event                  |
-| [`apps/agent-fleet`](apps/agent-fleet/README.md)             | Python     | Every Claude Code session, and which ones need you  |
+| [`apps/agent-fleet`](apps/agent-fleet/README.md)             | Python     | Claude sessions, Showtime, and review progress      |
 | [`apps/claude-limits`](apps/claude-limits/README.md)         | Python     | Usage limits of every rotated Claude account        |
 | [`apps/copenhagen-glance`](apps/copenhagen-glance/README.md) | TypeScript | Danish spot price, CO2, and rain                    |
 | [`apps/event-day`](apps/event-day/README.md)                 | TypeScript | PhotoCraft booths and ChallengeCraft on event days  |
 | [`apps/intercom`](apps/intercom/README.md)                   | TypeScript | Who on the team is free, and knocks, through Convex |
 | [`apps/linear-queue`](apps/linear-queue/README.md)           | TypeScript | A Linear team's ready, active, and review queue     |
-| [`apps/merge-ticker`](apps/merge-ticker/README.md)           | TypeScript | Today's merges, failing checks, auto-merge queue    |
+| [`apps/merge-ticker`](apps/merge-ticker/README.md)           | TypeScript | Your merges and PRs, or incoming review requests    |
 | [`libs/bar-kit`](libs/bar-kit/README.md)                     | TypeScript | Connection settings, display helpers, frame loop    |
 | [`libs/bar-kit-py`](libs/bar-kit-py/README.md)               | Python     | The same kit for Python apps                        |
 | [`libs/json-values`](libs/json-values/README.md)             | TypeScript | Narrowing untrusted JSON from APIs, without casts   |
