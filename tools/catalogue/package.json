@@ -9,6 +9,6 @@
   "dependencies": {
     "@busy-bar-apps/emulator": "workspace:0.0.1",
     "@busy-bar-apps/json-values": "workspace:0.0.1",
-    "@nx/devkit": "24.0.5"
+    "@nx/devkit": "24.0.6"
   }
 }
