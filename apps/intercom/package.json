@@ -8,6 +8,6 @@
     "convex": "1.47.0"
   },
   "devDependencies": {
-    "convex-test": "0.0.62"
+    "convex-test": "0.0.71"
   }
 }
